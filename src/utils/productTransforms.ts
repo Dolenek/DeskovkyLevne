@@ -9,6 +9,7 @@ interface SeriesDraft {
   listPrice: number | null;
   heroImage?: string | null;
   availabilityLabel?: string | null;
+  galleryImages?: string[];
   points: ProductSeries["points"];
 }
 
@@ -32,6 +33,49 @@ const appendPoint = (draft: SeriesDraft, row: ProductRow) => {
   });
 };
 
+const normalizeGalleryArray = (
+  value: ProductRow["gallery_image_urls"]
+): string[] => {
+  if (!value) {
+    return [];
+  }
+  if (Array.isArray(value)) {
+    return value.filter((entry): entry is string => typeof entry === "string" && entry.trim().length > 0);
+  }
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value) as unknown;
+      if (Array.isArray(parsed)) {
+        return parsed.filter(
+          (entry): entry is string =>
+            typeof entry === "string" && entry.trim().length > 0
+        );
+      }
+    } catch {
+      // fall through to delimiter-based parsing
+    }
+    return value
+      .split(/[\n,;]/g)
+      .map((entry) => entry.trim())
+      .filter((entry) => entry.length > 0);
+  }
+  return [];
+};
+
+const mergeGalleryImages = (
+  draft: SeriesDraft,
+  row: ProductRow
+): void => {
+  const incoming = normalizeGalleryArray(row.gallery_image_urls);
+  if (incoming.length === 0) {
+    return;
+  }
+  const existing = draft.galleryImages ?? [];
+  const merged = new Set(existing);
+  incoming.forEach((url) => merged.add(url));
+  draft.galleryImages = Array.from(merged);
+};
+
 export const buildProductSeries = (rows: ProductRow[]): ProductSeries[] => {
   const drafts = new Map<string, SeriesDraft>();
 
@@ -48,6 +92,7 @@ export const buildProductSeries = (rows: ProductRow[]): ProductSeries[] => {
         listPrice: toNumericPrice(row.list_price_with_vat),
         heroImage: row.hero_image_url ?? null,
         availabilityLabel: row.availability_label ?? null,
+        galleryImages: normalizeGalleryArray(row.gallery_image_urls),
         points: [],
       });
     }
@@ -62,6 +107,7 @@ export const buildProductSeries = (rows: ProductRow[]): ProductSeries[] => {
     if (!draft.availabilityLabel && row.availability_label) {
       draft.availabilityLabel = row.availability_label;
     }
+    mergeGalleryImages(draft, row);
     appendPoint(draft, row);
   });
 

@@ -12,7 +12,7 @@ const FILTER_CODES = import.meta.env.VITE_SUPABASE_FILTER_CODES
   : [];
 
 const SELECT_COLUMNS =
-  "id, product_code, product_name, price_with_vat, list_price_with_vat, currency_code, source_url, scraped_at, availability_label, hero_image_url";
+  "id, product_code, product_name, price_with_vat, list_price_with_vat, currency_code, source_url, scraped_at, availability_label, hero_image_url, gallery_image_urls";
 
 const SEARCH_LIMIT = Number(
   import.meta.env.VITE_SUPABASE_SEARCH_LIMIT ?? "2000"
@@ -45,6 +45,20 @@ const runQuery = async (query: any): Promise<ProductRow[]> => {
 
 export const fetchProductRows: ProductFetcher = async () =>
   runQuery(buildBaseQuery().order("scraped_at", { ascending: true }));
+
+export const fetchProductSnapshotsByCode = async (
+  productCode: string
+): Promise<ProductRow[]> => {
+  const normalized = productCode.trim();
+  if (!normalized) {
+    return [];
+  }
+  return runQuery(
+    buildBaseQuery()
+      .eq("product_code", normalized.toUpperCase())
+      .order("scraped_at", { ascending: true })
+  );
+};
 
 export const fetchRecentSnapshots = async (
   limit = RECENT_LOOKBACK_LIMIT

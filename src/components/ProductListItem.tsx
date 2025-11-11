@@ -1,3 +1,4 @@
+import type { MouseEvent } from "react";
 import type { ProductSeries } from "../types/product";
 import type { LocaleKey } from "../i18n/translations";
 import { formatPrice } from "../utils/numberFormat";
@@ -7,6 +8,7 @@ interface ProductListItemProps {
   locale: LocaleKey;
   selected: boolean;
   onSelect: (series: ProductSeries) => void;
+  onNavigate: (series: ProductSeries) => void;
 }
 
 export const ProductListItem = ({
@@ -14,6 +16,7 @@ export const ProductListItem = ({
   locale,
   selected,
   onSelect,
+  onNavigate,
 }: ProductListItemProps) => {
   const latestPrice = formatPrice(
     series.latestPrice,
@@ -28,12 +31,30 @@ export const ProductListItem = ({
           locale
         )
       : null;
+  const href = `/deskove-hry/${encodeURIComponent(series.productCode)}`;
+
+  const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.altKey ||
+      event.shiftKey
+    ) {
+      return;
+    }
+    event.preventDefault();
+    onNavigate(series);
+  };
 
   return (
-    <button
-      type="button"
-      onClick={() => onSelect(series)}
-      className={`flex w-full items-center gap-4 rounded-3xl border px-4 py-3 text-left transition ${
+    <a
+      href={href}
+      onClick={handleClick}
+      onMouseEnter={() => onSelect(series)}
+      onFocus={() => onSelect(series)}
+      className={`flex w-full items-center gap-4 rounded-3xl border px-4 py-3 text-left transition no-underline ${
         selected
           ? "border-primary bg-surface/80 shadow-2xl shadow-black/40"
           : "border-slate-800 bg-surface/50 hover:border-primary/70"
@@ -66,6 +87,6 @@ export const ProductListItem = ({
           <p className="text-sm text-slate-400 line-through">{previousPrice}</p>
         ) : null}
       </div>
-    </button>
+    </a>
   );
 };
