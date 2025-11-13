@@ -11,6 +11,7 @@ export interface ProductRow {
   gallery_image_urls?: string[] | string | null;
   short_description: string | null;
   scraped_at: string;
+  supplementary_parameters?: Record<string, unknown> | unknown[] | string | null;
 }
 
 export interface ProductPoint {
@@ -28,11 +29,18 @@ export interface ProductSeries {
   availabilityLabel?: string | null;
   shortDescription?: string | null;
   galleryImages?: string[];
+  supplementaryParameters: SupplementaryParameter[];
+  categoryTags: string[];
   points: ProductPoint[];
   latestPrice: number | null;
   firstPrice: number | null;
   previousPrice: number | null;
   latestScrapedAt: string | null;
+}
+
+export interface SupplementaryParameter {
+  name: string;
+  value: string;
 }
 
 export type ProductFetcher = () => Promise<ProductRow[]>;

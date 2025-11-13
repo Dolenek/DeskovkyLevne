@@ -51,4 +51,23 @@
   .price-range-slider input[type="range"]::-ms-track {
     @apply bg-transparent;
   }
+
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #475569 #0f172a;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: #0f172a;
+    border-radius: 9999px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #38bdf8, #6366f1);
+    border-radius: 9999px;
+  }
 }

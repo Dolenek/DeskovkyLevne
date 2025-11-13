@@ -8,6 +8,7 @@
 - Hlavni stranka nabizi fulltext product_name/product_code (debounce 400 ms) a filtr "Zobrazit pouze skladem". Sekci "Nedavno zlevnene" nahradil cenovy filtr s duplikovanym sliderem a poli "Cena od / Cena do", ktery okamzite filtruje dataset, ukazuje max. 10 karet na stranku a nabizi strankovani.
 - Pro rychlejsi prvni nacitani se dataset cenovych rad nacita po postupnych davkach (Supabase range) pres novy hook `useChunkedProductCatalog`; sekce s cenovym filtrem automaticky vyzaduje dalsi davku podle aktualni stranky, misto aby se cele historie produktu stahovaly hned pri vstupu na web.
 - Postranni panel filtru na vyhledavaci strance zabira celou vysku okna a vdaka sticky pozici zustava viditelny pri scrollovani.
+- Vyhledavaci filtr nově nabízí výpis všech dostupných „Herních kategorií“ (sbíraných z doplňkových parametrů) s možností vícenásobného výběru; jak sekce rychlého vyhledávání, tak paginovaný seznam respektují zvolené checkboxy, navíc je tu mini vyhledávací pole pro bleskové filtrování kategorií a decentní vlastní scrollbar, aby byl seznam přehledný.
 - Lokalizace pro cestinu byla opravena tak, aby obsahovala spravne diakriticke znaky a prirozene formulace.
 - Header s vyhledavacim polem je znovu pouzity i na detailu produktu a pri zadavani vyhledavani se cely podklad rozmaze a nad aktualnim produktem se objevi jednoduchy seznam max. 6 relevantnich titulu; klik mimo seznam zavre overlay, ale ponecha zadany text.
 - V overlays vyhledavani na detailu produktu ted kazdy vysledek zobrazuje i miniaturu hry (hero image), aby bylo snadnejsi vizualne identifikovat titul.
@@ -21,5 +22,6 @@
 - Overlay rychleho vyhledavani na detailu produktu vypisuje dostupnost hned vlevo od ceny, takze je na prvni pohled jasne, zda je produkt skladem nez uzivatel klikne na detail.
 - Galerie na detailu ma zmensenou vysku, obrazek je posazeny vys a nahledy sedi hned pod hlavnim snimkem; hlavni slider je horizontalne posuvny (snap + scroll) pro rychle listovani vice snimky.
 - Popisek produktu (short_description) se zobrazuje primo pod nazvem v pravem panelu, ktery ma max-height=100vh a ceny jsou zarovnane ke spodku, aby CTA byla vzdy ve stejnem miste.
+- Spodni cast sekce „Historie ceny" uz nezobrazuje tabulku dat/datumů – misto toho se sem natahnou `supplementary_parameters` z databaze a prehledne se vypisou jako klic-hodnota; pokud dodatecne informace chybi, uzivatel dostane odpovidajici hlasku.
 - Build overen (npm run build), varovani o velikosti bundlu zatim ponechano.
 - Odstranen postranni panel "Detail produktu" na vyhledavaci strance, protoze kompletni detail zije na dedikovanem route.

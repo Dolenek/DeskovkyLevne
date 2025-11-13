@@ -1,4 +1,8 @@
-import type { ProductRow, ProductSeries } from "../types/product";
+import type {
+  ProductRow,
+  ProductSeries,
+  SupplementaryParameter,
+} from "../types/product";
 import { toDateKey } from "./date";
 
 interface SeriesDraft {
@@ -12,6 +16,9 @@ interface SeriesDraft {
   availabilityRecordedAt: number | null;
   shortDescription?: string | null;
   galleryImages?: string[];
+  supplementaryParameters: SupplementaryParameter[];
+  supplementaryRecordedAt: number | null;
+  categoryTags: string[];
   points: ProductSeries["points"];
 }
 
@@ -91,6 +98,182 @@ const mergeGalleryImages = (draft: SeriesDraft, row: ProductRow): void => {
   draft.galleryImages = Array.from(merged);
 };
 
+const toReadableLabel = (raw: unknown): string => {
+  if (typeof raw !== "string") {
+    return "";
+  }
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    return "";
+  }
+  return trimmed
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (match) => match.toUpperCase());
+};
+
+const stringifySupplementaryValue = (value: unknown): string => {
+  if (value === null || value === undefined) {
+    return "";
+  }
+  if (Array.isArray(value)) {
+    return value
+      .map((entry) => stringifySupplementaryValue(entry))
+      .filter((entry) => entry.length > 0)
+      .join(", ");
+  }
+  if (typeof value === "object") {
+    const objectValue = value as Record<string, unknown>;
+    const preferred = objectValue.value ?? objectValue.val ?? objectValue.text;
+    if (preferred !== undefined) {
+      return stringifySupplementaryValue(preferred);
+    }
+    return JSON.stringify(objectValue);
+  }
+  return String(value).trim();
+};
+
+const entryFromRecord = (
+  name: unknown,
+  value: unknown
+): SupplementaryParameter | null => {
+  const readableName = toReadableLabel(name);
+  const readableValue = stringifySupplementaryValue(value);
+  if (!readableName || !readableValue) {
+    return null;
+  }
+  return { name: readableName, value: readableValue };
+};
+
+const objectEntriesToParameters = (
+  input: Record<string, unknown>
+): SupplementaryParameter[] => {
+  const entries = Object.entries(input)
+    .map(([name, value]) => entryFromRecord(name, value))
+    .filter((entry): entry is SupplementaryParameter => Boolean(entry));
+  return entries;
+};
+
+const arrayEntriesToParameters = (
+  input: unknown[]
+): SupplementaryParameter[] => {
+  const entries = input
+    .map((item) => {
+      if (typeof item === "object" && item !== null) {
+        const record = item as Record<string, unknown>;
+        const nameCandidate =
+          record.name ?? record.label ?? record.key ?? record.title;
+        return entryFromRecord(
+          nameCandidate,
+          record.value ?? record.val ?? record.text ?? record.data ?? null
+        );
+      }
+      if (typeof item === "string") {
+        const separatorIndex = item.indexOf(":");
+        if (separatorIndex !== -1) {
+          const name = item.slice(0, separatorIndex).trim();
+          const value = item.slice(separatorIndex + 1).trim();
+          return entryFromRecord(name, value);
+        }
+      }
+      return null;
+    })
+    .filter((entry): entry is SupplementaryParameter => Boolean(entry));
+  return entries;
+};
+
+const parseKeyValueText = (
+  value: string
+): Record<string, unknown> | null => {
+  const lines = value
+    .split(/\r?\n|;/g)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+  const entries: Record<string, unknown> = {};
+  lines.forEach((line) => {
+    const separatorIndex = line.indexOf(":");
+    const equalIndex = line.indexOf("=");
+    const index = separatorIndex >= 0 ? separatorIndex : equalIndex;
+    if (index === -1) {
+      return;
+    }
+    const key = line.slice(0, index).trim();
+    const rawValue = line.slice(index + 1).trim();
+    if (key && rawValue) {
+      entries[key] = rawValue;
+    }
+  });
+  return Object.keys(entries).length > 0 ? entries : null;
+};
+
+const normalizeSupplementaryParameters = (
+  source: ProductRow["supplementary_parameters"]
+): SupplementaryParameter[] => {
+  if (!source) {
+    return [];
+  }
+  if (Array.isArray(source)) {
+    return arrayEntriesToParameters(source);
+  }
+  if (typeof source === "object") {
+    return objectEntriesToParameters(source as Record<string, unknown>);
+  }
+  if (typeof source === "string") {
+    try {
+      const parsed = JSON.parse(source) as unknown;
+      if (Array.isArray(parsed)) {
+        return arrayEntriesToParameters(parsed);
+      }
+      if (parsed && typeof parsed === "object") {
+        return objectEntriesToParameters(parsed as Record<string, unknown>);
+      }
+    } catch {
+      // ignore JSON parse errors and try fallback
+    }
+    const fallbackObject = parseKeyValueText(source);
+    if (fallbackObject) {
+      return objectEntriesToParameters(fallbackObject);
+    }
+  }
+  return [];
+};
+
+const normalizeKey = (value: string): string =>
+  value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const CATEGORY_KEY = "herni kategorie";
+
+const isCategoryParameter = (name: string): boolean =>
+  normalizeKey(name) === CATEGORY_KEY;
+
+const splitCategoryValues = (value: string): string[] =>
+  value
+    .split(/[\n,;/]/g)
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0);
+
+const extractCategoryTags = (
+  parameters: SupplementaryParameter[]
+): string[] => {
+  const collected = new Set<string>();
+  parameters.forEach((parameter) => {
+    if (!isCategoryParameter(parameter.name)) {
+      return;
+    }
+    splitCategoryValues(parameter.value).forEach((entry) =>
+      collected.add(entry)
+    );
+  });
+  return Array.from(collected).sort((a, b) => a.localeCompare(b, "cs"));
+};
+
 const updateAvailabilityLabel = (draft: SeriesDraft, row: ProductRow): void => {
   const scrapedAt = toTimestamp(row.scraped_at);
   if (scrapedAt === null) {
@@ -102,6 +285,32 @@ const updateAvailabilityLabel = (draft: SeriesDraft, row: ProductRow): void => {
   ) {
     draft.availabilityLabel = row.availability_label ?? null;
     draft.availabilityRecordedAt = scrapedAt;
+  }
+};
+
+const updateSupplementaryParameters = (
+  draft: SeriesDraft,
+  row: ProductRow
+): void => {
+  const normalized = normalizeSupplementaryParameters(
+    row.supplementary_parameters ?? null
+  );
+  if (normalized.length === 0) {
+    return;
+  }
+  const scrapedAt = toTimestamp(row.scraped_at);
+  if (
+    draft.supplementaryParameters.length === 0 ||
+    (scrapedAt !== null &&
+      (draft.supplementaryRecordedAt === null ||
+        scrapedAt >= draft.supplementaryRecordedAt))
+  ) {
+    draft.supplementaryParameters = normalized;
+    draft.supplementaryRecordedAt = scrapedAt;
+    const categories = extractCategoryTags(normalized);
+    if (categories.length > 0) {
+      draft.categoryTags = categories;
+    }
   }
 };
 
@@ -124,6 +333,9 @@ export const buildProductSeries = (rows: ProductRow[]): ProductSeries[] => {
         availabilityRecordedAt: toTimestamp(row.scraped_at),
         shortDescription: toOptionalText(row.short_description),
         galleryImages: normalizeGalleryArray(row.gallery_image_urls),
+        supplementaryParameters: [],
+        supplementaryRecordedAt: null,
+        categoryTags: [],
         points: [],
       });
     }
@@ -140,12 +352,17 @@ export const buildProductSeries = (rows: ProductRow[]): ProductSeries[] => {
     }
     updateAvailabilityLabel(draft, row);
     mergeGalleryImages(draft, row);
+    updateSupplementaryParameters(draft, row);
     appendPoint(draft, row);
   });
 
   return Array.from(drafts.values())
     .map((draft) => {
-      const { availabilityRecordedAt: _availabilityRecordedAt, ...seriesBase } = draft;
+      const {
+        availabilityRecordedAt: _availabilityRecordedAt,
+        supplementaryRecordedAt: _supplementaryRecordedAt,
+        ...seriesBase
+      } = draft;
       const points = draft.points
         .sort(
           (a, b) =>

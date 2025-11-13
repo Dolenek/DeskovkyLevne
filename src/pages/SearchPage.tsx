@@ -38,6 +38,8 @@ const SearchPage = ({ onProductNavigate }: SearchPageProps) => {
   );
   const [priceFilter, setPriceFilter] = useState({ min: "", max: "" });
   const [pricePage, setPricePage] = useState(1);
+  const [categoryFilters, setCategoryFilters] = useState<string[]>([]);
+  const [categorySearch, setCategorySearch] = useState("");
   const debouncedQuery = useDebouncedValue(searchValue, 400).trim();
 
   const searchLoader = useCallback(() => {
@@ -129,15 +131,32 @@ const SearchPage = ({ onProductNavigate }: SearchPageProps) => {
 
   useEffect(() => {
     setPricePage(1);
-  }, [onlyAvailable]);
+  }, [onlyAvailable, categoryFilters]);
 
   useEffect(() => {
     void ensureCatalogCount(FILTERED_PAGE_SIZE * pricePage);
   }, [ensureCatalogCount, pricePage]);
 
+  const matchesCategoryFilters = useCallback(
+    (series: ProductSeries) => {
+      if (categoryFilters.length === 0) {
+        return true;
+      }
+      return categoryFilters.some((category) =>
+        series.categoryTags.includes(category)
+      );
+    },
+    [categoryFilters]
+  );
+
+  const filteredSearchSeries = useMemo(
+    () => searchSeries.filter(matchesCategoryFilters),
+    [matchesCategoryFilters, searchSeries]
+  );
+
   const visibleSeries = useMemo(
-    () => searchSeries.slice(0, MAX_SEARCH_SERIES),
-    [searchSeries]
+    () => filteredSearchSeries.slice(0, MAX_SEARCH_SERIES),
+    [filteredSearchSeries]
   );
   const displayCount = visibleSeries.length;
 
@@ -153,6 +172,47 @@ const SearchPage = ({ onProductNavigate }: SearchPageProps) => {
       return visibleSeries[0];
     });
   }, [visibleSeries]);
+
+  const categoryOptions = useMemo(() => {
+    const unique = new Set<string>();
+    const collect = (seriesList: ProductSeries[]) => {
+      seriesList.forEach((series) => {
+        series.categoryTags.forEach((category) => unique.add(category));
+      });
+    };
+    collect(allSeries);
+    collect(searchSeries);
+    return Array.from(unique).sort((a, b) => a.localeCompare(b, "cs"));
+  }, [allSeries, searchSeries]);
+
+  const filteredCategoryOptions = useMemo(() => {
+    const query = categorySearch.trim().toLowerCase();
+    if (!query) {
+      return categoryOptions;
+    }
+    return categoryOptions.filter((category) =>
+      category.toLowerCase().includes(query)
+    );
+  }, [categoryOptions, categorySearch]);
+
+  useEffect(() => {
+    setCategoryFilters((current) => {
+      const filtered = current.filter((category) =>
+        categoryOptions.includes(category)
+      );
+      return filtered.length === current.length ? current : filtered;
+    });
+  }, [categoryOptions]);
+
+  const handleCategoryToggle = useCallback((category: string) => {
+    setCategoryFilters((current) => {
+      if (current.includes(category)) {
+        return current.filter((entry) => entry !== category);
+      }
+      return [...current, category];
+    });
+    setPricePage(1);
+  }, []);
 
   return (
     <div className="min-h-screen bg-background text-white">
@@ -170,6 +230,12 @@ const SearchPage = ({ onProductNavigate }: SearchPageProps) => {
                 priceBounds={priceBounds}
                 onPriceFilterChange={handlePriceFilterChange}
                 onSliderChange={handleSliderChange}
+                categoryOptions={filteredCategoryOptions}
+                selectedCategories={categoryFilters}
+                onCategoryToggle={handleCategoryToggle}
+                hasCategoryOptions={categoryOptions.length > 0}
+                categorySearchValue={categorySearch}
+                onCategorySearchChange={setCategorySearch}
                 t={t}
               />
             </div>
@@ -202,6 +268,7 @@ const SearchPage = ({ onProductNavigate }: SearchPageProps) => {
                 t={t}
                 priceRange={priceRange}
                 onlyAvailable={onlyAvailable}
+                categoryFilters={categoryFilters}
                 page={pricePage}
                 onPageChange={setPricePage}
                 onNavigateToSeries={(series) =>

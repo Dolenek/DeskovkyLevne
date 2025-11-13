@@ -30,6 +30,9 @@ export const translations: Record<LocaleKey, TranslationMap> = {
     availabilityFilterOff: "Zobrazit vše",
     filtersTitle: "Filtry",
     filtersAvailability: "Dostupnost",
+    filtersCategoryTitle: "Herní kategorie",
+    filtersCategorySearchPlaceholder: "Hledejte kategorii...",
+    filtersCategoryEmpty: "Žádná kategorie neodpovídá hledání.",
     priceFilterTitle: "Cenový filtr",
     priceFilterMin: "Cena od",
     priceFilterMax: "Cena do",
@@ -56,6 +59,8 @@ export const translations: Record<LocaleKey, TranslationMap> = {
     detailTimelineEmpty: "Pro tento produkt zatím nemáme historii cen.",
     detailNotFoundDescription: "Pro kód {{code}} jsme nenašli žádná data.",
     detailDescriptionTitle: "Popis produktu",
+    detailSupplementaryTitle: "Doplňující parametry",
+    detailSupplementaryEmpty: "Žádné doplňující informace zatím nemáme.",
   },
   en: {
     heroTitle: "Product price trends",
@@ -84,6 +89,9 @@ export const translations: Record<LocaleKey, TranslationMap> = {
     availabilityFilterOff: "Show all products",
     filtersTitle: "Filters",
     filtersAvailability: "Availability",
+    filtersCategoryTitle: "Game categories",
+    filtersCategorySearchPlaceholder: "Search categories...",
+    filtersCategoryEmpty: "No categories match your search.",
     priceFilterTitle: "Cost filter",
     priceFilterMin: "Price from",
     priceFilterMax: "Price to",
@@ -110,6 +118,8 @@ export const translations: Record<LocaleKey, TranslationMap> = {
     detailTimelineEmpty: "No price history yet.",
     detailNotFoundDescription: "No data available for code {{code}}.",
     detailDescriptionTitle: "Product description",
+    detailSupplementaryTitle: "Supplementary details",
+    detailSupplementaryEmpty: "No extra information is available yet.",
   },
 };
 

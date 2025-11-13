@@ -19,7 +19,6 @@ const PriceRangeSlider = ({
     Number.isFinite(bounds.max) && bounds.max > minBound
       ? bounds.max
       : minBound + 100;
-  const range = Math.max(maxBound - minBound, 1);
 
   const activeMin = clamp(
     values.min ?? minBound,
@@ -33,8 +32,8 @@ const PriceRangeSlider = ({
   );
 
   const highlightStyle = {
-    left: `${((activeMin - minBound) / range) * 100}%`,
-    right: `${100 - ((activeMax - minBound) / range) * 100}%`,
+    left: `${((activeMin - minBound) / (maxBound - minBound || 1)) * 100}%`,
+    right: `${100 - ((activeMax - minBound) / (maxBound - minBound || 1)) * 100}%`,
   };
 
   const baseRangeClass =
@@ -84,6 +83,12 @@ export interface FiltersPanelProps {
   priceBounds: { min: number; max: number };
   onPriceFilterChange: (key: "min" | "max", value: string) => void;
   onSliderChange: (key: "min" | "max", value: number) => void;
+  categoryOptions: string[];
+  selectedCategories: string[];
+  onCategoryToggle: (category: string) => void;
+  hasCategoryOptions: boolean;
+  categorySearchValue: string;
+  onCategorySearchChange: (value: string) => void;
   t: TranslationHook["t"];
 }
 
@@ -96,6 +101,12 @@ export const FiltersPanel = ({
   priceBounds,
   onPriceFilterChange,
   onSliderChange,
+  categoryOptions,
+  selectedCategories,
+  onCategoryToggle,
+  hasCategoryOptions,
+  categorySearchValue,
+  onCategorySearchChange,
   t,
 }: FiltersPanelProps) => (
   <aside
@@ -148,5 +159,50 @@ export const FiltersPanel = ({
       </div>
       <p className="text-xs text-slate-500">{t("priceFilterHint")}</p>
     </div>
+    {hasCategoryOptions ? (
+      <div className="mt-6 space-y-3">
+        <p className="text-sm font-semibold uppercase tracking-wide text-slate-400">
+          {t("filtersCategoryTitle")}
+        </p>
+        <div className="rounded-2xl border border-slate-800 bg-black/30 px-3 py-2 shadow-inner shadow-black/40">
+          <input
+            type="text"
+            value={categorySearchValue}
+            onChange={(event) => onCategorySearchChange(event.target.value)}
+            placeholder={t("filtersCategorySearchPlaceholder")}
+            className="w-full bg-transparent text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none"
+          />
+        </div>
+        <div className="custom-scrollbar flex max-h-60 flex-col gap-2 overflow-y-auto pr-1">
+          {categoryOptions.length > 0 ? (
+            categoryOptions.map((category) => {
+              const checked = selectedCategories.includes(category);
+              return (
+                <label
+                  key={category}
+                  className={`flex cursor-pointer items-center gap-3 rounded-2xl border px-3 py-2 text-sm transition ${
+                    checked
+                      ? "border-primary/60 bg-primary/10 text-white"
+                      : "border-slate-800 bg-black/30 text-slate-200 hover:border-primary/60"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => onCategoryToggle(category)}
+                    className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-primary focus:ring-primary"
+                  />
+                  <span className="flex-1">{category}</span>
+                </label>
+              );
+            })
+          ) : (
+            <p className="rounded-2xl border border-dashed border-slate-700 px-3 py-2 text-center text-sm text-slate-500">
+              {t("filtersCategoryEmpty")}
+            </p>
+          )}
+        </div>
+      </div>
+    ) : null}
   </aside>
 );

@@ -22,6 +22,7 @@ export interface FilteredProductsSectionProps {
   t: TranslationHook["t"];
   priceRange: { min: number | null; max: number | null };
   onlyAvailable: boolean;
+  categoryFilters: string[];
   page: number;
   onPageChange: (page: number) => void;
   onNavigateToSeries: (series: ProductSeries) => void;
@@ -41,6 +42,7 @@ export const FilteredProductsSection = ({
   t,
   priceRange,
   onlyAvailable,
+  categoryFilters,
   page,
   onPageChange,
   onNavigateToSeries,
@@ -51,6 +53,14 @@ export const FilteredProductsSection = ({
   const filteredSeries = useMemo(() => {
     return series.filter((entry) => {
       if (onlyAvailable && !isSeriesAvailable(entry)) {
+        return false;
+      }
+      if (
+        categoryFilters.length > 0 &&
+        !categoryFilters.some((category) =>
+          entry.categoryTags.includes(category)
+        )
+      ) {
         return false;
       }
       const price = entry.latestPrice ?? entry.firstPrice ?? null;
@@ -65,7 +75,13 @@ export const FilteredProductsSection = ({
       }
       return true;
     });
-  }, [series, priceRange.min, priceRange.max, onlyAvailable]);
+  }, [
+    categoryFilters,
+    onlyAvailable,
+    priceRange.max,
+    priceRange.min,
+    series,
+  ]);
 
   const rawPageCount = Math.ceil(filteredSeries.length / FILTERED_PAGE_SIZE);
   const pageCount = Math.max(1, rawPageCount);
