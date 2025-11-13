@@ -4,7 +4,7 @@ import { ProductListItem } from "../../components/ProductListItem";
 import type { TranslationHook } from "../../hooks/useTranslation";
 import type { ProductSeries } from "../../types/product";
 
-const PAGE_SIZE = 10;
+export const FILTERED_PAGE_SIZE = 10;
 
 const isSeriesAvailable = (series: ProductSeries): boolean => {
   const label = series.availabilityLabel?.toLowerCase() ?? "";
@@ -14,6 +14,8 @@ const isSeriesAvailable = (series: ProductSeries): boolean => {
 export interface FilteredProductsSectionProps {
   series: ProductSeries[];
   loading: boolean;
+  loadingMore: boolean;
+  hasMore: boolean;
   error: string | null;
   reload: () => void;
   locale: TranslationHook["locale"];
@@ -25,11 +27,14 @@ export interface FilteredProductsSectionProps {
   onNavigateToSeries: (series: ProductSeries) => void;
   selectedSeries: ProductSeries | null;
   onSelectSeries: (series: ProductSeries) => void;
+  onRequestMore: (desiredCount: number) => void;
 }
 
 export const FilteredProductsSection = ({
   series,
   loading,
+  loadingMore,
+  hasMore,
   error,
   reload,
   locale,
@@ -41,6 +46,7 @@ export const FilteredProductsSection = ({
   onNavigateToSeries,
   selectedSeries,
   onSelectSeries,
+  onRequestMore,
 }: FilteredProductsSectionProps) => {
   const filteredSeries = useMemo(() => {
     return series.filter((entry) => {
@@ -61,7 +67,7 @@ export const FilteredProductsSection = ({
     });
   }, [series, priceRange.min, priceRange.max, onlyAvailable]);
 
-  const rawPageCount = Math.ceil(filteredSeries.length / PAGE_SIZE);
+  const rawPageCount = Math.ceil(filteredSeries.length / FILTERED_PAGE_SIZE);
   const pageCount = Math.max(1, rawPageCount);
 
   useEffect(() => {
@@ -70,9 +76,19 @@ export const FilteredProductsSection = ({
     }
   }, [page, pageCount, onPageChange]);
 
+  useEffect(() => {
+    if (loadingMore) {
+      return;
+    }
+    const required = page * FILTERED_PAGE_SIZE;
+    if (filteredSeries.length < required && hasMore) {
+      onRequestMore(required + FILTERED_PAGE_SIZE);
+    }
+  }, [filteredSeries.length, hasMore, loadingMore, onRequestMore, page]);
+
   const pagedSeries = useMemo(() => {
-    const start = (page - 1) * PAGE_SIZE;
-    return filteredSeries.slice(start, start + PAGE_SIZE);
+    const start = (page - 1) * FILTERED_PAGE_SIZE;
+    return filteredSeries.slice(start, start + FILTERED_PAGE_SIZE);
   }, [filteredSeries, page]);
 
   if (loading) {
@@ -90,15 +106,19 @@ export const FilteredProductsSection = ({
   }
 
   if (filteredSeries.length === 0) {
-    return <EmptyState message={t("filteredResultsEmpty")} />;
+    return hasMore ? (
+      <LoadingState message={t("loading")} />
+    ) : (
+      <EmptyState message={t("filteredResultsEmpty")} />
+    );
   }
 
   const minLabel =
     priceRange.min !== null ? priceRange.min.toString() : t("priceFilterAny");
   const maxLabel =
     priceRange.max !== null ? priceRange.max.toString() : t("priceFilterAny");
-  const showingFrom = (page - 1) * PAGE_SIZE + 1;
-  const showingTo = Math.min(page * PAGE_SIZE, filteredSeries.length);
+  const showingFrom = (page - 1) * FILTERED_PAGE_SIZE + 1;
+  const showingTo = Math.min(page * FILTERED_PAGE_SIZE, filteredSeries.length);
 
   return (
     <section className="flex flex-col gap-4">
@@ -122,7 +142,7 @@ export const FilteredProductsSection = ({
           />
         ))}
       </div>
-      {filteredSeries.length > PAGE_SIZE ? (
+      {filteredSeries.length > FILTERED_PAGE_SIZE ? (
         <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-slate-400">
             {t("filteredPaginationLabel", {
@@ -153,6 +173,9 @@ export const FilteredProductsSection = ({
             </button>
           </div>
         </div>
+      ) : null}
+      {loadingMore ? (
+        <p className="text-sm text-slate-400">{t("loading")}</p>
       ) : null}
     </section>
   );

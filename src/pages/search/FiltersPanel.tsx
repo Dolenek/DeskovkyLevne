@@ -76,6 +76,7 @@ const PriceRangeSlider = ({
 };
 
 export interface FiltersPanelProps {
+  className?: string;
   onlyAvailable: boolean;
   onToggleAvailable: () => void;
   priceFilter: { min: string; max: string };
@@ -87,6 +88,7 @@ export interface FiltersPanelProps {
 }
 
 export const FiltersPanel = ({
+  className = "",
   onlyAvailable,
   onToggleAvailable,
   priceFilter,
@@ -96,7 +98,9 @@ export const FiltersPanel = ({
   onSliderChange,
   t,
 }: FiltersPanelProps) => (
-  <aside className="rounded-3xl border border-slate-800 bg-surface/60 p-6 shadow-lg shadow-black/30">
+  <aside
+    className={`rounded-3xl border border-slate-800 bg-surface/60 p-6 shadow-lg shadow-black/30 ${className}`}
+  >
     <h2 className="text-xl font-semibold text-white">{t("filtersTitle")}</h2>
     <div className="mt-6 space-y-3">
       <p className="text-sm font-semibold uppercase tracking-wide text-slate-400">

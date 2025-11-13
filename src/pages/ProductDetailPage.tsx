@@ -1,56 +1,30 @@
-import { useEffect, useMemo, useState } from "react";
-import { LocaleSwitcher } from "../components/LocaleSwitcher";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   EmptyState,
   ErrorState,
   LoadingState,
 } from "../components/AsyncStates";
 import { ProductChart } from "../components/ProductChart";
+import { AppHeader } from "../components/AppHeader";
+import { ProductSearchOverlay } from "../components/ProductSearchOverlay";
+import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useTranslation } from "../hooks/useTranslation";
 import { useProductDetail } from "../hooks/useProductDetail";
+import { useProductPricing } from "../hooks/useProductPricing";
 import type { ProductSeries } from "../types/product";
 import { formatPrice } from "../utils/numberFormat";
 import { formatDateLabel } from "../utils/date";
+import { searchSnapshotsByName } from "../services/productService";
 
 type Translator = ReturnType<typeof useTranslation>["t"];
 
 interface ProductDetailPageProps {
   productCode: string;
-  onBack: () => void;
+  onNavigateToProduct: (productCode: string) => void;
   onNavigateHome: () => void;
 }
 
-const DetailHeader = ({
-  onBack,
-  onNavigateHome,
-  backLabel,
-}: {
-  onBack: () => void;
-  onNavigateHome: () => void;
-  backLabel: string;
-}) => (
-  <header className="sticky top-0 z-40 border-b border-slate-900 bg-black/95 shadow-lg shadow-black/60">
-    <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-4 text-white sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex items-center gap-4">
-        <button
-          type="button"
-          onClick={onBack}
-          className="rounded-full border border-slate-800 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-primary hover:text-white"
-        >
-          {backLabel}
-        </button>
-        <button
-          type="button"
-          onClick={onNavigateHome}
-          className="text-xl font-bold uppercase tracking-[0.3em]"
-        >
-          Tlama Prices
-        </button>
-      </div>
-      <LocaleSwitcher />
-    </div>
-  </header>
-);
+const INLINE_SEARCH_LIMIT = 6;
 
 const toLargeImageUrl = (url: string): string => {
   if (!url) {
@@ -349,18 +323,70 @@ const HistorySection = ({
 
 export const ProductDetailPage = ({
   productCode,
-  onBack,
+  onNavigateToProduct,
   onNavigateHome,
 }: ProductDetailPageProps) => {
   const { t, locale } = useTranslation();
   const { product, loading, error, reload } = useProductDetail(productCode);
+  const [searchValue, setSearchValue] = useState("");
+  const [searchActive, setSearchActive] = useState(false);
+  const debouncedQuery = useDebouncedValue(searchValue, 400).trim();
+
+  const searchLoader = useCallback(() => {
+    if (debouncedQuery.length < 2) {
+      return Promise.resolve([]);
+    }
+    return searchSnapshotsByName(debouncedQuery);
+  }, [debouncedQuery]);
+
+  const {
+    series: searchSeries,
+    loading: searchLoading,
+    error: searchError,
+    reload: reloadSearch,
+  } = useProductPricing(searchLoader);
+
+  useEffect(() => {
+    setSearchActive(false);
+  }, [productCode]);
+
+  const overlayResults = useMemo(
+    () => searchSeries.slice(0, INLINE_SEARCH_LIMIT),
+    [searchSeries]
+  );
+  const overlayVisible = searchActive && debouncedQuery.length >= 2;
 
   return (
     <div className="min-h-screen bg-background text-white">
-      <DetailHeader
-        onBack={onBack}
-        onNavigateHome={onNavigateHome}
-        backLabel={t("detailBackToSearch")}
+      <AppHeader
+        searchValue={searchValue}
+        onSearchChange={(value) => {
+          setSearchValue(value);
+          if (!value.trim()) {
+            setSearchActive(false);
+          }
+        }}
+        onSearchFocus={() => setSearchActive(true)}
+        onLogoClick={() => {
+          setSearchActive(false);
+          onNavigateHome();
+        }}
+        t={t}
+      />
+      <ProductSearchOverlay
+        visible={overlayVisible}
+        loading={searchLoading}
+        error={searchError}
+        results={overlayResults}
+        query={debouncedQuery}
+        locale={locale}
+        t={t}
+        onRetry={reloadSearch}
+        onSelect={(series) => {
+          setSearchActive(false);
+          onNavigateToProduct(series.productCode);
+        }}
+        onClose={() => setSearchActive(false)}
       />
       <main className="px-4 py-10 sm:px-6 lg:px-10">
         <div className="mx-auto flex max-w-6xl flex-col gap-8">

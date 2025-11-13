@@ -92,3 +92,20 @@ export const searchSnapshotsByName = async (
     query.order("scraped_at", { ascending: true }).limit(limit)
   );
 };
+
+export const fetchProductRowsChunk = async (
+  from: number,
+  size: number
+): Promise<ProductRow[]> => {
+  if (size <= 0) {
+    return [];
+  }
+  const start = Math.max(0, from);
+  const end = start + size - 1;
+  return runQuery(
+    buildBaseQuery()
+      .order("scraped_at", { ascending: false })
+      .order("product_code", { ascending: true })
+      .range(start, end)
+  );
+};

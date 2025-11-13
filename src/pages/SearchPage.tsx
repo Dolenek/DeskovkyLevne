@@ -1,13 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { LocaleSwitcher } from "../components/LocaleSwitcher";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useProductPricing } from "../hooks/useProductPricing";
-import { useTranslation, type TranslationHook } from "../hooks/useTranslation";
+import { useChunkedProductCatalog } from "../hooks/useChunkedProductCatalog";
+import { useTranslation } from "../hooks/useTranslation";
 import { searchSnapshotsByName } from "../services/productService";
 import type { ProductSeries } from "../types/product";
 import { FiltersPanel } from "./search/FiltersPanel";
 import { SearchResultsSection } from "./search/SearchResultsSection";
-import { FilteredProductsSection } from "./search/FilteredProductsSection";
+import {
+  FilteredProductsSection,
+  FILTERED_PAGE_SIZE,
+} from "./search/FilteredProductsSection";
+import { AppHeader } from "../components/AppHeader";
 
 interface SearchPageProps {
   onProductNavigate: (productCode: string) => void;
@@ -24,37 +28,6 @@ const parsePriceInput = (value: string): number | null => {
   const numeric = Number(value);
   return Number.isFinite(numeric) ? numeric : null;
 };
-
-const Header = ({
-  searchValue,
-  onSearchChange,
-  t,
-}: {
-  searchValue: string;
-  onSearchChange: (value: string) => void;
-  t: TranslationHook["t"];
-}) => (
-  <header className="sticky top-0 z-50 w-full border-b border-slate-900 bg-black/95 shadow-lg shadow-black/60">
-    <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-4 text-white sm:flex-row sm:items-center sm:gap-8">
-      <div className="text-xl font-bold uppercase tracking-[0.3em]">
-        Tlama Prices
-      </div>
-      <div className="flex-1">
-        <div className="mx-auto flex max-w-xl justify-center">
-          <input
-            value={searchValue}
-            onChange={(event) => onSearchChange(event.target.value)}
-            placeholder={t("searchPlaceholder")}
-            className="w-full rounded-full border border-slate-700 bg-black/40 px-4 py-3 text-center text-base font-semibold text-white outline-none transition focus:border-primary focus:shadow-[0_0_0_2px_rgba(76,144,255,0.4)]"
-          />
-        </div>
-      </div>
-      <div className="flex justify-end">
-        <LocaleSwitcher />
-      </div>
-    </div>
-  </header>
-);
 
 const SearchPage = ({ onProductNavigate }: SearchPageProps) => {
   const { t, locale } = useTranslation();
@@ -85,8 +58,11 @@ const SearchPage = ({ onProductNavigate }: SearchPageProps) => {
     series: allSeries,
     loading: filteredLoading,
     error: filteredError,
+    ensureCount: ensureCatalogCount,
+    hasMore: catalogHasMore,
+    loadingMore: catalogLoadingMore,
     reload: reloadFiltered,
-  } = useProductPricing();
+  } = useChunkedProductCatalog();
 
   const priceRange = useMemo(
     () => ({
@@ -155,6 +131,10 @@ const SearchPage = ({ onProductNavigate }: SearchPageProps) => {
     setPricePage(1);
   }, [onlyAvailable]);
 
+  useEffect(() => {
+    void ensureCatalogCount(FILTERED_PAGE_SIZE * pricePage);
+  }, [ensureCatalogCount, pricePage]);
+
   const visibleSeries = useMemo(
     () => searchSeries.slice(0, MAX_SEARCH_SERIES),
     [searchSeries]
@@ -176,24 +156,23 @@ const SearchPage = ({ onProductNavigate }: SearchPageProps) => {
 
   return (
     <div className="min-h-screen bg-background text-white">
-      <Header
-        searchValue={searchValue}
-        onSearchChange={setSearchValue}
-        t={t}
-      />
+      <AppHeader searchValue={searchValue} onSearchChange={setSearchValue} t={t} />
       <main className="px-4 py-10 sm:px-6 lg:px-10">
         <div className="mx-auto flex max-w-6xl flex-col gap-8">
           <div className="grid gap-8 lg:grid-cols-[260px_minmax(0,1fr)]">
-            <FiltersPanel
-              onlyAvailable={onlyAvailable}
-              onToggleAvailable={() => setOnlyAvailable((prev) => !prev)}
-              priceFilter={priceFilter}
-              priceRangeValues={priceRange}
-              priceBounds={priceBounds}
-              onPriceFilterChange={handlePriceFilterChange}
-              onSliderChange={handleSliderChange}
-              t={t}
-            />
+            <div className="lg:sticky lg:top-28 lg:h-[calc(100vh-7rem)] lg:self-start">
+              <FiltersPanel
+                className="lg:flex lg:h-full lg:flex-col lg:overflow-y-auto"
+                onlyAvailable={onlyAvailable}
+                onToggleAvailable={() => setOnlyAvailable((prev) => !prev)}
+                priceFilter={priceFilter}
+                priceRangeValues={priceRange}
+                priceBounds={priceBounds}
+                onPriceFilterChange={handlePriceFilterChange}
+                onSliderChange={handleSliderChange}
+                t={t}
+              />
+            </div>
             <div className="flex flex-col gap-8">
               <SearchResultsSection
                 query={debouncedQuery}
@@ -215,6 +194,8 @@ const SearchPage = ({ onProductNavigate }: SearchPageProps) => {
               <FilteredProductsSection
                 series={allSeries}
                 loading={filteredLoading}
+                loadingMore={catalogLoadingMore}
+                hasMore={catalogHasMore}
                 error={filteredError}
                 reload={reloadFiltered}
                 locale={locale}
@@ -228,6 +209,9 @@ const SearchPage = ({ onProductNavigate }: SearchPageProps) => {
                 }
                 selectedSeries={selectedSeries}
                 onSelectSeries={setSelectedSeries}
+                onRequestMore={(count) => {
+                  void ensureCatalogCount(count);
+                }}
               />
             </div>
           </div>

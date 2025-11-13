@@ -9,7 +9,7 @@ const buildDetailPath = (code: string) =>
   `/deskove-hry/${encodeURIComponent(code)}`;
 
 const App = () => {
-  const { path, navigate, goBack } = usePathNavigation();
+  const { path, navigate } = usePathNavigation();
 
   const productCode = useMemo(() => {
     const match = path.match(DETAIL_ROUTE);
@@ -20,7 +20,7 @@ const App = () => {
     return (
       <ProductDetailPage
         productCode={productCode}
-        onBack={goBack}
+        onNavigateToProduct={(code) => navigate(buildDetailPath(code))}
         onNavigateHome={() => navigate("/")}
       />
     );
