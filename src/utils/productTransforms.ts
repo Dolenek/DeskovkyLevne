@@ -9,12 +9,30 @@ interface SeriesDraft {
   listPrice: number | null;
   heroImage?: string | null;
   availabilityLabel?: string | null;
+  availabilityRecordedAt: number | null;
+  shortDescription?: string | null;
   galleryImages?: string[];
   points: ProductSeries["points"];
 }
 
+const toTimestamp = (value: string | null | undefined): number | null => {
+  if (!value) {
+    return null;
+  }
+  const parsed = Date.parse(value);
+  return Number.isNaN(parsed) ? null : parsed;
+};
+
 const toSeriesLabel = (row: ProductRow): string =>
   row.product_name?.trim() || row.product_code;
+
+const toOptionalText = (value: string | null | undefined): string | null => {
+  if (!value) {
+    return null;
+  }
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
 
 const toNumericPrice = (price: unknown): number | null => {
   const numeric = typeof price === "number" ? price : Number(price);
@@ -62,10 +80,7 @@ const normalizeGalleryArray = (
   return [];
 };
 
-const mergeGalleryImages = (
-  draft: SeriesDraft,
-  row: ProductRow
-): void => {
+const mergeGalleryImages = (draft: SeriesDraft, row: ProductRow): void => {
   const incoming = normalizeGalleryArray(row.gallery_image_urls);
   if (incoming.length === 0) {
     return;
@@ -74,6 +89,20 @@ const mergeGalleryImages = (
   const merged = new Set(existing);
   incoming.forEach((url) => merged.add(url));
   draft.galleryImages = Array.from(merged);
+};
+
+const updateAvailabilityLabel = (draft: SeriesDraft, row: ProductRow): void => {
+  const scrapedAt = toTimestamp(row.scraped_at);
+  if (scrapedAt === null) {
+    return;
+  }
+  if (
+    draft.availabilityRecordedAt === null ||
+    scrapedAt >= draft.availabilityRecordedAt
+  ) {
+    draft.availabilityLabel = row.availability_label ?? null;
+    draft.availabilityRecordedAt = scrapedAt;
+  }
 };
 
 export const buildProductSeries = (rows: ProductRow[]): ProductSeries[] => {
@@ -92,6 +121,8 @@ export const buildProductSeries = (rows: ProductRow[]): ProductSeries[] => {
         listPrice: toNumericPrice(row.list_price_with_vat),
         heroImage: row.hero_image_url ?? null,
         availabilityLabel: row.availability_label ?? null,
+        availabilityRecordedAt: toTimestamp(row.scraped_at),
+        shortDescription: toOptionalText(row.short_description),
         galleryImages: normalizeGalleryArray(row.gallery_image_urls),
         points: [],
       });
@@ -104,15 +135,17 @@ export const buildProductSeries = (rows: ProductRow[]): ProductSeries[] => {
     if (!draft.heroImage && row.hero_image_url) {
       draft.heroImage = row.hero_image_url;
     }
-    if (!draft.availabilityLabel && row.availability_label) {
-      draft.availabilityLabel = row.availability_label;
+    if (!draft.shortDescription && row.short_description) {
+      draft.shortDescription = toOptionalText(row.short_description);
     }
+    updateAvailabilityLabel(draft, row);
     mergeGalleryImages(draft, row);
     appendPoint(draft, row);
   });
 
   return Array.from(drafts.values())
     .map((draft) => {
+      const { availabilityRecordedAt: _availabilityRecordedAt, ...seriesBase } = draft;
       const points = draft.points
         .sort(
           (a, b) =>
@@ -129,7 +162,7 @@ export const buildProductSeries = (rows: ProductRow[]): ProductSeries[] => {
       const latestScrapedAt = points[points.length - 1]?.rawDate ?? null;
 
       return {
-        ...draft,
+        ...seriesBase,
         points,
         firstPrice,
         latestPrice,

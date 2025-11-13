@@ -67,12 +67,19 @@ const OverlayResultsList = ({
               <p className="text-sm text-slate-400">{series.productCode}</p>
             </div>
           </div>
-          <div className="text-right text-lg font-semibold text-accent">
-            {formatPrice(
-              series.latestPrice,
-              series.currency ?? undefined,
-              locale
-            ) ?? "--"}
+          <div className="flex items-center gap-3 text-right">
+            {series.availabilityLabel ? (
+              <span className="inline-flex rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-200">
+                {series.availabilityLabel}
+              </span>
+            ) : null}
+            <span className="text-lg font-semibold text-accent">
+              {formatPrice(
+                series.latestPrice,
+                series.currency ?? undefined,
+                locale
+              ) ?? "--"}
+            </span>
           </div>
         </button>
       </li>

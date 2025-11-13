@@ -55,6 +55,7 @@ export const translations: Record<LocaleKey, TranslationMap> = {
     detailHistorySubtitle: "Počet záznamů: {{count}}",
     detailTimelineEmpty: "Pro tento produkt zatím nemáme historii cen.",
     detailNotFoundDescription: "Pro kód {{code}} jsme nenašli žádná data.",
+    detailDescriptionTitle: "Popis produktu",
   },
   en: {
     heroTitle: "Product price trends",
@@ -108,6 +109,7 @@ export const translations: Record<LocaleKey, TranslationMap> = {
     detailHistorySubtitle: "{{count}} recorded snapshots",
     detailTimelineEmpty: "No price history yet.",
     detailNotFoundDescription: "No data available for code {{code}}.",
+    detailDescriptionTitle: "Product description",
   },
 };
 

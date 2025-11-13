@@ -12,7 +12,7 @@ const FILTER_CODES = import.meta.env.VITE_SUPABASE_FILTER_CODES
   : [];
 
 const SELECT_COLUMNS =
-  "id, product_code, product_name, price_with_vat, list_price_with_vat, currency_code, source_url, scraped_at, availability_label, hero_image_url, gallery_image_urls";
+  "id, product_code, product_name, price_with_vat, list_price_with_vat, currency_code, source_url, scraped_at, availability_label, hero_image_url, gallery_image_urls, short_description";
 
 const SEARCH_LIMIT = Number(
   import.meta.env.VITE_SUPABASE_SEARCH_LIMIT ?? "2000"

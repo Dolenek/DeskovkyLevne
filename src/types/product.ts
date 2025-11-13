@@ -9,6 +9,7 @@ export interface ProductRow {
   availability_label: string | null;
   hero_image_url: string | null;
   gallery_image_urls?: string[] | string | null;
+  short_description: string | null;
   scraped_at: string;
 }
 
@@ -25,6 +26,7 @@ export interface ProductSeries {
   listPrice: number | null;
   heroImage?: string | null;
   availabilityLabel?: string | null;
+  shortDescription?: string | null;
   galleryImages?: string[];
   points: ProductPoint[];
   latestPrice: number | null;

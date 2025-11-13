@@ -17,5 +17,9 @@
 - Layout hlavni stranky presunut do pages/SearchPage.tsx, doplnen lehky router (usePathNavigation + App.tsx) pro URL / a /deskove-hry/:code.
 - Karty ve vysledcich jsou skutecne odkazy na kod produktu; hover/slash focus stale aktualizuje pravou cast, klik prechazi na detail.
 - Hook useProductDetail + dotaz fetchProductSnapshotsByCode obstarava data pro jeden produkt. ProductDetailPage ma hero s obrazkem, dostupnost, CTA do obchodu, souhrn cen, graf a tabulku poslednich zaznamu, nove texty jsou v translations. Pokud Supabase vrati gallery_image_urls, detail ukaze galeriovy slider (velky nahled + klikatelne nahledy) s fallbackem na hlavni hero obrazek.
+- Zpracovani availability_label v productTransforms ted preferuje nejcerstvejsi scrape, aby se na detailu i ve zbytku UI ukazoval skutecny aktualni stav skladu.
+- Overlay rychleho vyhledavani na detailu produktu vypisuje dostupnost hned vlevo od ceny, takze je na prvni pohled jasne, zda je produkt skladem nez uzivatel klikne na detail.
+- Galerie na detailu ma zmensenou vysku, obrazek je posazeny vys a nahledy sedi hned pod hlavnim snimkem; hlavni slider je horizontalne posuvny (snap + scroll) pro rychle listovani vice snimky.
+- Popisek produktu (short_description) se zobrazuje primo pod nazvem v pravem panelu, ktery ma max-height=100vh a ceny jsou zarovnane ke spodku, aby CTA byla vzdy ve stejnem miste.
 - Build overen (npm run build), varovani o velikosti bundlu zatim ponechano.
 - Odstranen postranni panel "Detail produktu" na vyhledavaci strance, protoze kompletni detail zije na dedikovanem route.
