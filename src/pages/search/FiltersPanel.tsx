@@ -1,4 +1,5 @@
 import type { TranslationHook } from "../../hooks/useTranslation";
+import type { AvailabilityFilter } from "../../types/filters";
 
 interface PriceRangeSliderProps {
   bounds: { min: number; max: number };
@@ -76,8 +77,8 @@ const PriceRangeSlider = ({
 
 export interface FiltersPanelProps {
   className?: string;
-  onlyAvailable: boolean;
-  onToggleAvailable: () => void;
+  availabilityFilter: AvailabilityFilter;
+  onAvailabilityChange: (filter: AvailabilityFilter) => void;
   priceFilter: { min: string; max: string };
   priceRangeValues: { min: number | null; max: number | null };
   priceBounds: { min: number; max: number };
@@ -94,8 +95,8 @@ export interface FiltersPanelProps {
 
 export const FiltersPanel = ({
   className = "",
-  onlyAvailable,
-  onToggleAvailable,
+  availabilityFilter,
+  onAvailabilityChange,
   priceFilter,
   priceRangeValues,
   priceBounds,
@@ -117,17 +118,29 @@ export const FiltersPanel = ({
       <p className="text-sm font-semibold uppercase tracking-wide text-slate-400">
         {t("filtersAvailability")}
       </p>
-      <button
-        type="button"
-        onClick={onToggleAvailable}
-        className={`w-full rounded-2xl border px-4 py-3 text-sm font-semibold transition ${
-          onlyAvailable
-            ? "border-emerald-400/60 bg-emerald-500/10 text-emerald-200"
-            : "border-slate-700 text-slate-300 hover:border-primary hover:text-white"
-        }`}
-      >
-        {onlyAvailable ? t("availabilityFilterOn") : t("availabilityFilterOff")}
-      </button>
+      <div className="flex flex-col gap-2">
+        {[
+          { value: "available" as AvailabilityFilter, label: t("availabilityFilterOn") },
+          { value: "preorder" as AvailabilityFilter, label: t("availabilityFilterPreorder") },
+          { value: "all" as AvailabilityFilter, label: t("availabilityFilterOff") },
+        ].map(({ value, label }) => {
+          const active = availabilityFilter === value;
+          return (
+            <button
+              type="button"
+              key={value}
+              onClick={() => onAvailabilityChange(value)}
+              className={`w-full rounded-2xl border px-4 py-3 text-sm font-semibold transition ${
+                active
+                  ? "border-emerald-400/60 bg-emerald-500/10 text-emerald-200"
+                  : "border-slate-700 text-slate-300 hover:border-primary hover:text-white"
+              }`}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
     </div>
     <div className="mt-6 space-y-3">
       <p className="text-sm font-semibold uppercase tracking-wide text-slate-400">

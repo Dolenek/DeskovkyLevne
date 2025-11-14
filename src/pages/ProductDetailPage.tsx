@@ -204,7 +204,7 @@ export const ProductDetailPage = ({
       <main className="px-4 pt-6 pb-10 sm:px-6 lg:px-10 lg:pt-8">
         <div className="mx-auto flex max-w-6xl flex-col gap-8">
           {loading ? (
-            <LoadingState message={t("loading")} />
+            <LoadingState />
           ) : error ? (
             <ErrorState message={error} retryLabel={t("retry")} onRetry={reload} />
           ) : product ? (

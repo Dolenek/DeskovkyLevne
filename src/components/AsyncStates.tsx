@@ -1,6 +1,7 @@
-export const LoadingState = ({ message }: { message: string }) => (
-  <div className="rounded-3xl border border-dashed border-slate-700 bg-slate-900/40 p-10 text-center text-slate-300">
-    {message}
+export const LoadingState = ({ message }: { message?: string }) => (
+  <div className="flex flex-col items-center gap-4 rounded-3xl border border-dashed border-slate-700 bg-slate-900/40 p-10 text-center text-slate-300">
+    <div className="h-10 w-10 animate-spin rounded-full border-2 border-slate-600 border-t-primary" />
+    {message ? <p className="text-sm text-slate-400">{message}</p> : null}
   </div>
 );
 

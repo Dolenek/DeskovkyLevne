@@ -1,4 +1,5 @@
 import type {
+  ProductCatalogIndexRow,
   ProductRow,
   ProductSeries,
   SupplementaryParameter,
@@ -389,4 +390,59 @@ export const buildProductSeries = (rows: ProductRow[]): ProductSeries[] => {
     })
     .filter((series) => series.points.length > 0)
     .sort((a, b) => a.label.localeCompare(b.label, "cs"));
+};
+
+const toPointArray = (
+  pricePoints: ProductCatalogIndexRow["price_points"]
+): ProductSeries["points"] => {
+  if (!Array.isArray(pricePoints)) {
+    return [];
+  }
+  return pricePoints
+    .map((entry) => {
+      if (
+        !entry ||
+        typeof entry !== "object" ||
+        typeof (entry as Record<string, unknown>).rawDate !== "string"
+      ) {
+        return null;
+      }
+      const rawDate = (entry as Record<string, unknown>).rawDate as string;
+      const priceValue = (entry as Record<string, unknown>).price;
+      const price = toNumericPrice(priceValue);
+      if (!rawDate || price === null) {
+        return null;
+      }
+      return { rawDate, price };
+    })
+    .filter((point): point is ProductSeries["points"][number] => Boolean(point));
+};
+
+export const buildSeriesFromCatalogIndexRow = (
+  row: ProductCatalogIndexRow
+): ProductSeries => {
+  const normalizedSupplementary = normalizeSupplementaryParameters(
+    row.supplementary_parameters ?? null
+  );
+  const categoryTags = extractCategoryTags(normalizedSupplementary);
+  const points = toPointArray(row.price_points);
+
+  return {
+    productCode: row.product_code,
+    label: row.product_name,
+    currency: row.currency_code ?? null,
+    url: row.source_url ?? null,
+    listPrice: toNumericPrice(row.list_price_with_vat),
+    heroImage: row.hero_image_url ?? null,
+    availabilityLabel: row.availability_label ?? null,
+    shortDescription: toOptionalText(row.short_description),
+    galleryImages: normalizeGalleryArray(row.gallery_image_urls),
+    supplementaryParameters: normalizedSupplementary,
+    categoryTags,
+    points,
+    latestPrice: toNumericPrice(row.latest_price),
+    firstPrice: toNumericPrice(row.first_price),
+    previousPrice: toNumericPrice(row.previous_price),
+    latestScrapedAt: row.latest_scraped_at ?? null,
+  };
 };

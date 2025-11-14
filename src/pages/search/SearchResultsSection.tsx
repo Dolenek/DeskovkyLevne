@@ -2,6 +2,7 @@ import { EmptyState, ErrorState, LoadingState } from "../../components/AsyncStat
 import { ProductListItem } from "../../components/ProductListItem";
 import type { TranslationHook } from "../../hooks/useTranslation";
 import type { ProductSeries } from "../../types/product";
+import type { AvailabilityFilter } from "../../types/filters";
 
 export interface SearchResultsSectionProps {
   query: string;
@@ -10,7 +11,7 @@ export interface SearchResultsSectionProps {
   series: ProductSeries[];
   displayCount: number;
   maxCount: number;
-  onlyAvailable: boolean;
+  availabilityFilter: AvailabilityFilter;
   selectedSeries: ProductSeries | null;
   onSelectSeries: (series: ProductSeries) => void;
   locale: TranslationHook["locale"];
@@ -26,7 +27,7 @@ export const SearchResultsSection = ({
   series,
   displayCount,
   maxCount,
-  onlyAvailable,
+  availabilityFilter,
   selectedSeries,
   onSelectSeries,
   locale,
@@ -39,7 +40,7 @@ export const SearchResultsSection = ({
   }
 
   if (loading) {
-    return <LoadingState message={t("loading")} />;
+    return <LoadingState />;
   }
 
   if (error) {
@@ -56,6 +57,13 @@ export const SearchResultsSection = ({
     return <EmptyState message={t("searchNoResults", { term: query })} />;
   }
 
+  const filterLabel =
+    availabilityFilter === "available"
+      ? t("availabilityFilterOn")
+      : availabilityFilter === "preorder"
+        ? t("availabilityFilterPreorder")
+        : null;
+
   return (
     <section className="flex flex-col gap-4">
       <div>
@@ -65,9 +73,9 @@ export const SearchResultsSection = ({
         <p className="text-sm text-slate-400">
           {displayCount} / {maxCount}
         </p>
-        {onlyAvailable ? (
+        {filterLabel ? (
           <p className="mt-1 inline-flex items-center rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-200">
-            {t("availabilityFilterOn")}
+            {filterLabel}
           </p>
         ) : null}
       </div>

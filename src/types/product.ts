@@ -14,6 +14,26 @@ export interface ProductRow {
   supplementary_parameters?: Record<string, unknown> | unknown[] | string | null;
 }
 
+export interface ProductCatalogIndexRow {
+  product_code: string;
+  product_name: string;
+  currency_code: string | null;
+  availability_label: string | null;
+  stock_status_label: string | null;
+  latest_price: number | null;
+  previous_price: number | null;
+  first_price: number | null;
+  list_price_with_vat: number | null;
+  source_url: string | null;
+  latest_scraped_at: string | null;
+  hero_image_url: string | null;
+  gallery_image_urls?: string[] | string | null;
+  short_description: string | null;
+  supplementary_parameters?: Record<string, unknown> | unknown[] | string | null;
+  metadata?: Record<string, unknown> | null;
+  price_points?: Array<Record<string, unknown>> | null;
+}
+
 export interface ProductPoint {
   rawDate: string;
   price: number;

@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { EmptyState, ErrorState, LoadingState } from "../../components/AsyncStates";
 import { ProductListItem } from "../../components/ProductListItem";
 import type { TranslationHook } from "../../hooks/useTranslation";
@@ -6,109 +6,42 @@ import type { ProductSeries } from "../../types/product";
 
 export const FILTERED_PAGE_SIZE = 10;
 
-const isSeriesAvailable = (series: ProductSeries): boolean => {
-  const label = series.availabilityLabel?.toLowerCase() ?? "";
-  return label.includes("sklad");
-};
-
 export interface FilteredProductsSectionProps {
   series: ProductSeries[];
+  total: number;
   loading: boolean;
-  loadingMore: boolean;
-  hasMore: boolean;
   error: string | null;
   reload: () => void;
   locale: TranslationHook["locale"];
   t: TranslationHook["t"];
   priceRange: { min: number | null; max: number | null };
-  onlyAvailable: boolean;
-  categoryFilters: string[];
   page: number;
   onPageChange: (page: number) => void;
   onNavigateToSeries: (series: ProductSeries) => void;
   selectedSeries: ProductSeries | null;
   onSelectSeries: (series: ProductSeries) => void;
-  onRequestMore: (desiredCount: number) => void;
 }
 
 export const FilteredProductsSection = ({
   series,
+  total,
   loading,
-  loadingMore,
-  hasMore,
   error,
   reload,
   locale,
   t,
   priceRange,
-  onlyAvailable,
-  categoryFilters,
   page,
   onPageChange,
   onNavigateToSeries,
   selectedSeries,
   onSelectSeries,
-  onRequestMore,
 }: FilteredProductsSectionProps) => {
-  const filteredSeries = useMemo(() => {
-    return series.filter((entry) => {
-      if (onlyAvailable && !isSeriesAvailable(entry)) {
-        return false;
-      }
-      if (
-        categoryFilters.length > 0 &&
-        !categoryFilters.some((category) =>
-          entry.categoryTags.includes(category)
-        )
-      ) {
-        return false;
-      }
-      const price = entry.latestPrice ?? entry.firstPrice ?? null;
-      if (price === null) {
-        return false;
-      }
-      if (priceRange.min !== null && price < priceRange.min) {
-        return false;
-      }
-      if (priceRange.max !== null && price > priceRange.max) {
-        return false;
-      }
-      return true;
-    });
-  }, [
-    categoryFilters,
-    onlyAvailable,
-    priceRange.max,
-    priceRange.min,
-    series,
-  ]);
-
-  const rawPageCount = Math.ceil(filteredSeries.length / FILTERED_PAGE_SIZE);
+  const rawPageCount = Math.ceil(total / FILTERED_PAGE_SIZE);
   const pageCount = Math.max(1, rawPageCount);
 
-  useEffect(() => {
-    if (page > pageCount) {
-      onPageChange(pageCount);
-    }
-  }, [page, pageCount, onPageChange]);
-
-  useEffect(() => {
-    if (loadingMore) {
-      return;
-    }
-    const required = page * FILTERED_PAGE_SIZE;
-    if (filteredSeries.length < required && hasMore) {
-      onRequestMore(required + FILTERED_PAGE_SIZE);
-    }
-  }, [filteredSeries.length, hasMore, loadingMore, onRequestMore, page]);
-
-  const pagedSeries = useMemo(() => {
-    const start = (page - 1) * FILTERED_PAGE_SIZE;
-    return filteredSeries.slice(start, start + FILTERED_PAGE_SIZE);
-  }, [filteredSeries, page]);
-
   if (loading) {
-    return <LoadingState message={t("loading")} />;
+    return <LoadingState />;
   }
 
   if (error) {
@@ -121,12 +54,8 @@ export const FilteredProductsSection = ({
     );
   }
 
-  if (filteredSeries.length === 0) {
-    return hasMore ? (
-      <LoadingState message={t("loading")} />
-    ) : (
-      <EmptyState message={t("filteredResultsEmpty")} />
-    );
+  if (total === 0) {
+    return <EmptyState message={t("filteredResultsEmpty")} />;
   }
 
   const minLabel =
@@ -134,7 +63,12 @@ export const FilteredProductsSection = ({
   const maxLabel =
     priceRange.max !== null ? priceRange.max.toString() : t("priceFilterAny");
   const showingFrom = (page - 1) * FILTERED_PAGE_SIZE + 1;
-  const showingTo = Math.min(page * FILTERED_PAGE_SIZE, filteredSeries.length);
+  const showingTo = Math.min(page * FILTERED_PAGE_SIZE, total);
+
+  const pageSeries = useMemo(
+    () => series.slice(0, FILTERED_PAGE_SIZE),
+    [series]
+  );
 
   return (
     <section className="flex flex-col gap-4">
@@ -147,7 +81,7 @@ export const FilteredProductsSection = ({
         </p>
       </div>
       <div className="flex flex-col gap-4">
-        {pagedSeries.map((entry) => (
+        {pageSeries.map((entry) => (
           <ProductListItem
             key={entry.productCode}
             series={entry}
@@ -158,13 +92,13 @@ export const FilteredProductsSection = ({
           />
         ))}
       </div>
-      {filteredSeries.length > FILTERED_PAGE_SIZE ? (
+      {total > FILTERED_PAGE_SIZE ? (
         <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-slate-400">
             {t("filteredPaginationLabel", {
               from: showingFrom,
               to: showingTo,
-              total: filteredSeries.length,
+              total,
             })}
           </p>
           <div className="flex items-center gap-3">
@@ -189,9 +123,6 @@ export const FilteredProductsSection = ({
             </button>
           </div>
         </div>
-      ) : null}
-      {loadingMore ? (
-        <p className="text-sm text-slate-400">{t("loading")}</p>
       ) : null}
     </section>
   );

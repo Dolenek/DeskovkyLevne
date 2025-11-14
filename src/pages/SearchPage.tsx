@@ -2,9 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useProductPricing } from "../hooks/useProductPricing";
 import { useChunkedProductCatalog } from "../hooks/useChunkedProductCatalog";
+import { useFilteredCatalogIndex } from "../hooks/useFilteredCatalogIndex";
 import { useTranslation } from "../hooks/useTranslation";
 import { searchSnapshotsByName } from "../services/productService";
 import type { ProductSeries } from "../types/product";
+import type { AvailabilityFilter } from "../types/filters";
 import { FiltersPanel } from "./search/FiltersPanel";
 import { SearchResultsSection } from "./search/SearchResultsSection";
 import {
@@ -32,7 +34,7 @@ const parsePriceInput = (value: string): number | null => {
 const SearchPage = ({ onProductNavigate }: SearchPageProps) => {
   const { t, locale } = useTranslation();
   const [searchValue, setSearchValue] = useState("");
-  const [onlyAvailable, setOnlyAvailable] = useState(false);
+  const [availabilityFilter, setAvailabilityFilter] = useState<AvailabilityFilter>("all");
   const [selectedSeries, setSelectedSeries] = useState<ProductSeries | null>(
     null
   );
@@ -46,8 +48,8 @@ const SearchPage = ({ onProductNavigate }: SearchPageProps) => {
     if (debouncedQuery.length < 2) {
       return Promise.resolve([]);
     }
-    return searchSnapshotsByName(debouncedQuery, undefined, onlyAvailable);
-  }, [debouncedQuery, onlyAvailable]);
+    return searchSnapshotsByName(debouncedQuery, undefined, availabilityFilter);
+  }, [availabilityFilter, debouncedQuery]);
 
   const {
     series: searchSeries,
@@ -56,16 +58,6 @@ const SearchPage = ({ onProductNavigate }: SearchPageProps) => {
     reload: reloadSearch,
   } = useProductPricing(searchLoader);
 
-  const {
-    series: allSeries,
-    loading: filteredLoading,
-    error: filteredError,
-    ensureCount: ensureCatalogCount,
-    hasMore: catalogHasMore,
-    loadingMore: catalogLoadingMore,
-    reload: reloadFiltered,
-  } = useChunkedProductCatalog();
-
   const priceRange = useMemo(
     () => ({
       min: parsePriceInput(priceFilter.min),
@@ -73,6 +65,22 @@ const SearchPage = ({ onProductNavigate }: SearchPageProps) => {
     }),
     [priceFilter]
   );
+
+  const { series: allSeries } = useChunkedProductCatalog();
+
+  const {
+    series: filteredSeries,
+    total: filteredTotal,
+    loading: filteredLoading,
+    error: filteredError,
+    reload: reloadFiltered,
+  } = useFilteredCatalogIndex({
+    priceRange,
+    availabilityFilter,
+    categoryFilters,
+    page: pricePage,
+    pageSize: FILTERED_PAGE_SIZE,
+  });
 
   const priceBounds = useMemo(() => {
     let min = Number.POSITIVE_INFINITY;
@@ -131,11 +139,7 @@ const SearchPage = ({ onProductNavigate }: SearchPageProps) => {
 
   useEffect(() => {
     setPricePage(1);
-  }, [onlyAvailable, categoryFilters]);
-
-  useEffect(() => {
-    void ensureCatalogCount(FILTERED_PAGE_SIZE * pricePage);
-  }, [ensureCatalogCount, pricePage]);
+  }, [availabilityFilter, categoryFilters]);
 
   const matchesCategoryFilters = useCallback(
     (series: ProductSeries) => {
@@ -223,8 +227,8 @@ const SearchPage = ({ onProductNavigate }: SearchPageProps) => {
             <div className="lg:sticky lg:top-28 lg:h-[calc(100vh-7rem)] lg:self-start">
               <FiltersPanel
                 className="lg:flex lg:h-full lg:flex-col lg:overflow-y-auto"
-                onlyAvailable={onlyAvailable}
-                onToggleAvailable={() => setOnlyAvailable((prev) => !prev)}
+                availabilityFilter={availabilityFilter}
+                onAvailabilityChange={setAvailabilityFilter}
                 priceFilter={priceFilter}
                 priceRangeValues={priceRange}
                 priceBounds={priceBounds}
@@ -247,7 +251,7 @@ const SearchPage = ({ onProductNavigate }: SearchPageProps) => {
                 series={visibleSeries}
                 displayCount={displayCount}
                 maxCount={MAX_SEARCH_SERIES}
-                onlyAvailable={onlyAvailable}
+                availabilityFilter={availabilityFilter}
                 selectedSeries={selectedSeries}
                 onSelectSeries={setSelectedSeries}
                 onNavigateToSeries={(series) =>
@@ -258,17 +262,14 @@ const SearchPage = ({ onProductNavigate }: SearchPageProps) => {
                 reload={reloadSearch}
               />
               <FilteredProductsSection
-                series={allSeries}
+                series={filteredSeries}
+                total={filteredTotal}
                 loading={filteredLoading}
-                loadingMore={catalogLoadingMore}
-                hasMore={catalogHasMore}
                 error={filteredError}
                 reload={reloadFiltered}
                 locale={locale}
                 t={t}
                 priceRange={priceRange}
-                onlyAvailable={onlyAvailable}
-                categoryFilters={categoryFilters}
                 page={pricePage}
                 onPageChange={setPricePage}
                 onNavigateToSeries={(series) =>
@@ -276,9 +277,6 @@ const SearchPage = ({ onProductNavigate }: SearchPageProps) => {
                 }
                 selectedSeries={selectedSeries}
                 onSelectSeries={setSelectedSeries}
-                onRequestMore={(count) => {
-                  void ensureCatalogCount(count);
-                }}
               />
             </div>
           </div>
