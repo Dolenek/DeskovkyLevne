@@ -8,12 +8,12 @@ import { searchSnapshotsByName } from "../services/productService";
 import type { ProductSeries } from "../types/product";
 import type { AvailabilityFilter } from "../types/filters";
 import { FiltersPanel } from "./search/FiltersPanel";
-import { SearchResultsSection } from "./search/SearchResultsSection";
 import {
   FilteredProductsSection,
   FILTERED_PAGE_SIZE,
 } from "./search/FilteredProductsSection";
 import { AppHeader } from "../components/AppHeader";
+import { ProductSearchOverlay } from "../components/ProductSearchOverlay";
 
 interface SearchPageProps {
   onProductNavigate: (productCode: string) => void;
@@ -34,6 +34,7 @@ const parsePriceInput = (value: string): number | null => {
 const SearchPage = ({ onProductNavigate }: SearchPageProps) => {
   const { t, locale } = useTranslation();
   const [searchValue, setSearchValue] = useState("");
+  const [searchActive, setSearchActive] = useState(false);
   const [availabilityFilter, setAvailabilityFilter] = useState<AvailabilityFilter>("all");
   const [selectedSeries, setSelectedSeries] = useState<ProductSeries | null>(
     null
@@ -162,20 +163,8 @@ const SearchPage = ({ onProductNavigate }: SearchPageProps) => {
     () => filteredSearchSeries.slice(0, MAX_SEARCH_SERIES),
     [filteredSearchSeries]
   );
-  const displayCount = visibleSeries.length;
 
-  useEffect(() => {
-    if (visibleSeries.length === 0) {
-      setSelectedSeries(null);
-      return;
-    }
-    setSelectedSeries((current) => {
-      if (current && visibleSeries.some((s) => s.productCode === current.productCode)) {
-        return current;
-      }
-      return visibleSeries[0];
-    });
-  }, [visibleSeries]);
+  const overlayVisible = searchActive && debouncedQuery.length >= 2;
 
   const categoryOptions = useMemo(() => {
     const unique = new Set<string>();
@@ -220,7 +209,32 @@ const SearchPage = ({ onProductNavigate }: SearchPageProps) => {
 
   return (
     <div className="min-h-screen bg-background text-white">
-      <AppHeader searchValue={searchValue} onSearchChange={setSearchValue} t={t} />
+      <AppHeader
+        searchValue={searchValue}
+        onSearchChange={(value) => {
+          setSearchValue(value);
+          if (!value.trim()) {
+            setSearchActive(false);
+          }
+        }}
+        onSearchFocus={() => setSearchActive(true)}
+        t={t}
+      />
+      <ProductSearchOverlay
+        visible={overlayVisible}
+        loading={searchLoading}
+        error={searchError}
+        results={visibleSeries}
+        query={debouncedQuery}
+        locale={locale}
+        t={t}
+        onRetry={reloadSearch}
+        onSelect={(series) => {
+          setSearchActive(false);
+          onProductNavigate(series.productCode);
+        }}
+        onClose={() => setSearchActive(false)}
+      />
       <main className="px-4 py-10 sm:px-6 lg:px-10">
         <div className="mx-auto flex max-w-6xl flex-col gap-8">
           <div className="grid gap-8 lg:grid-cols-[260px_minmax(0,1fr)]">
@@ -244,23 +258,6 @@ const SearchPage = ({ onProductNavigate }: SearchPageProps) => {
               />
             </div>
             <div className="flex flex-col gap-8">
-              <SearchResultsSection
-                query={debouncedQuery}
-                loading={searchLoading}
-                error={searchError}
-                series={visibleSeries}
-                displayCount={displayCount}
-                maxCount={MAX_SEARCH_SERIES}
-                availabilityFilter={availabilityFilter}
-                selectedSeries={selectedSeries}
-                onSelectSeries={setSelectedSeries}
-                onNavigateToSeries={(series) =>
-                  onProductNavigate(series.productCode)
-                }
-                locale={locale}
-                t={t}
-                reload={reloadSearch}
-              />
               <FilteredProductsSection
                 series={filteredSeries}
                 total={filteredTotal}

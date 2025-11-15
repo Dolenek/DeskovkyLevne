@@ -16,6 +16,7 @@
 - Loading stavy už pouze zobrazují decentní spinner místo textu „Načítám produkty…“, aby UI působilo svižněji a nerušilo při krátkých dotazech.
 - Lokalizace pro cestinu byla opravena tak, aby obsahovala spravne diakriticke znaky a prirozene formulace.
 - Header s vyhledavacim polem je znovu pouzity i na detailu produktu a pri zadavani vyhledavani se cely podklad rozmaze a nad aktualnim produktem se objevi jednoduchy seznam max. 6 relevantnich titulu; klik mimo seznam zavre overlay, ale ponecha zadany text.
+- Hlavni vyhledavaci pole ted spousti stejny rozmazany overlay s vysledky jako na detailu; pokud nejsou zadane aspon dva znaky, overlay se vubec neukaze a zmizela i hlaska "Start typing at least 2 characters.".
 - V overlays vyhledavani na detailu produktu ted kazdy vysledek zobrazuje i miniaturu hry (hero image), aby bylo snadnejsi vizualne identifikovat titul.
 - Klik na logotyp/napis „TLAMA PRICES“ v hlavicce kdykoliv presune uzivatele zpet na hlavni vyhledavaci stranku.
 
