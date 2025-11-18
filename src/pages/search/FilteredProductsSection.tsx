@@ -83,10 +83,10 @@ export const FilteredProductsSection = ({
       <div className="flex flex-col gap-4">
         {pageSeries.map((entry) => (
           <ProductListItem
-            key={entry.productCode}
+            key={entry.slug}
             series={entry}
             locale={locale}
-            selected={selectedSeries?.productCode === entry.productCode}
+            selected={selectedSeries?.slug === entry.slug}
             onSelect={onSelectSeries}
             onNavigate={onNavigateToSeries}
           />

@@ -49,7 +49,7 @@ export const ProductGallery = ({ series }: { series: ProductSeries }) => {
   useEffect(() => {
     setActiveIndex(0);
     scrollToIndex(0, "auto");
-  }, [scrollToIndex, series.productCode]);
+  }, [scrollToIndex, series.slug]);
 
   useEffect(() => {
     const container = sliderRef.current;

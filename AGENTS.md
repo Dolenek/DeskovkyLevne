@@ -23,3 +23,9 @@ Whenever an agent adds a feature or significant refactor, they must document the
 
 Always code as if someone else will scale this.
 Include extension points (e.g., protocol conformance, dependency injection) from day one.
+
+## data model and routing
+
+- `product_name_normalized` je kanonický identifikátor. Jakékoliv nové routy nebo odkazy musí používat slug, nikdy `product_code`.
+- Při agregaci snapshotů vždy udržujte informace per-prodejce. Tlamagames/tlamagase má nejvyšší prioritu pro hero obrázek, popisy a další texty, ale pokud chybí, přepněte na dalšího prodejce.
+- Historie cen (grafy, statistiky) musí zobrazovat všechny dostupné prodejce daného slugu paralelně – žádné slučování do jedné čáry.

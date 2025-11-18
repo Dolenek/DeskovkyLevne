@@ -26,7 +26,9 @@ export const ProductHero = ({ series, locale, t }: ProductHeroProps) => {
           {t("productCodeLabel")}
         </p>
         <h1 className="text-3xl font-semibold text-white">{series.label}</h1>
-        <p className="text-sm text-slate-400">{series.productCode}</p>
+        <p className="text-sm text-slate-400">
+          {series.primaryProductCode ?? series.slug}
+        </p>
         {series.availabilityLabel ? (
           <span className="mt-3 inline-flex rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-200">
             {series.availabilityLabel}

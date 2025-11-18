@@ -87,12 +87,13 @@ export const useChunkedProductCatalog = (
         totalRef.current = total;
       }
       setSeries((current) => {
-        const map = new Map(current.map((item) => [item.productCode, item]));
+        const map = new Map(current.map((item) => [item.slug, item]));
         rows.forEach((row) => {
-          map.set(row.product_code, buildSeriesFromCatalogIndexRow(row));
+          const series = buildSeriesFromCatalogIndexRow(row);
+          map.set(series.slug, series);
         });
         return Array.from(map.values()).sort((a, b) =>
-          a.productCode.localeCompare(b.productCode, "cs")
+          a.slug.localeCompare(b.slug, "cs")
         );
       });
       setError(null);

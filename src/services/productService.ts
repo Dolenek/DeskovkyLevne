@@ -17,7 +17,7 @@ const FILTER_CODES = import.meta.env.VITE_SUPABASE_FILTER_CODES
   : [];
 
 const SELECT_COLUMNS =
-  "id, product_code, product_name, price_with_vat, list_price_with_vat, currency_code, source_url, scraped_at, availability_label, hero_image_url, gallery_image_urls, short_description, supplementary_parameters";
+  "id, product_code, product_name_original, product_name_normalized, price_with_vat, list_price_with_vat, currency_code, source_url, scraped_at, availability_label, stock_status_label, hero_image_url, gallery_image_urls, short_description, supplementary_parameters, metadata, seller";
 const CATALOG_INDEX_TABLE = "product_catalog_index";
 const CATALOG_INDEX_COLUMNS =
   "product_code, product_name, currency_code, availability_label, stock_status_label, latest_price, previous_price, first_price, list_price_with_vat, source_url, latest_scraped_at, hero_image_url, gallery_image_urls, short_description, supplementary_parameters, metadata, price_points";
@@ -71,16 +71,16 @@ const buildCatalogIndexQuery = (selectOptions?: { count?: "exact" }) => {
 export const fetchProductRows: ProductFetcher = async () =>
   runQuery(buildBaseQuery().order("scraped_at", { ascending: true }));
 
-export const fetchProductSnapshotsByCode = async (
-  productCode: string
+export const fetchProductSnapshotsBySlug = async (
+  productSlug: string
 ): Promise<ProductRow[]> => {
-  const normalized = productCode.trim();
+  const normalized = productSlug.trim().toLowerCase();
   if (!normalized) {
     return [];
   }
   return runQuery(
     buildBaseQuery()
-      .eq("product_code", normalized.toUpperCase())
+      .eq("product_name_normalized", normalized)
       .order("scraped_at", { ascending: true })
   );
 };
@@ -108,7 +108,7 @@ export const searchSnapshotsByName = async (
 
   const pattern = `%${safeTerm}%`;
   let query = buildBaseQuery().or(
-    `product_name.ilike.${pattern},product_code.ilike.${pattern}`
+    `product_name_original.ilike.${pattern},product_name_normalized.ilike.${pattern},product_code.ilike.${pattern}`
   );
   if (availabilityFilter === "available") {
     query = query.ilike("availability_label", "%Skladem%");
@@ -132,7 +132,7 @@ export const fetchProductRowsChunk = async (
   return runQuery(
     buildBaseQuery()
       .order("scraped_at", { ascending: false })
-      .order("product_code", { ascending: true })
+      .order("product_name_normalized", { ascending: true })
       .range(start, end)
   );
 };
@@ -147,8 +147,8 @@ export const fetchUniqueProductRowsChunk = async (
   const start = Math.max(0, from);
   const end = start + size - 1;
   return runQuery(
-    buildBaseQuery({ distinct: "product_code" })
-      .order("product_code", { ascending: true })
+    buildBaseQuery({ distinct: "product_name_normalized" })
+      .order("product_name_normalized", { ascending: true })
       .order("scraped_at", { ascending: false })
       .range(start, end)
   );
@@ -166,7 +166,7 @@ export const fetchCatalogIndexChunk = async (
   const { data, count, error } = (await buildCatalogIndexQuery({
     count: "exact",
   })
-    .order("product_code", { ascending: true })
+    .order("product_name", { ascending: true })
     .range(start, end)) as {
     data: ProductCatalogIndexRow[] | null;
     count: number | null;
@@ -260,7 +260,7 @@ export const fetchFilteredCatalogIndex = async (
   query = applyCategoryFilter(query, filters.categories);
 
   const { data, count, error } = (await query
-    .order("product_code", { ascending: true })
+    .order("product_name", { ascending: true })
     .range(start, end)) as {
     data: ProductCatalogIndexRow[] | null;
     count: number | null;

@@ -18,10 +18,11 @@ import type { ProductSeries } from "../types/product";
 import type { Translator } from "../types/i18n";
 import { formatPrice } from "../utils/numberFormat";
 import { searchSnapshotsByName } from "../services/productService";
+import { uniqueSeriesBySlug } from "../utils/series";
 
 interface ProductDetailPageProps {
-  productCode: string;
-  onNavigateToProduct: (productCode: string) => void;
+  productSlug: string;
+  onNavigateToProduct: (productSlug: string) => void;
   onNavigateHome: () => void;
 }
 
@@ -107,7 +108,12 @@ const HistorySection = ({
         {t("detailHistoryTitle")}
       </h2>
       <p className="text-sm text-slate-400">
-        {t("detailHistorySubtitle", { count: series.points.length })}
+        {t("detailHistorySubtitle", {
+          count: series.sellers.reduce(
+            (sum, seller) => sum + seller.points.length,
+            0
+          ),
+        })}
       </p>
     </div>
     <div className="mt-6">
@@ -135,12 +141,12 @@ const HistorySection = ({
 
 
 export const ProductDetailPage = ({
-  productCode,
+  productSlug,
   onNavigateToProduct,
   onNavigateHome,
 }: ProductDetailPageProps) => {
   const { t, locale } = useTranslation();
-  const { product, loading, error, reload } = useProductDetail(productCode);
+  const { product, loading, error, reload } = useProductDetail(productSlug);
   const [searchValue, setSearchValue] = useState("");
   const [searchActive, setSearchActive] = useState(false);
   const debouncedQuery = useDebouncedValue(searchValue, 400).trim();
@@ -161,12 +167,12 @@ export const ProductDetailPage = ({
 
   useEffect(() => {
     setSearchActive(false);
-  }, [productCode]);
+  }, [productSlug]);
 
-  const overlayResults = useMemo(
-    () => searchSeries.slice(0, INLINE_SEARCH_LIMIT),
-    [searchSeries]
-  );
+  const overlayResults = useMemo(() => {
+    const unique = uniqueSeriesBySlug(searchSeries);
+    return unique.slice(0, INLINE_SEARCH_LIMIT);
+  }, [searchSeries]);
   const overlayVisible = searchActive && debouncedQuery.length >= 2;
 
   return (
@@ -197,7 +203,7 @@ export const ProductDetailPage = ({
         onRetry={reloadSearch}
         onSelect={(series) => {
           setSearchActive(false);
-          onNavigateToProduct(series.productCode);
+          onNavigateToProduct(series.slug);
         }}
         onClose={() => setSearchActive(false)}
       />
@@ -218,7 +224,7 @@ export const ProductDetailPage = ({
             </>
           ) : (
             <EmptyState
-              message={t("detailNotFoundDescription", { code: productCode })}
+              message={t("detailNotFoundDescription", { code: productSlug })}
             />
           )}
         </div>

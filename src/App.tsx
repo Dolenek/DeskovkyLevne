@@ -5,22 +5,22 @@ import { usePathNavigation } from "./hooks/usePathNavigation";
 
 const DETAIL_ROUTE = /^\/deskove-hry\/([^/]+)\/?$/i;
 
-const buildDetailPath = (code: string) =>
-  `/deskove-hry/${encodeURIComponent(code)}`;
+const buildDetailPath = (slug: string) =>
+  `/deskove-hry/${encodeURIComponent(slug)}`;
 
 const App = () => {
   const { path, navigate } = usePathNavigation();
 
-  const productCode = useMemo(() => {
+  const productSlug = useMemo(() => {
     const match = path.match(DETAIL_ROUTE);
     return match ? decodeURIComponent(match[1]) : null;
   }, [path]);
 
-  if (productCode) {
+  if (productSlug) {
     return (
       <ProductDetailPage
-        productCode={productCode}
-        onNavigateToProduct={(code) => navigate(buildDetailPath(code))}
+        productSlug={productSlug}
+        onNavigateToProduct={(slug) => navigate(buildDetailPath(slug))}
         onNavigateHome={() => navigate("/")}
       />
     );
@@ -28,7 +28,7 @@ const App = () => {
 
   return (
     <SearchPage
-      onProductNavigate={(code) => navigate(buildDetailPath(code))}
+      onProductNavigate={(slug) => navigate(buildDetailPath(slug))}
     />
   );
 };

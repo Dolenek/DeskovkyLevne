@@ -39,7 +39,7 @@ const OverlayResultsList = ({
 }) => (
   <ul className="space-y-2">
     {results.map((series) => (
-      <li key={series.productCode}>
+      <li key={series.slug}>
         <button
           type="button"
           onClick={() => onSelect(series)}
@@ -49,7 +49,8 @@ const OverlayResultsList = ({
             {(() => {
               const image = getSeriesImage(series);
               const fallbackLabel =
-                series.label?.charAt(0).toUpperCase() || series.productCode[0];
+                series.label?.charAt(0).toUpperCase() ||
+                series.slug.charAt(0).toUpperCase();
               return image ? (
                 <img
                   src={image}
@@ -64,7 +65,9 @@ const OverlayResultsList = ({
             })()}
             <div>
               <p className="text-base font-semibold text-white">{series.label}</p>
-              <p className="text-sm text-slate-400">{series.productCode}</p>
+              <p className="text-sm text-slate-400">
+                {series.primaryProductCode ?? series.slug}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-3 text-right">

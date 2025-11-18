@@ -5,9 +5,15 @@ import type {
   SupplementaryParameter,
 } from "../types/product";
 import { toDateKey } from "./date";
+import {
+  extractCategoryTags,
+  normalizeSupplementaryParameters,
+} from "./supplementary";
 
-interface SeriesDraft {
-  productCode: string;
+interface SellerDraft {
+  slug: string;
+  sellerId: string;
+  productCode: string | null;
   label: string;
   currency?: string | null;
   url?: string | null;
@@ -23,6 +29,14 @@ interface SeriesDraft {
   points: ProductSeries["points"];
 }
 
+interface ProductDraft {
+  slug: string;
+  label: string;
+  sellers: Map<string, SellerDraft>;
+}
+
+const SELLER_PRIORITY = ["tlamagames", "tlamagase", "planetaher"];
+
 const toTimestamp = (value: string | null | undefined): number | null => {
   if (!value) {
     return null;
@@ -31,8 +45,53 @@ const toTimestamp = (value: string | null | undefined): number | null => {
   return Number.isNaN(parsed) ? null : parsed;
 };
 
+const normalizeSellerId = (seller?: string | null): string =>
+  seller?.trim().toLowerCase() || "unknown";
+
+const sellerRank = (sellerId: string): number => {
+  const index = SELLER_PRIORITY.indexOf(sellerId);
+  return index === -1 ? SELLER_PRIORITY.length : index;
+};
+
+const compareSellerDraft = (a: SellerDraft, b: SellerDraft): number => {
+  const rankDiff = sellerRank(a.sellerId) - sellerRank(b.sellerId);
+  if (rankDiff !== 0) {
+    return rankDiff;
+  }
+  return a.label.localeCompare(b.label, "cs");
+};
+
+const slugify = (value: string): string =>
+  value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .trim();
+
+const resolveSlug = (row: ProductRow): string | null => {
+  const normalized = row.product_name_normalized?.trim().toLowerCase();
+  if (normalized) {
+    return normalized;
+  }
+  const fallbackCode = row.product_code?.trim().toLowerCase();
+  if (fallbackCode) {
+    return fallbackCode;
+  }
+  const fallbackName = row.product_name_original?.trim();
+  if (fallbackName) {
+    const slug = slugify(fallbackName);
+    return slug.length > 0 ? slug : null;
+  }
+  return null;
+};
+
 const toSeriesLabel = (row: ProductRow): string =>
-  row.product_name?.trim() || row.product_code;
+  row.product_name_original?.trim() ||
+  row.product_code?.trim() ||
+  row.product_name_normalized?.trim() ||
+  "Neznámý produkt";
 
 const toOptionalText = (value: string | null | undefined): string | null => {
   if (!value) {
@@ -47,7 +106,7 @@ const toNumericPrice = (price: unknown): number | null => {
   return Number.isFinite(numeric) ? Number(numeric.toFixed(2)) : null;
 };
 
-const appendPoint = (draft: SeriesDraft, row: ProductRow) => {
+const appendPoint = (draft: SellerDraft, row: ProductRow) => {
   const price = toNumericPrice(row.price_with_vat);
   if (price === null || !row.scraped_at) {
     return;
@@ -88,7 +147,7 @@ const normalizeGalleryArray = (
   return [];
 };
 
-const mergeGalleryImages = (draft: SeriesDraft, row: ProductRow): void => {
+const mergeGalleryImages = (draft: SellerDraft, row: ProductRow): void => {
   const incoming = normalizeGalleryArray(row.gallery_image_urls);
   if (incoming.length === 0) {
     return;
@@ -99,183 +158,9 @@ const mergeGalleryImages = (draft: SeriesDraft, row: ProductRow): void => {
   draft.galleryImages = Array.from(merged);
 };
 
-const toReadableLabel = (raw: unknown): string => {
-  if (typeof raw !== "string") {
-    return "";
-  }
-  const trimmed = raw.trim();
-  if (!trimmed) {
-    return "";
-  }
-  return trimmed
-    .replace(/[_-]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .replace(/\b\w/g, (match) => match.toUpperCase());
-};
 
-const stringifySupplementaryValue = (value: unknown): string => {
-  if (value === null || value === undefined) {
-    return "";
-  }
-  if (Array.isArray(value)) {
-    return value
-      .map((entry) => stringifySupplementaryValue(entry))
-      .filter((entry) => entry.length > 0)
-      .join(", ");
-  }
-  if (typeof value === "object") {
-    const objectValue = value as Record<string, unknown>;
-    const preferred = objectValue.value ?? objectValue.val ?? objectValue.text;
-    if (preferred !== undefined) {
-      return stringifySupplementaryValue(preferred);
-    }
-    return JSON.stringify(objectValue);
-  }
-  return String(value).trim();
-};
 
-const entryFromRecord = (
-  name: unknown,
-  value: unknown
-): SupplementaryParameter | null => {
-  const readableName = toReadableLabel(name);
-  const readableValue = stringifySupplementaryValue(value);
-  if (!readableName || !readableValue) {
-    return null;
-  }
-  return { name: readableName, value: readableValue };
-};
-
-const objectEntriesToParameters = (
-  input: Record<string, unknown>
-): SupplementaryParameter[] => {
-  const entries = Object.entries(input)
-    .map(([name, value]) => entryFromRecord(name, value))
-    .filter((entry): entry is SupplementaryParameter => Boolean(entry));
-  return entries;
-};
-
-const arrayEntriesToParameters = (
-  input: unknown[]
-): SupplementaryParameter[] => {
-  const entries = input
-    .map((item) => {
-      if (typeof item === "object" && item !== null) {
-        const record = item as Record<string, unknown>;
-        const nameCandidate =
-          record.name ?? record.label ?? record.key ?? record.title;
-        return entryFromRecord(
-          nameCandidate,
-          record.value ?? record.val ?? record.text ?? record.data ?? null
-        );
-      }
-      if (typeof item === "string") {
-        const separatorIndex = item.indexOf(":");
-        if (separatorIndex !== -1) {
-          const name = item.slice(0, separatorIndex).trim();
-          const value = item.slice(separatorIndex + 1).trim();
-          return entryFromRecord(name, value);
-        }
-      }
-      return null;
-    })
-    .filter((entry): entry is SupplementaryParameter => Boolean(entry));
-  return entries;
-};
-
-const parseKeyValueText = (
-  value: string
-): Record<string, unknown> | null => {
-  const lines = value
-    .split(/\r?\n|;/g)
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0);
-  const entries: Record<string, unknown> = {};
-  lines.forEach((line) => {
-    const separatorIndex = line.indexOf(":");
-    const equalIndex = line.indexOf("=");
-    const index = separatorIndex >= 0 ? separatorIndex : equalIndex;
-    if (index === -1) {
-      return;
-    }
-    const key = line.slice(0, index).trim();
-    const rawValue = line.slice(index + 1).trim();
-    if (key && rawValue) {
-      entries[key] = rawValue;
-    }
-  });
-  return Object.keys(entries).length > 0 ? entries : null;
-};
-
-const normalizeSupplementaryParameters = (
-  source: ProductRow["supplementary_parameters"]
-): SupplementaryParameter[] => {
-  if (!source) {
-    return [];
-  }
-  if (Array.isArray(source)) {
-    return arrayEntriesToParameters(source);
-  }
-  if (typeof source === "object") {
-    return objectEntriesToParameters(source as Record<string, unknown>);
-  }
-  if (typeof source === "string") {
-    try {
-      const parsed = JSON.parse(source) as unknown;
-      if (Array.isArray(parsed)) {
-        return arrayEntriesToParameters(parsed);
-      }
-      if (parsed && typeof parsed === "object") {
-        return objectEntriesToParameters(parsed as Record<string, unknown>);
-      }
-    } catch {
-      // ignore JSON parse errors and try fallback
-    }
-    const fallbackObject = parseKeyValueText(source);
-    if (fallbackObject) {
-      return objectEntriesToParameters(fallbackObject);
-    }
-  }
-  return [];
-};
-
-const normalizeKey = (value: string): string =>
-  value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-
-const CATEGORY_KEY = "herni kategorie";
-
-const isCategoryParameter = (name: string): boolean =>
-  normalizeKey(name) === CATEGORY_KEY;
-
-const splitCategoryValues = (value: string): string[] =>
-  value
-    .split(/[\n,;/]/g)
-    .map((entry) => entry.trim())
-    .filter((entry) => entry.length > 0);
-
-const extractCategoryTags = (
-  parameters: SupplementaryParameter[]
-): string[] => {
-  const collected = new Set<string>();
-  parameters.forEach((parameter) => {
-    if (!isCategoryParameter(parameter.name)) {
-      return;
-    }
-    splitCategoryValues(parameter.value).forEach((entry) =>
-      collected.add(entry)
-    );
-  });
-  return Array.from(collected).sort((a, b) => a.localeCompare(b, "cs"));
-};
-
-const updateAvailabilityLabel = (draft: SeriesDraft, row: ProductRow): void => {
+const updateAvailabilityLabel = (draft: SellerDraft, row: ProductRow): void => {
   const scrapedAt = toTimestamp(row.scraped_at);
   if (scrapedAt === null) {
     return;
@@ -290,7 +175,7 @@ const updateAvailabilityLabel = (draft: SeriesDraft, row: ProductRow): void => {
 };
 
 const updateSupplementaryParameters = (
-  draft: SeriesDraft,
+  draft: SellerDraft,
   row: ProductRow
 ): void => {
   const normalized = normalizeSupplementaryParameters(
@@ -316,15 +201,27 @@ const updateSupplementaryParameters = (
 };
 
 export const buildProductSeries = (rows: ProductRow[]): ProductSeries[] => {
-  const drafts = new Map<string, SeriesDraft>();
+  const drafts = new Map<string, ProductDraft>();
 
   rows.forEach((row) => {
-    if (!row.product_code) {
+    const slug = resolveSlug(row);
+    if (!slug) {
       return;
     }
-    if (!drafts.has(row.product_code)) {
-      drafts.set(row.product_code, {
-        productCode: row.product_code,
+    const sellerId = normalizeSellerId(row.seller);
+    if (!drafts.has(slug)) {
+      drafts.set(slug, {
+        slug,
+        label: toSeriesLabel(row),
+        sellers: new Map(),
+      });
+    }
+    const productDraft = drafts.get(slug)!;
+    if (!productDraft.sellers.has(sellerId)) {
+      productDraft.sellers.set(sellerId, {
+        slug,
+        sellerId,
+        productCode: row.product_code ?? null,
         label: toSeriesLabel(row),
         currency: row.currency_code ?? null,
         url: row.source_url ?? null,
@@ -340,56 +237,128 @@ export const buildProductSeries = (rows: ProductRow[]): ProductSeries[] => {
         points: [],
       });
     }
-
-    const draft = drafts.get(row.product_code)!;
-    if (draft.listPrice === null && row.list_price_with_vat !== null) {
-      draft.listPrice = toNumericPrice(row.list_price_with_vat);
+    const sellerDraft = productDraft.sellers.get(sellerId)!;
+    if (sellerDraft.listPrice === null && row.list_price_with_vat !== null) {
+      sellerDraft.listPrice = toNumericPrice(row.list_price_with_vat);
     }
-    if (!draft.heroImage && row.hero_image_url) {
-      draft.heroImage = row.hero_image_url;
+    if (!sellerDraft.heroImage && row.hero_image_url) {
+      sellerDraft.heroImage = row.hero_image_url;
     }
-    if (!draft.shortDescription && row.short_description) {
-      draft.shortDescription = toOptionalText(row.short_description);
+    if (!sellerDraft.shortDescription && row.short_description) {
+      sellerDraft.shortDescription = toOptionalText(row.short_description);
     }
-    updateAvailabilityLabel(draft, row);
-    mergeGalleryImages(draft, row);
-    updateSupplementaryParameters(draft, row);
-    appendPoint(draft, row);
+    if (!sellerDraft.url && row.source_url) {
+      sellerDraft.url = row.source_url;
+    }
+    if (!sellerDraft.currency && row.currency_code) {
+      sellerDraft.currency = row.currency_code;
+    }
+    updateAvailabilityLabel(sellerDraft, row);
+    mergeGalleryImages(sellerDraft, row);
+    updateSupplementaryParameters(sellerDraft, row);
+    appendPoint(sellerDraft, row);
   });
 
-  return Array.from(drafts.values())
-    .map((draft) => {
-      const {
-        availabilityRecordedAt: _availabilityRecordedAt,
-        supplementaryRecordedAt: _supplementaryRecordedAt,
-        ...seriesBase
-      } = draft;
-      const points = draft.points
-        .sort(
-          (a, b) =>
-            new Date(a.rawDate).getTime() - new Date(b.rawDate).getTime()
-        )
-        .filter(
-          (point, index, arr) =>
-            index === 0 || point.rawDate !== arr[index - 1]?.rawDate
-        );
-      const firstPrice = points[0]?.price ?? null;
-      const latestPrice = points[points.length - 1]?.price ?? null;
-      const previousPrice =
-        points.length > 1 ? points[points.length - 2]?.price ?? null : null;
-      const latestScrapedAt = points[points.length - 1]?.rawDate ?? null;
+  const finalizeSeller = (
+    draft: SellerDraft
+  ): ProductSeries["sellers"][number] => {
+    const points = draft.points
+      .sort(
+        (a, b) => new Date(a.rawDate).getTime() - new Date(b.rawDate).getTime()
+      )
+      .filter(
+        (point, index, arr) =>
+          index === 0 || point.rawDate !== arr[index - 1]?.rawDate
+      );
+    const firstPrice = points[0]?.price ?? null;
+    const latestPrice = points[points.length - 1]?.price ?? null;
+    const previousPrice =
+      points.length > 1 ? points[points.length - 2]?.price ?? null : null;
+    const latestScrapedAt = points[points.length - 1]?.rawDate ?? null;
 
-      return {
-        ...seriesBase,
-        points,
-        firstPrice,
-        latestPrice,
-        previousPrice,
-        latestScrapedAt,
-      };
-    })
-    .filter((series) => series.points.length > 0)
-    .sort((a, b) => a.label.localeCompare(b.label, "cs"));
+    return {
+      seller: draft.sellerId,
+      productCode: draft.productCode,
+      label: draft.label,
+      currency: draft.currency ?? null,
+      url: draft.url ?? null,
+      listPrice: draft.listPrice,
+      heroImage: draft.heroImage ?? null,
+      availabilityLabel: draft.availabilityLabel ?? null,
+      shortDescription: draft.shortDescription ?? null,
+      galleryImages: draft.galleryImages ?? [],
+      supplementaryParameters: draft.supplementaryParameters,
+      categoryTags: draft.categoryTags,
+      points,
+      latestPrice,
+      firstPrice,
+      previousPrice,
+      latestScrapedAt,
+    };
+  };
+
+  const seriesList: ProductSeries[] = [];
+
+  drafts.forEach((product) => {
+    const sellerDrafts = Array.from(product.sellers.values()).sort(
+      (a, b) => compareSellerDraft(a, b)
+    );
+    const sellers = sellerDrafts
+      .map(finalizeSeller)
+      .filter((seller) => seller.points.length > 0);
+    if (sellers.length === 0) {
+      return;
+    }
+    const primary = sellers[0];
+    const categoryTags = Array.from(
+      sellers.reduce((set, seller) => {
+        seller.categoryTags.forEach((category) => set.add(category));
+        return set;
+      }, new Set<string>())
+    ).sort((a, b) => a.localeCompare(b, "cs"));
+    const heroImage =
+      primary.heroImage ??
+      sellers.find((seller) => seller.heroImage)?.heroImage ??
+      null;
+    const shortDescription =
+      primary.shortDescription ??
+      sellers.find((seller) => seller.shortDescription)?.shortDescription ??
+      null;
+    const galleryImages = (() => {
+      const merged = new Set<string>();
+      sellers.forEach((seller) => {
+        (seller.galleryImages ?? []).forEach((image) => merged.add(image));
+      });
+      if (merged.size === 0) {
+        return primary.galleryImages ?? [];
+      }
+      return Array.from(merged);
+    })();
+
+    seriesList.push({
+      slug: product.slug,
+      primaryProductCode: primary.productCode ?? null,
+      label: primary.label || product.label,
+      currency: primary.currency ?? null,
+      url: primary.url ?? null,
+      listPrice: primary.listPrice,
+      heroImage,
+      availabilityLabel: primary.availabilityLabel ?? null,
+      shortDescription,
+      galleryImages,
+      supplementaryParameters: primary.supplementaryParameters,
+      categoryTags,
+      points: primary.points,
+      latestPrice: primary.latestPrice,
+      firstPrice: primary.firstPrice,
+      previousPrice: primary.previousPrice,
+      latestScrapedAt: primary.latestScrapedAt,
+      sellers,
+      primarySeller: primary.seller,
+    });
+  });
+
+  return seriesList.sort((a, b) => a.label.localeCompare(b.label, "cs"));
 };
 
 const toPointArray = (
@@ -418,6 +387,26 @@ const toPointArray = (
     .filter((point): point is ProductSeries["points"][number] => Boolean(point));
 };
 
+const resolveCatalogSlug = (row: ProductCatalogIndexRow): string => {
+  const normalized = row.product_name_normalized?.trim().toLowerCase();
+  if (normalized) {
+    return normalized;
+  }
+  const fallbackName =
+    row.product_name_original?.trim() ?? row.product_name?.trim() ?? "";
+  if (fallbackName) {
+    const slug = slugify(fallbackName);
+    if (slug) {
+      return slug;
+    }
+  }
+  const fallbackCode = row.product_code?.trim().toLowerCase();
+  if (fallbackCode) {
+    return fallbackCode;
+  }
+  return "unknown";
+};
+
 export const buildSeriesFromCatalogIndexRow = (
   row: ProductCatalogIndexRow
 ): ProductSeries => {
@@ -426,10 +415,22 @@ export const buildSeriesFromCatalogIndexRow = (
   );
   const categoryTags = extractCategoryTags(normalizedSupplementary);
   const points = toPointArray(row.price_points);
+  const slug = resolveCatalogSlug(row);
+  const label =
+    row.product_name_original?.trim() ??
+    row.product_name?.trim() ??
+    row.product_code ??
+    row.product_name_normalized ??
+    "Neznámý produkt";
+  const sellerId =
+    (typeof row.metadata === "object" && row.metadata
+      ? ((row.metadata as Record<string, unknown>).seller as string | undefined)
+      : null) ?? "catalog";
 
-  return {
-    productCode: row.product_code,
-    label: row.product_name,
+  const sellerEntry: ProductSeries["sellers"][number] = {
+    seller: sellerId,
+    productCode: row.product_code ?? null,
+    label,
     currency: row.currency_code ?? null,
     url: row.source_url ?? null,
     listPrice: toNumericPrice(row.list_price_with_vat),
@@ -444,5 +445,27 @@ export const buildSeriesFromCatalogIndexRow = (
     firstPrice: toNumericPrice(row.first_price),
     previousPrice: toNumericPrice(row.previous_price),
     latestScrapedAt: row.latest_scraped_at ?? null,
+  };
+
+  return {
+    slug,
+    primaryProductCode: sellerEntry.productCode ?? null,
+    label,
+    currency: sellerEntry.currency,
+    url: sellerEntry.url,
+    listPrice: sellerEntry.listPrice,
+    heroImage: sellerEntry.heroImage,
+    availabilityLabel: sellerEntry.availabilityLabel,
+    shortDescription: sellerEntry.shortDescription,
+    galleryImages: sellerEntry.galleryImages,
+    supplementaryParameters: sellerEntry.supplementaryParameters,
+    categoryTags,
+    points,
+    latestPrice: sellerEntry.latestPrice,
+    firstPrice: sellerEntry.firstPrice,
+    previousPrice: sellerEntry.previousPrice,
+    latestScrapedAt: sellerEntry.latestScrapedAt,
+    sellers: [sellerEntry],
+    primarySeller: sellerEntry.seller,
   };
 };

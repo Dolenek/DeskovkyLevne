@@ -31,7 +31,7 @@ export const ProductListItem = ({
           locale
         )
       : null;
-  const href = `/deskove-hry/${encodeURIComponent(series.productCode)}`;
+  const href = `/deskove-hry/${encodeURIComponent(series.slug)}`;
 
   const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
     if (

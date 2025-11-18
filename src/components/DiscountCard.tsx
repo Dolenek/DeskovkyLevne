@@ -18,7 +18,7 @@ export const DiscountCard = ({ discount, locale, t }: DiscountCardProps) => {
     <article className="flex flex-col gap-4 rounded-3xl border border-slate-800 bg-surface/80 p-6 shadow-xl shadow-black/40 backdrop-blur">
       <div>
         <p className="text-sm uppercase tracking-wide text-slate-400">
-          {discount.productCode}
+          {discount.productSlug}
         </p>
         <h3 className="text-xl font-semibold text-white">
           {discount.productName}

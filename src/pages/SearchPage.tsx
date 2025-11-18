@@ -14,9 +14,10 @@ import {
 } from "./search/FilteredProductsSection";
 import { AppHeader } from "../components/AppHeader";
 import { ProductSearchOverlay } from "../components/ProductSearchOverlay";
+import { uniqueSeriesBySlug } from "../utils/series";
 
 interface SearchPageProps {
-  onProductNavigate: (productCode: string) => void;
+  onProductNavigate: (productSlug: string) => void;
 }
 
 const MAX_SEARCH_SERIES = Number(
@@ -159,10 +160,10 @@ const SearchPage = ({ onProductNavigate }: SearchPageProps) => {
     [matchesCategoryFilters, searchSeries]
   );
 
-  const visibleSeries = useMemo(
-    () => filteredSearchSeries.slice(0, MAX_SEARCH_SERIES),
-    [filteredSearchSeries]
-  );
+  const visibleSeries = useMemo(() => {
+    const unique = uniqueSeriesBySlug(filteredSearchSeries);
+    return unique.slice(0, MAX_SEARCH_SERIES);
+  }, [filteredSearchSeries]);
 
   const overlayVisible = searchActive && debouncedQuery.length >= 2;
 
@@ -231,7 +232,7 @@ const SearchPage = ({ onProductNavigate }: SearchPageProps) => {
         onRetry={reloadSearch}
         onSelect={(series) => {
           setSearchActive(false);
-          onProductNavigate(series.productCode);
+          onProductNavigate(series.slug);
         }}
         onClose={() => setSearchActive(false)}
       />
@@ -270,7 +271,7 @@ const SearchPage = ({ onProductNavigate }: SearchPageProps) => {
                 page={pricePage}
                 onPageChange={setPricePage}
                 onNavigateToSeries={(series) =>
-                  onProductNavigate(series.productCode)
+                  onProductNavigate(series.slug)
                 }
                 selectedSeries={selectedSeries}
                 onSelectSeries={setSelectedSeries}

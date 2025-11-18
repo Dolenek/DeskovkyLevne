@@ -1,8 +1,9 @@
 import { useMemo } from "react";
 import {
-  Area,
-  AreaChart,
   CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -22,6 +23,8 @@ interface ProductChartProps {
 
 interface TooltipPayload {
   value: number;
+  dataKey: string;
+  color?: string;
 }
 
 interface ChartTooltipProps {
@@ -29,7 +32,8 @@ interface ChartTooltipProps {
   payload?: TooltipPayload[];
   label?: string;
   locale: LocaleKey;
-  currency?: string | null;
+  sellerLabels: Record<string, string>;
+  currencyBySeller: Record<string, string | null>;
   priceLabel: string;
   dateLabel: string;
 }
@@ -39,7 +43,8 @@ const ChartTooltip = ({
   payload,
   label,
   locale,
-  currency,
+  sellerLabels,
+  currencyBySeller,
   priceLabel,
   dateLabel,
 }: ChartTooltipProps) => {
@@ -52,14 +57,87 @@ const ChartTooltip = ({
       <p className="text-slate-300">
         {dateLabel}: <span className="font-semibold text-white">{label}</span>
       </p>
-      <p className="text-slate-300">
-        {priceLabel}:{" "}
-        <span className="font-semibold text-accent">
-          {formatPrice(payload[0].value, currency ?? undefined, locale)}
-        </span>
+      <p className="mt-2 text-xs uppercase tracking-wide text-slate-500">
+        {priceLabel}
       </p>
+      <ul className="mt-2 space-y-1">
+        {payload.map((entry) => (
+          <li key={entry.dataKey} className="flex items-center justify-between">
+            <span className="flex items-center gap-2 text-slate-300">
+              <span
+                className="inline-block h-2 w-2 rounded-full"
+                style={{ backgroundColor: entry.color ?? "#fff" }}
+              />
+              {sellerLabels[entry.dataKey] ?? entry.dataKey}
+            </span>
+            <span className="font-semibold text-accent">
+              {formatPrice(
+                entry.value,
+                currencyBySeller[entry.dataKey] ?? undefined,
+                locale
+              ) ?? "--"}
+            </span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
+};
+
+const SELLER_DISPLAY_NAMES: Record<string, string> = {
+  tlamagames: "Tlama Games",
+  tlamagase: "TlamaGase",
+  planetaher: "Planeta Her",
+};
+
+const SELLER_COLORS = ["#4f9dff", "#f472b6", "#34d399", "#f97316"];
+
+const getSellerName = (sellerId: string): string =>
+  SELLER_DISPLAY_NAMES[sellerId] ?? sellerId;
+
+const buildSellerConfigs = (series: ProductSeries) =>
+  series.sellers.map((seller, index) => {
+    const id = seller.seller || `seller-${index}`;
+    return {
+      id,
+      label: getSellerName(id),
+      color: SELLER_COLORS[index % SELLER_COLORS.length],
+      currency: seller.currency ?? series.currency ?? null,
+      priceMap: new Map(seller.points.map((point) => [point.rawDate, point.price])),
+    };
+  });
+
+const buildChartData = (series: ProductSeries, locale: LocaleKey) => {
+  const sellerConfigs = buildSellerConfigs(series);
+  const dateSet = new Set<string>();
+  sellerConfigs.forEach((config) => {
+    config.priceMap.forEach((_, date) => dateSet.add(date));
+  });
+  const sortedDates = Array.from(dateSet).sort(
+    (a, b) => new Date(a).getTime() - new Date(b).getTime()
+  );
+
+  const data = sortedDates.map((rawDate) => {
+    const entry: Record<string, string | number> = {
+      date: formatDateLabel(rawDate, locale),
+    };
+    sellerConfigs.forEach((config) => {
+      const value = config.priceMap.get(rawDate);
+      if (typeof value === "number") {
+        entry[config.id] = value;
+      }
+    });
+    return entry;
+  });
+
+  const sellerLabels: Record<string, string> = {};
+  const currencyBySeller: Record<string, string | null> = {};
+  sellerConfigs.forEach((config) => {
+    sellerLabels[config.id] = config.label;
+    currencyBySeller[config.id] = config.currency;
+  });
+
+  return { data, sellerConfigs, sellerLabels, currencyBySeller };
 };
 
 export const ProductChart = ({
@@ -68,30 +146,19 @@ export const ProductChart = ({
   priceLabel,
   dateLabel,
 }: ProductChartProps) => {
-  const gradientId = useMemo(
-    () => `priceGradient-${series.productCode.replace(/[^a-zA-Z0-9_-]/g, "")}`,
-    [series.productCode]
+  const { data, sellerConfigs, sellerLabels, currencyBySeller } = useMemo(
+    () => buildChartData(series, locale),
+    [series, locale]
   );
 
-  const chartData = useMemo(
-    () =>
-      series.points.map((point) => ({
-        price: point.price,
-        date: formatDateLabel(point.rawDate, locale),
-      })),
-    [series.points, locale]
-  );
+  if (data.length === 0 || sellerConfigs.length === 0) {
+    return null;
+  }
 
   return (
-    <div className="h-48 w-full">
+    <div className="h-64 w-full">
       <ResponsiveContainer>
-        <AreaChart data={chartData}>
-          <defs>
-            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#4f9dff" stopOpacity={0.8} />
-              <stop offset="95%" stopColor="#4f9dff" stopOpacity={0.05} />
-            </linearGradient>
-          </defs>
+        <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
           <XAxis
             dataKey="date"
@@ -110,21 +177,26 @@ export const ProductChart = ({
             content={
               <ChartTooltip
                 locale={locale}
-                currency={series.currency}
+                sellerLabels={sellerLabels}
+                currencyBySeller={currencyBySeller}
                 priceLabel={priceLabel}
                 dateLabel={dateLabel}
               />
             }
           />
-          <Area
-            type="monotone"
-            dataKey="price"
-            stroke="#4f9dff"
-            fillOpacity={1}
-            fill={`url(#${gradientId})`}
-            strokeWidth={2}
-          />
-        </AreaChart>
+          <Legend formatter={(value) => sellerLabels[value] ?? value} />
+          {sellerConfigs.map((config) => (
+            <Line
+              key={config.id}
+              type="monotone"
+              dataKey={config.id}
+              stroke={config.color}
+              strokeWidth={2}
+              dot={false}
+              isAnimationActive={false}
+            />
+          ))}
+        </LineChart>
       </ResponsiveContainer>
     </div>
   );

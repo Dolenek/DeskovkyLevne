@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { fetchProductSnapshotsByCode } from "../services/productService";
+import { fetchProductSnapshotsBySlug } from "../services/productService";
 import type { ProductSeries } from "../types/product";
 import { useProductPricing } from "./useProductPricing";
 
@@ -11,15 +11,15 @@ interface UseProductDetailResult {
 }
 
 export const useProductDetail = (
-  productCode: string
+  productSlug: string
 ): UseProductDetailResult => {
   const loader = useMemo(() => {
-    const trimmed = productCode.trim();
+    const trimmed = productSlug.trim();
     if (!trimmed) {
       return async () => [];
     }
-    return () => fetchProductSnapshotsByCode(trimmed);
-  }, [productCode]);
+    return () => fetchProductSnapshotsBySlug(trimmed);
+  }, [productSlug]);
 
   const { series, loading, error, reload } = useProductPricing(loader);
 

@@ -14,13 +14,14 @@ const buildPairs = (rows: ProductRow[]): Map<string, SeriesPair> => {
   const pairs = new Map<string, SeriesPair>();
 
   for (const row of rows) {
-    if (!row.product_code) {
+    const slug = row.product_name_normalized?.trim().toLowerCase();
+    if (!slug) {
       continue;
     }
 
-    const existing = pairs.get(row.product_code);
+    const existing = pairs.get(slug);
     if (!existing) {
-      pairs.set(row.product_code, { latest: row });
+      pairs.set(slug, { latest: row });
       continue;
     }
 
@@ -38,8 +39,16 @@ const toDiscountEntry = (
   referencePrice: number,
   currentPrice: number
 ): DiscountEntry => ({
-  productCode: latest.product_code,
-  productName: latest.product_name ?? reference.product_name ?? latest.product_code,
+  productSlug:
+    latest.product_name_normalized?.trim().toLowerCase() ??
+    reference.product_name_normalized?.trim().toLowerCase() ??
+    latest.product_code ??
+    "",
+  productName:
+    latest.product_name_original ??
+    reference.product_name_original ??
+    latest.product_code ??
+    "Neznámý produkt",
   currency: latest.currency_code ?? reference.currency_code ?? "CZK",
   url: latest.source_url ?? reference.source_url ?? null,
   previousPrice: referencePrice,
