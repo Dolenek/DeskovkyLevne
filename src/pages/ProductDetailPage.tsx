@@ -16,7 +16,7 @@ import { useProductDetail } from "../hooks/useProductDetail";
 import { useProductPricing } from "../hooks/useProductPricing";
 import type { ProductSeries } from "../types/product";
 import type { Translator } from "../types/i18n";
-import { formatPrice } from "../utils/numberFormat";
+import type { LocaleKey } from "../i18n/translations";
 import { searchSnapshotsByName } from "../services/productService";
 import { uniqueSeriesBySlug } from "../utils/series";
 
@@ -29,77 +29,13 @@ interface ProductDetailPageProps {
 const INLINE_SEARCH_LIMIT = 6;
 
 
-interface PriceStats {
-  lowest: number | null;
-  highest: number | null;
-  average: number | null;
-}
-
-const buildPriceStats = (series: ProductSeries | null): PriceStats => {
-  if (!series || series.points.length === 0) {
-    return { lowest: null, highest: null, average: null };
-  }
-  const prices = series.points.map((point) => point.price);
-  const lowest = Math.min(...prices);
-  const highest = Math.max(...prices);
-  const average = prices.reduce((sum, price) => sum + price, 0) / prices.length;
-  return {
-    lowest,
-    highest,
-    average: Number.isFinite(average) ? Number(average.toFixed(2)) : null,
-  };
-};
-
-const StatCard = ({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) => (
-  <div className="rounded-2xl border border-slate-800 bg-black/30 p-4">
-    <p className="text-xs uppercase tracking-wide text-slate-400">{label}</p>
-    <p className="text-2xl font-semibold text-white">{value}</p>
-  </div>
-);
-
-const PriceSummary = ({
-  series,
-  locale,
-  t,
-}: {
-  series: ProductSeries | null;
-  locale: Parameters<typeof formatPrice>[2];
-  t: Translator;
-}) => {
-  const stats = useMemo(() => buildPriceStats(series), [series]);
-  if (!series) {
-    return null;
-  }
-  const format = (price: number | null) =>
-    formatPrice(price, series.currency ?? undefined, locale) || "--";
-
-  return (
-    <section className="rounded-3xl border border-slate-800 bg-surface/70 p-6 shadow-xl shadow-black/40 backdrop-blur">
-      <h2 className="text-2xl font-semibold text-white">
-        {t("detailPriceStatsTitle")}
-      </h2>
-      <div className="mt-4 grid gap-4 md:grid-cols-3">
-        <StatCard label={t("detailStatsLowest")} value={format(stats.lowest)} />
-        <StatCard label={t("detailStatsHighest")} value={format(stats.highest)} />
-        <StatCard label={t("detailStatsAverage")} value={format(stats.average)} />
-      </div>
-    </section>
-  );
-};
-
 const HistorySection = ({
   series,
   locale,
   t,
 }: {
   series: ProductSeries;
-  locale: Parameters<typeof formatPrice>[2];
+  locale: LocaleKey;
   t: Translator;
 }) => (
   <section className="rounded-3xl border border-slate-800 bg-surface/70 p-6 shadow-xl shadow-black/40 backdrop-blur">
@@ -219,7 +155,6 @@ export const ProductDetailPage = ({
                 <ProductGallery series={product} />
                 <ProductHero series={product} locale={locale} t={t} />
               </div>
-              <PriceSummary series={product} locale={locale} t={t} />
               <HistorySection series={product} locale={locale} t={t} />
             </>
           ) : (

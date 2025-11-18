@@ -34,3 +34,4 @@
 - Spodni cast sekce „Historie ceny" uz nezobrazuje tabulku dat/datumů – misto toho se sem natahnou `supplementary_parameters` z databaze a prehledne se vypisou jako klic-hodnota; pokud dodatecne informace chybi, uzivatel dostane odpovidajici hlasku.
 - Build overen (npm run build), varovani o velikosti bundlu zatim ponechano.
 - Odstranen postranni panel "Detail produktu" na vyhledavaci strance, protoze kompletni detail zije na dedikovanem route.
+- Odstranen cenový souhrn (Lowest/Highest/Average) z detailu produktu, aby stranka zduraznila historii cen a doplnkove parametry misto statickych karet.
