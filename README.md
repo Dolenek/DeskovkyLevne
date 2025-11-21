@@ -1,11 +1,10 @@
 # Deskovky Levně
 
-## Catalog index refresh (important)
+Deskovky Levně is a React + Vite single-page app that tracks Czech board-game prices by canonical product slug (`product_name_normalized`). It combines every seller for a slug, lets users search/filter, and renders a multi-seller price history graph with per-seller legends (no price lines are merged).
 
-The frontend now reads products from the Postgres materialized view `public.product_catalog_index`. New snapshots do **not** appear automatically – you must refresh the view whenever the scraper finishes importing data (or on a schedule) by running:
-
-```sql
-REFRESH MATERIALIZED VIEW CONCURRENTLY public.product_catalog_index;
-```
-
-Until a refresh occurs, users will keep seeing the previous dataset. Please keep this step in your deployment/scrape pipeline (automation TBD).
+**What the site does**
+- Landing page: full-text search (CZ/EN UI) with debounced overlay suggestions, plus a paginated catalog filtered by availability, price range, and game categories extracted from supplementary parameters.
+- Detail page: `/deskove-hry/:slug` shows hero/gallery, availability badge, seller CTA, latest/list price, and a Recharts history where each seller has its own line; supplementary parameters replace the old data table.
+- Routing: lightweight history-based navigation with slug-first URLs; logo click returns home.
+- Assets priority: hero text/images prefer Tlamagames/Tlamagase, then fall back to other sellers; galleries merge unique images across sellers.
+- SEO: dynamic titles, canonical links, Open Graph/Twitter tags, JSON-LD (`WebSite` on home, `Product` with per-seller `Offer` on detail), and `VITE_SITE_URL` can set the absolute origin.
