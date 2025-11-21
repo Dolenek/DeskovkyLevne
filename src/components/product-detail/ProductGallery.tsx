@@ -87,7 +87,7 @@ export const ProductGallery = ({ series }: { series: ProductSeries }) => {
         <div className="relative">
           <div
             ref={sliderRef}
-            className="flex snap-x snap-mandatory overflow-x-auto rounded-2xl bg-slate-900/40 px-2 py-4 scroll-smooth"
+            className="custom-scrollbar flex snap-x snap-mandatory overflow-x-auto rounded-2xl bg-slate-900/40 px-2 py-4 scroll-smooth"
           >
             {images.length > 0 ? (
               images.map((url, index) => (
@@ -110,7 +110,7 @@ export const ProductGallery = ({ series }: { series: ProductSeries }) => {
           </div>
         </div>
         {images.length > 1 ? (
-          <div className="flex flex-nowrap gap-3 overflow-x-auto pb-1">
+          <div className="custom-scrollbar flex flex-nowrap gap-3 overflow-x-auto pb-1">
             {images.map((url, index) => (
               <button
                 key={`${url}-${index}`}
