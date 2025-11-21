@@ -2,9 +2,11 @@
 
 ## React + Vite frontend
 - Postavena nova React aplikace (Vite + TypeScript + Tailwind) v cerno-modrem vizualu.
+- Pridana komponenta `Seo`, ktera nastavuje slugove canonical linky, Open Graph/Twitter meta a JSON-LD; domovska stranka publikuje schema.org `WebSite`, detail produktu `Product` s nabidkami pro kazdeho prodejce a obrazky preferuje hero snimek. Index.html ma predvyplneny popis, theme-color a jazyk `cs`.
 - Supabase klient + hook useProductPricing převádějí tabulku `product_price_snapshots` na časové řady podle `product_name_normalized` (slug). Slug je nově hlavním identifikátorem produktů i pro routing, takže více prodejců se stejným slagem sdílí jednu kartu/detail. Volitelný filtr `VITE_SUPABASE_FILTER_CODES` dál omezuje jen zdrojová product_code.
 - Pridany komponenty pro lokalizaci (CZ/EN), prepinac jazyka, karty s grafem (Recharts) a stavove obrazovky (nacitani/chyba/prazdno).
 - Popsane formatovani dat/cen a moznost snadno rozsirit UI o dalsi produkty.
+- Branding prejmenovan na „Deskovky Levně (DeskovkyLevne)“ – hlavicka, HTML titulek i README nesou nove jmeno a lokalni ukladani jazyka pouziva novy prefix s fallbackem na predchozi klic.
 - Hlavni stranka nabizi fulltext product_name/product_code (debounce 400 ms) a filtr "Zobrazit pouze skladem". Sekci "Nedavno zlevnene" nahradil cenovy filtr s duplikovanym sliderem a poli "Cena od / Cena do", ktery okamzite filtruje dataset, ukazuje max. 10 karet na stranku a nabizi strankovani.
 - Pro rychlejsi prvni nacitani se dataset cenovych rad nacita po postupnych davkach (Supabase range) pres novy hook `useChunkedProductCatalog`; sekce s cenovym filtrem automaticky vyzaduje dalsi davku podle aktualni stranky, misto aby se cele historie produktu stahovaly hned pri vstupu na web.
 - Postranni panel filtru na vyhledavaci strance zabira celou vysku okna a vdaka sticky pozici zustava viditelny pri scrollovani.
@@ -19,7 +21,7 @@
 - Header s vyhledavacim polem je znovu pouzity i na detailu produktu a pri zadavani vyhledavani se cely podklad rozmaze a nad aktualnim produktem se objevi jednoduchy seznam max. 6 relevantnich titulu; klik mimo seznam zavre overlay, ale ponecha zadany text.
 - Hlavni vyhledavaci pole ted spousti stejny rozmazany overlay s vysledky jako na detailu; pokud nejsou zadane aspon dva znaky, overlay se vubec neukaze a zmizela i hlaska "Start typing at least 2 characters.".
 - V overlays vyhledavani na detailu produktu ted kazdy vysledek zobrazuje i miniaturu hry (hero image), aby bylo snadnejsi vizualne identifikovat titul.
-- Klik na logotyp/napis „TLAMA PRICES“ v hlavicce kdykoliv presune uzivatele zpet na hlavni vyhledavaci stranku.
+- Klik na logotyp/napis „DESKOVKY LEVNĚ“ v hlavicce kdykoliv presune uzivatele zpet na hlavni vyhledavaci stranku.
 
 ## Detail produktu /deskove-hry/:slug
 - Layout hlavni stranky presunut do pages/SearchPage.tsx, doplnen lehky router (usePathNavigation + App.tsx) pro URL / a /deskove-hry/:slug.

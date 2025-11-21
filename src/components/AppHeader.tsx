@@ -24,11 +24,11 @@ export const AppHeader = ({
           onClick={onLogoClick}
           className="text-xl font-bold uppercase tracking-[0.3em] transition hover:text-primary focus:text-primary focus:outline-none"
         >
-          Tlama Prices
+          Deskovky Levně
         </button>
       ) : (
         <div className="text-xl font-bold uppercase tracking-[0.3em]">
-          Tlama Prices
+          Deskovky Levně
         </div>
       )}
       <div className="flex-1">

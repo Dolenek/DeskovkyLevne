@@ -1,4 +1,4 @@
-# TLAMA Prices
+# Deskovky Levně
 
 ## Catalog index refresh (important)
 

@@ -13,6 +13,7 @@ import type { LocaleKey } from "../i18n/translations";
 import { formatDateLabel } from "../utils/date";
 import { formatPrice } from "../utils/numberFormat";
 import type { ProductSeries } from "../types/product";
+import { getSellerDisplayName } from "../utils/sellers";
 
 interface ProductChartProps {
   series: ProductSeries;
@@ -84,23 +85,14 @@ const ChartTooltip = ({
   );
 };
 
-const SELLER_DISPLAY_NAMES: Record<string, string> = {
-  tlamagames: "Tlama Games",
-  tlamagase: "TlamaGase",
-  planetaher: "Planeta Her",
-};
-
 const SELLER_COLORS = ["#4f9dff", "#f472b6", "#34d399", "#f97316"];
-
-const getSellerName = (sellerId: string): string =>
-  SELLER_DISPLAY_NAMES[sellerId] ?? sellerId;
 
 const buildSellerConfigs = (series: ProductSeries) =>
   series.sellers.map((seller, index) => {
     const id = seller.seller || `seller-${index}`;
     return {
       id,
-      label: getSellerName(id),
+      label: getSellerDisplayName(id),
       color: SELLER_COLORS[index % SELLER_COLORS.length],
       currency: seller.currency ?? series.currency ?? null,
       priceMap: new Map(seller.points.map((point) => [point.rawDate, point.price])),

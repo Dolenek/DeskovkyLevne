@@ -10,6 +10,7 @@ import { ProductSearchOverlay } from "../components/ProductSearchOverlay";
 import { ProductGallery } from "../components/product-detail/ProductGallery";
 import { ProductHero } from "../components/product-detail/ProductHero";
 import { SupplementaryParametersPanel } from "../components/product-detail/SupplementaryParametersPanel";
+import { Seo } from "../components/Seo";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useTranslation } from "../hooks/useTranslation";
 import { useProductDetail } from "../hooks/useProductDetail";
@@ -19,6 +20,12 @@ import type { Translator } from "../types/i18n";
 import type { LocaleKey } from "../i18n/translations";
 import { searchSnapshotsByName } from "../services/productService";
 import { uniqueSeriesBySlug } from "../utils/series";
+import {
+  buildProductDescription,
+  buildProductStructuredData,
+  pickPrimaryImage,
+} from "../utils/productSeo";
+import { buildAbsoluteUrl } from "../utils/urls";
 
 interface ProductDetailPageProps {
   productSlug: string;
@@ -27,7 +34,6 @@ interface ProductDetailPageProps {
 }
 
 const INLINE_SEARCH_LIMIT = 6;
-
 
 const HistorySection = ({
   series,
@@ -110,9 +116,59 @@ export const ProductDetailPage = ({
     return unique.slice(0, INLINE_SEARCH_LIMIT);
   }, [searchSeries]);
   const overlayVisible = searchActive && debouncedQuery.length >= 2;
+  const canonicalPath = useMemo(
+    () => `/deskove-hry/${encodeURIComponent(productSlug)}`,
+    [productSlug]
+  );
+  const seoDescription = useMemo(
+    () => (product ? buildProductDescription(product, locale) : null),
+    [locale, product]
+  );
+  const structuredData = useMemo(() => {
+    if (!product || !seoDescription) {
+      return null;
+    }
+    const canonicalUrl = buildAbsoluteUrl(canonicalPath) ?? canonicalPath;
+    return buildProductStructuredData(
+      product,
+      canonicalUrl,
+      locale,
+      seoDescription
+    );
+  }, [canonicalPath, locale, product, seoDescription]);
+  const ogImage = useMemo(
+    () => (product ? pickPrimaryImage(product) : null),
+    [product]
+  );
+  const keywords = useMemo(
+    () =>
+      product ? [product.label, ...product.categoryTags].slice(0, 8) : undefined,
+    [product]
+  );
+  const defaultDescription =
+    locale === "en"
+      ? "Track price history and availability for Czech board games."
+      : "Sledujte vývoj ceny a dostupnosti českých deskových her.";
+  const fallbackTitle =
+    locale === "en"
+      ? "Deskovky Levně | Board game price tracker"
+      : "Deskovky Levně | Srovnávač cen deskových her";
+  const pageTitle = product ? `${product.label} | Deskovky Levně` : fallbackTitle;
+  const shouldNoIndex = !product || Boolean(error);
 
   return (
     <div className="min-h-screen bg-background text-white">
+      <Seo
+        title={pageTitle}
+        description={seoDescription ?? defaultDescription}
+        path={canonicalPath}
+        imageUrl={ogImage}
+        locale={locale}
+        type={product ? "product" : "website"}
+        noIndex={shouldNoIndex}
+        keywords={keywords}
+        structuredData={structuredData ?? undefined}
+      />
       <AppHeader
         searchValue={searchValue}
         onSearchChange={(value) => {

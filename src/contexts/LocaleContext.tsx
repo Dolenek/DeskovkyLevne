@@ -8,7 +8,8 @@ import {
 } from "react";
 import type { LocaleKey } from "../i18n/translations";
 
-const LOCALE_STORAGE_KEY = "tlama-site-locale";
+const LOCALE_STORAGE_KEY = "deskovky-levne-locale";
+const PREVIOUS_LOCALE_STORAGE_KEY = "tlama-site-locale";
 
 interface LocaleContextValue {
   locale: LocaleKey;
@@ -22,9 +23,10 @@ const getInitialLocale = (): LocaleKey => {
     return "cs";
   }
 
-  const stored = window.localStorage.getItem(
-    LOCALE_STORAGE_KEY
-  ) as LocaleKey | null;
+  const stored = (window.localStorage.getItem(LOCALE_STORAGE_KEY) ??
+    window.localStorage.getItem(PREVIOUS_LOCALE_STORAGE_KEY)) as
+    | LocaleKey
+    | null;
   if (stored === "cs" || stored === "en") {
     return stored;
   }
@@ -45,6 +47,7 @@ export const LocaleProvider = ({ children }: { children: ReactNode }) => {
     setLocaleState(value);
     try {
       window.localStorage.setItem(LOCALE_STORAGE_KEY, value);
+      window.localStorage.removeItem(PREVIOUS_LOCALE_STORAGE_KEY);
     } catch {
       // localStorage might be unavailable (SSR / private mode), safe to ignore.
     }

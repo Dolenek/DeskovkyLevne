@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Seo } from "../components/Seo";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useProductPricing } from "../hooks/useProductPricing";
 import { useChunkedProductCatalog } from "../hooks/useChunkedProductCatalog";
@@ -15,6 +16,7 @@ import {
 import { AppHeader } from "../components/AppHeader";
 import { ProductSearchOverlay } from "../components/ProductSearchOverlay";
 import { uniqueSeriesBySlug } from "../utils/series";
+import { HOME_SEO_COPY, buildHomeStructuredData } from "../utils/seoContent";
 
 interface SearchPageProps {
   onProductNavigate: (productSlug: string) => void;
@@ -34,6 +36,11 @@ const parsePriceInput = (value: string): number | null => {
 
 const SearchPage = ({ onProductNavigate }: SearchPageProps) => {
   const { t, locale } = useTranslation();
+  const homeSeo = useMemo(() => HOME_SEO_COPY[locale], [locale]);
+  const homeStructuredData = useMemo(
+    () => buildHomeStructuredData(locale),
+    [locale]
+  );
   const [searchValue, setSearchValue] = useState("");
   const [searchActive, setSearchActive] = useState(false);
   const [availabilityFilter, setAvailabilityFilter] = useState<AvailabilityFilter>("all");
@@ -210,6 +217,14 @@ const SearchPage = ({ onProductNavigate }: SearchPageProps) => {
 
   return (
     <div className="min-h-screen bg-background text-white">
+      <Seo
+        title={homeSeo.title}
+        description={homeSeo.description}
+        path="/"
+        locale={locale}
+        keywords={homeSeo.keywords}
+        structuredData={homeStructuredData}
+      />
       <AppHeader
         searchValue={searchValue}
         onSearchChange={(value) => {
