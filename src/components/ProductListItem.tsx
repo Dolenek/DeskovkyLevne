@@ -54,13 +54,13 @@ export const ProductListItem = ({
       onClick={handleClick}
       onMouseEnter={() => onSelect(series)}
       onFocus={() => onSelect(series)}
-      className={`flex w-full items-center gap-4 rounded-3xl border px-4 py-3 text-left transition no-underline ${
+      className={`flex w-full flex-col gap-3 rounded-3xl border px-4 py-3 text-left transition no-underline sm:flex-row sm:items-center ${
         selected
           ? "border-primary bg-surface/80 shadow-2xl shadow-black/40"
           : "border-slate-800 bg-surface/50 hover:border-primary/70"
       }`}
     >
-      <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-2xl bg-slate-900/70">
+      <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-2xl bg-slate-900/70 sm:h-20 sm:w-20">
         {series.heroImage ? (
           <img
             src={series.heroImage}
@@ -81,7 +81,7 @@ export const ProductListItem = ({
           </span>
         ) : null}
       </div>
-      <div className="text-right">
+      <div className="flex items-baseline gap-3 text-left sm:flex-col sm:items-end sm:text-right">
         <p className="text-2xl font-semibold text-white">{latestPrice}</p>
         {previousPrice ? (
           <p className="text-sm text-slate-400 line-through">{previousPrice}</p>

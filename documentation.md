@@ -21,6 +21,7 @@
 - Header s vyhledavacim polem je znovu pouzity i na detailu produktu a pri zadavani vyhledavani se cely podklad rozmaze a nad aktualnim produktem se objevi jednoduchy seznam max. 6 relevantnich titulu; klik mimo seznam zavre overlay, ale ponecha zadany text.
 - Hlavni vyhledavaci pole ted spousti stejny rozmazany overlay s vysledky jako na detailu; pokud nejsou zadane aspon dva znaky, overlay se vubec neukaze a zmizela i hlaska "Start typing at least 2 characters.".
 - V overlays vyhledavani na detailu produktu ted kazdy vysledek zobrazuje i miniaturu hry (hero image), aby bylo snadnejsi vizualne identifikovat titul.
+- Mobilni overlay vyhledavani se uz posouva v ramci obrazovky a radky vysledku se lami tak, aby se dostupnost s cenou neprekryvaly.
 - Klik na logotyp/napis „DESKOVKY LEVNĚ“ v hlavicce kdykoliv presune uzivatele zpet na hlavni vyhledavaci stranku.
 
 ## Detail produktu /deskove-hry/:slug

@@ -43,7 +43,7 @@ const OverlayResultsList = ({
         <button
           type="button"
           onClick={() => onSelect(series)}
-          className="flex w-full items-center justify-between gap-4 rounded-2xl border border-slate-800 bg-black/30 px-4 py-3 text-left transition hover:border-primary hover:bg-black/60"
+          className="flex w-full flex-col gap-3 rounded-2xl border border-slate-800 bg-black/30 px-4 py-3 text-left transition hover:border-primary hover:bg-black/60 sm:flex-row sm:items-center sm:justify-between"
         >
           <div className="flex items-center gap-4">
             {(() => {
@@ -70,7 +70,7 @@ const OverlayResultsList = ({
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-3 text-right">
+          <div className="flex flex-col items-start gap-1 text-left sm:flex-row sm:items-center sm:gap-3 sm:text-right">
             {series.availabilityLabel ? (
               <span className="inline-flex rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-200">
                 {series.availabilityLabel}
@@ -143,19 +143,21 @@ export const ProductSearchOverlay = ({
   const content = renderOverlayContent(contentProps);
 
   return (
-    <div className="fixed inset-0 z-40 flex items-start justify-center px-4 pt-32 sm:px-6 lg:px-10">
+    <div className="fixed inset-0 z-40 flex items-start justify-center px-4 pt-24 sm:px-6 sm:pt-32 lg:px-10">
       <div
         className="absolute inset-0 bg-black/70 backdrop-blur-md"
         onClick={onClose}
       />
       <div
-        className="relative z-10 w-full max-w-3xl rounded-3xl border border-slate-800 bg-slate-950/90 p-4 shadow-2xl"
+        className="relative z-10 flex w-full max-w-3xl flex-col rounded-3xl border border-slate-800 bg-slate-950/90 p-4 shadow-2xl max-h-[calc(100vh-7rem)] sm:max-h-[calc(100vh-10rem)]"
         onClick={(event) => event.stopPropagation()}
       >
         <p className="mb-3 text-center text-sm uppercase tracking-wide text-slate-400">
           {contentProps.t("searchResultsTitle")}
         </p>
-        {content}
+        <div className="overflow-y-auto pr-1">
+          {content}
+        </div>
       </div>
     </div>
   );
