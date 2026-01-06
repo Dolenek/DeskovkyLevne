@@ -16,19 +16,19 @@ const buildChangeLabel = (
   locale: LocaleKey
 ): { label: string; tone: string } => {
   if (series.latestPrice === null || series.firstPrice === null) {
-    return { label: "--", tone: "text-slate-400" };
+    return { label: "--", tone: "text-muted" };
   }
 
   const delta = series.latestPrice - series.firstPrice;
   const formatted = formatPrice(delta, series.currency ?? undefined, locale);
   if (delta > 0) {
-    return { label: `+${formatted}`, tone: "text-rose-400" };
+    return { label: `+${formatted}`, tone: "text-accent" };
   }
   if (delta < 0) {
-    return { label: formatted, tone: "text-emerald-400" };
+    return { label: formatted, tone: "text-secondary" };
   }
 
-  return { label: formatted, tone: "text-slate-300" };
+  return { label: formatted, tone: "text-muted" };
 };
 
 const ProductHeader = ({
@@ -48,15 +48,17 @@ const ProductHeader = ({
         />
       ) : null}
       <div>
-        <p className="text-sm uppercase tracking-wide text-slate-400">
+        <p className="text-sm uppercase tracking-wide text-muted">
           {t("productCodeLabel")}
         </p>
-        <h2 className="text-2xl font-semibold text-white">{series.label}</h2>
-        <p className="text-sm text-slate-400">
+        <h2 className="font-display text-2xl font-semibold text-ink">
+          {series.label}
+        </h2>
+        <p className="text-sm text-muted">
           {series.primaryProductCode ?? series.slug}
         </p>
         {series.availabilityLabel ? (
-          <span className="mt-2 inline-flex rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-200">
+          <span className="mt-2 inline-flex rounded-full bg-secondary/15 px-3 py-1 text-xs font-semibold text-secondary">
             {series.availabilityLabel}
           </span>
         ) : null}
@@ -67,7 +69,7 @@ const ProductHeader = ({
         href={series.url}
         target="_blank"
         rel="noreferrer"
-        className="rounded-full border border-slate-700 px-4 py-2 text-sm text-slate-200 transition hover:border-primary hover:text-white"
+        className="rounded-full border border-outline px-4 py-2 text-sm text-ink transition hover:border-primary hover:text-primary"
       >
         {series.url.replace(/^https?:\/\//, "")}
       </a>
@@ -86,18 +88,18 @@ const ProductStats = ({
 }) => {
   const change = buildChangeLabel(series, locale);
   return (
-    <div className="grid grid-cols-2 gap-4 rounded-2xl bg-black/20 p-4">
+    <div className="grid grid-cols-2 gap-4 rounded-2xl border border-outline bg-surface-muted p-4">
       <div>
-        <p className="text-xs uppercase tracking-wide text-slate-400">
+        <p className="text-xs uppercase tracking-wide text-muted">
           {t("latestPrice")}
         </p>
-        <p className="text-2xl font-semibold text-accent">
+        <p className="text-2xl font-semibold text-ink">
           {formatPrice(series.latestPrice, series.currency ?? undefined, locale)}
         </p>
         {series.listPrice !== null ? (
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-muted">
             {t("listPriceLabel")}:{" "}
-            <span className="text-slate-200">
+            <span className="text-ink">
               {formatPrice(
                 series.listPrice,
                 series.currency ?? undefined,
@@ -108,7 +110,7 @@ const ProductStats = ({
         ) : null}
       </div>
       <div>
-        <p className="text-xs uppercase tracking-wide text-slate-400">
+        <p className="text-xs uppercase tracking-wide text-muted">
           {t("priceChange")}
         </p>
         <p className={`text-2xl font-semibold ${change.tone}`}>
@@ -132,14 +134,14 @@ const ProductFooter = ({
     ? formatDateLabel(series.latestScrapedAt, locale)
     : "--";
   return (
-    <p className="text-xs text-slate-400">
+    <p className="text-xs text-muted">
       {t("lastUpdated", { value: lastDate })}
     </p>
   );
 };
 
 export const ProductCard = ({ series, locale, t }: ProductCardProps) => (
-  <article className="flex flex-col gap-6 rounded-3xl border border-slate-800 bg-surface/70 p-6 shadow-2xl shadow-black/40 backdrop-blur">
+  <article className="flex flex-col gap-6 rounded-3xl border border-outline bg-surface/90 p-6 shadow-card backdrop-blur">
     <ProductHeader series={series} t={t} />
     <ProductStats series={series} locale={locale} t={t} />
     {series.points.length > 0 ? (
@@ -148,9 +150,9 @@ export const ProductCard = ({ series, locale, t }: ProductCardProps) => (
         locale={locale}
         priceLabel={t("price")}
         dateLabel={t("date")}
-      />
-    ) : (
-      <p className="rounded-2xl border border-dashed border-slate-700 p-6 text-center text-slate-400">
+        />
+      ) : (
+      <p className="rounded-2xl border border-dashed border-outline p-6 text-center text-muted">
         {t("noSeriesData")}
       </p>
     )}

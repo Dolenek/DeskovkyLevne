@@ -43,7 +43,7 @@ const OverlayResultsList = ({
         <button
           type="button"
           onClick={() => onSelect(series)}
-          className="flex w-full flex-col gap-3 rounded-2xl border border-slate-800 bg-black/30 px-4 py-3 text-left transition hover:border-primary hover:bg-black/60 sm:flex-row sm:items-center sm:justify-between"
+          className="flex w-full flex-col gap-3 rounded-2xl border border-outline bg-surface/80 px-4 py-3 text-left transition hover:border-primary hover:bg-white sm:flex-row sm:items-center sm:justify-between"
         >
           <div className="flex items-center gap-4">
             {(() => {
@@ -55,28 +55,28 @@ const OverlayResultsList = ({
                 <img
                   src={image}
                   alt={series.label}
-                  className="h-14 w-14 rounded-2xl border border-slate-800 object-cover"
+                  className="h-14 w-14 rounded-2xl border border-outline object-cover"
                 />
               ) : (
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-dashed border-slate-700 bg-slate-900 text-lg font-semibold text-slate-500">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-dashed border-outline bg-surface-muted text-lg font-semibold text-muted">
                   {fallbackLabel}
                 </div>
               );
             })()}
             <div>
-              <p className="text-base font-semibold text-white">{series.label}</p>
-              <p className="text-sm text-slate-400">
+              <p className="text-base font-semibold text-ink">{series.label}</p>
+              <p className="text-sm text-muted">
                 {series.primaryProductCode ?? series.slug}
               </p>
             </div>
           </div>
           <div className="flex flex-col items-start gap-1 text-left sm:flex-row sm:items-center sm:gap-3 sm:text-right">
             {series.availabilityLabel ? (
-              <span className="inline-flex rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-200">
+              <span className="inline-flex rounded-full bg-secondary/15 px-3 py-1 text-xs font-semibold text-secondary">
                 {series.availabilityLabel}
               </span>
             ) : null}
-            <span className="text-lg font-semibold text-accent">
+            <span className="text-lg font-semibold text-ink">
               {formatPrice(
                 series.latestPrice,
                 series.currency ?? undefined,
@@ -103,18 +103,18 @@ const renderOverlayContent = ({
   if (loading) {
     return (
       <div className="flex items-center justify-center py-6">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-600 border-t-primary" />
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-outline border-t-primary" />
       </div>
     );
   }
   if (error) {
     return (
       <div className="flex flex-col items-center gap-3 py-4 text-center">
-        <p className="text-sm text-red-300">{error}</p>
+        <p className="text-sm text-accent">{error}</p>
         <button
           type="button"
           onClick={onRetry}
-          className="rounded-full border border-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary/20"
+          className="rounded-full border border-primary px-4 py-2 text-sm font-semibold text-ink transition hover:bg-primary/15"
         >
           {t("retry")}
         </button>
@@ -123,7 +123,7 @@ const renderOverlayContent = ({
   }
   if (results.length === 0) {
     return (
-      <p className="py-6 text-center text-sm text-slate-400">
+      <p className="py-6 text-center text-sm text-muted">
         {t("searchNoResults", { term: query })}
       </p>
     );
@@ -145,17 +145,17 @@ export const ProductSearchOverlay = ({
   return (
     <div className="fixed inset-0 z-40 flex items-start justify-center px-4 pt-24 sm:px-6 sm:pt-32 lg:px-10">
       <div
-        className="absolute inset-0 bg-black/70 backdrop-blur-md"
+        className="absolute inset-0 bg-ink/40 backdrop-blur-md"
         onClick={onClose}
       />
       <div
-        className="relative z-10 flex w-full max-w-3xl flex-col rounded-3xl border border-slate-800 bg-slate-950/90 p-4 shadow-2xl max-h-[calc(100vh-7rem)] sm:max-h-[calc(100vh-10rem)]"
+        className="relative z-10 flex w-full max-w-3xl flex-col rounded-3xl border border-outline bg-surface/95 p-4 shadow-card max-h-[calc(100vh-7rem)] sm:max-h-[calc(100vh-10rem)]"
         onClick={(event) => event.stopPropagation()}
       >
-        <p className="mb-3 text-center text-sm uppercase tracking-wide text-slate-400">
+        <p className="mb-3 text-center text-sm uppercase tracking-wide text-muted">
           {contentProps.t("searchResultsTitle")}
         </p>
-        <div className="overflow-y-auto pr-1">
+        <div className="custom-scrollbar overflow-y-auto pr-1">
           {content}
         </div>
       </div>

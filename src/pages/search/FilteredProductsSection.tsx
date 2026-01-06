@@ -73,10 +73,10 @@ export const FilteredProductsSection = ({
   return (
     <section className="flex flex-col gap-4">
       <div>
-        <h2 className="text-2xl font-semibold text-white">
+        <h2 className="text-2xl font-semibold text-ink">
           {t("filteredResultsTitle")}
         </h2>
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-muted">
           {t("filteredResultsSubtitle", { min: minLabel, max: maxLabel })}
         </p>
       </div>
@@ -94,7 +94,7 @@ export const FilteredProductsSection = ({
       </div>
       {total > FILTERED_PAGE_SIZE ? (
         <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-muted">
             {t("filteredPaginationLabel", {
               from: showingFrom,
               to: showingTo,
@@ -106,18 +106,18 @@ export const FilteredProductsSection = ({
               type="button"
               onClick={() => onPageChange(page - 1)}
               disabled={page === 1}
-              className="rounded-full border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-200 transition disabled:cursor-not-allowed disabled:opacity-40 hover:border-primary hover:text-white"
+              className="rounded-full border border-outline px-4 py-2 text-sm font-semibold text-ink transition disabled:cursor-not-allowed disabled:opacity-40 hover:border-primary hover:text-primary"
             >
               {t("filteredPaginationPrev")}
             </button>
-            <span className="text-sm text-slate-400">
+            <span className="text-sm text-muted">
               {page} / {pageCount}
             </span>
             <button
               type="button"
               onClick={() => onPageChange(page + 1)}
               disabled={page === pageCount}
-              className="rounded-full border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-200 transition disabled:cursor-not-allowed disabled:opacity-40 hover:border-primary hover:text-white"
+              className="rounded-full border border-outline px-4 py-2 text-sm font-semibold text-ink transition disabled:cursor-not-allowed disabled:opacity-40 hover:border-primary hover:text-primary"
             >
               {t("filteredPaginationNext")}
             </button>

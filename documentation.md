@@ -41,6 +41,7 @@
 - Scrollbary v galerii detailu pouzivaji stejny custom styl jako filtry/kategorie, aby vizualne ladily s ostatnimi castmi webu.
 - Popisek produktu (short_description) se zobrazuje primo pod nazvem v pravem panelu, ktery ma max-height=100vh a ceny jsou zarovnane ke spodku, aby CTA byla vzdy ve stejnem miste.
 - Spodni cast sekce „Historie ceny" uz nezobrazuje tabulku dat/datumů – misto toho se sem natahnou `supplementary_parameters` z databaze a prehledne se vypisou jako klic-hodnota; pokud dodatecne informace chybi, uzivatel dostane odpovidajici hlasku.
+- Kompletně přepracovaný vizuál do světlého, „papírového” vzhledu s novou typografií (Space Grotesk + Fraunces), teplou paletou, výraznějšími kartami, přehlednější hlavičkou a hero sekcí na hlavní stránce; detail produktu i overlaye používají sjednocené povrchy, nové stíny a jemné animace náběhu.
 - Build overen (npm run build), varovani o velikosti bundlu zatim ponechano.
 - Odstranen postranni panel "Detail produktu" na vyhledavaci strance, protoze kompletni detail zije na dedikovanem route.
 - Odstranen cenový souhrn (Lowest/Highest/Average) z detailu produktu, aby stranka zduraznila historii cen a doplnkove parametry misto statickych karet.

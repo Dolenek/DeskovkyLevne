@@ -13,9 +13,11 @@ import {
   FILTERED_PAGE_SIZE,
 } from "./search/FilteredProductsSection";
 import { AppHeader } from "../components/AppHeader";
+import { PageShell } from "../components/PageShell";
 import { ProductSearchOverlay } from "../components/ProductSearchOverlay";
 import { uniqueSeriesBySlug } from "../utils/series";
 import { HOME_SEO_COPY, buildHomeStructuredData } from "../utils/seoContent";
+import { formatPrice } from "../utils/numberFormat";
 
 interface SearchPageProps {
   onProductNavigate: (productSlug: string) => void;
@@ -219,8 +221,38 @@ const SearchPage = ({ onProductNavigate }: SearchPageProps) => {
     setPricePage(1);
   }, []);
 
+  const availabilitySummary = useMemo(() => {
+    if (availabilityFilter === "available") {
+      return t("availabilityFilterOn");
+    }
+    if (availabilityFilter === "preorder") {
+      return t("availabilityFilterPreorder");
+    }
+    return t("availabilityFilterOff");
+  }, [availabilityFilter, t]);
+
+  const priceSummary = useMemo(() => {
+    const minLabel = formatPrice(
+      priceBounds.min,
+      undefined,
+      locale
+    ) ?? priceBounds.min.toString();
+    const maxLabel = formatPrice(
+      priceBounds.max,
+      undefined,
+      locale
+    ) ?? priceBounds.max.toString();
+    return `${minLabel} - ${maxLabel}`;
+  }, [locale, priceBounds.max, priceBounds.min]);
+
+  const priceRangeActive = priceRange.min !== null || priceRange.max !== null;
+  const activeFiltersCount =
+    (availabilityFilter === "all" ? 0 : 1) +
+    (categoryFilters.length > 0 ? 1 : 0) +
+    (priceRangeActive ? 1 : 0);
+
   return (
-    <div className="min-h-screen bg-background text-white">
+    <PageShell>
       <Seo
         title={homeSeo.title}
         description={homeSeo.description}
@@ -258,8 +290,72 @@ const SearchPage = ({ onProductNavigate }: SearchPageProps) => {
         onClose={() => setSearchActive(false)}
       />
       <main className="px-4 py-10 sm:px-6 lg:px-10">
-        <div className="mx-auto flex max-w-6xl flex-col gap-8">
-          <div className="grid gap-8 lg:grid-cols-[260px_minmax(0,1fr)]">
+        <div className="mx-auto flex max-w-6xl flex-col gap-10">
+          <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+            <div className="flex flex-col gap-4 animate-fade-up">
+              <p className="text-xs uppercase tracking-[0.4em] text-muted">
+                Deskovky Levne
+              </p>
+              <h1 className="font-display text-4xl font-semibold text-ink sm:text-5xl">
+                {t("heroTitle")}
+              </h1>
+              <p className="text-base text-muted sm:text-lg">
+                {t("heroSubtitle")}
+              </p>
+              <div className="flex flex-wrap gap-3 text-sm font-semibold text-ink">
+                <span className="rounded-full border border-outline bg-white/70 px-4 py-2">
+                  {availabilitySummary}
+                </span>
+                {categoryFilters.length > 0 ? (
+                  <span className="rounded-full border border-outline bg-white/70 px-4 py-2">
+                    {categoryFilters.length}× {t("filtersCategoryTitle")}
+                  </span>
+                ) : null}
+                {priceRangeActive ? (
+                  <span className="rounded-full border border-outline bg-white/70 px-4 py-2">
+                    {t("priceFilterTitle")}
+                  </span>
+                ) : null}
+                {activeFiltersCount > 0 ? (
+                  <span className="rounded-full border border-primary/60 bg-primary/10 px-4 py-2 text-primary">
+                    {activeFiltersCount}× {t("filtersTitle")}
+                  </span>
+                ) : null}
+              </div>
+            </div>
+            <div
+              className="grid gap-4 rounded-3xl border border-outline bg-surface/90 p-6 shadow-card animate-fade-up"
+              style={{ animationDelay: "0.08s" }}
+            >
+              <div className="rounded-2xl border border-outline bg-white/70 p-4">
+                <p className="text-xs uppercase tracking-wide text-muted">
+                  {t("trackedProductsLabel")}
+                </p>
+                <p className="mt-2 text-3xl font-semibold text-ink">
+                  {filteredLoading ? "—" : filteredTotal.toLocaleString(locale)}
+                </p>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="rounded-2xl border border-outline bg-surface-muted p-4">
+                  <p className="text-xs uppercase tracking-wide text-muted">
+                    {t("priceFilterTitle")}
+                  </p>
+                  <p className="mt-2 text-lg font-semibold text-ink">
+                    {priceSummary}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-outline bg-surface-muted p-4">
+                  <p className="text-xs uppercase tracking-wide text-muted">
+                    {t("filtersAvailability")}
+                  </p>
+                  <p className="mt-2 text-lg font-semibold text-ink">
+                    {availabilitySummary}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+          <div className="grid gap-8 lg:grid-cols-[280px_minmax(0,1fr)]">
             <div className="lg:sticky lg:top-28 lg:h-[calc(100vh-7rem)] lg:self-start">
               <FiltersPanel
                 className="lg:flex lg:h-full lg:flex-col lg:overflow-y-auto"
@@ -301,7 +397,7 @@ const SearchPage = ({ onProductNavigate }: SearchPageProps) => {
           </div>
         </div>
       </main>
-    </div>
+    </PageShell>
   );
 };
 

@@ -6,6 +6,7 @@ import {
 } from "../components/AsyncStates";
 import { ProductChart } from "../components/ProductChart";
 import { AppHeader } from "../components/AppHeader";
+import { PageShell } from "../components/PageShell";
 import { ProductSearchOverlay } from "../components/ProductSearchOverlay";
 import { ProductGallery } from "../components/product-detail/ProductGallery";
 import { ProductHero } from "../components/product-detail/ProductHero";
@@ -43,12 +44,12 @@ const HistorySection = ({
   locale: LocaleKey;
   t: Translator;
 }) => (
-  <section className="rounded-3xl border border-slate-800 bg-surface/70 p-6 shadow-xl shadow-black/40 backdrop-blur">
+  <section className="rounded-3xl border border-outline bg-surface/90 p-6 shadow-card backdrop-blur animate-fade-up">
     <div className="flex flex-col gap-1">
-      <h2 className="text-2xl font-semibold text-white">
+      <h2 className="text-2xl font-semibold text-ink">
         {t("detailHistoryTitle")}
       </h2>
-      <p className="text-sm text-slate-400">
+      <p className="text-sm text-muted">
         {t("detailHistorySubtitle", {
           count: series.sellers.reduce(
             (sum, seller) => sum + seller.points.length,
@@ -66,7 +67,7 @@ const HistorySection = ({
           dateLabel={t("date")}
         />
       ) : (
-        <p className="rounded-2xl border border-dashed border-slate-700 p-6 text-center text-slate-400">
+        <p className="rounded-2xl border border-dashed border-outline p-6 text-center text-muted">
           {t("detailTimelineEmpty")}
         </p>
       )}
@@ -153,7 +154,7 @@ export const ProductDetailPage = ({
   const shouldNoIndex = !product || Boolean(error);
 
   return (
-    <div className="min-h-screen bg-background text-white">
+    <PageShell>
       <Seo
         title={pageTitle}
         description={seoDescription ?? defaultDescription}
@@ -197,7 +198,7 @@ export const ProductDetailPage = ({
         }}
         onClose={() => setSearchActive(false)}
       />
-      <main className="px-4 pt-6 pb-10 sm:px-6 lg:px-10 lg:pt-8">
+      <main className="px-4 pt-8 pb-12 sm:px-6 lg:px-10">
         <div className="mx-auto flex max-w-6xl flex-col gap-8">
           {loading ? (
             <LoadingState />
@@ -205,7 +206,7 @@ export const ProductDetailPage = ({
             <ErrorState message={error} retryLabel={t("retry")} onRetry={reload} />
           ) : product ? (
             <>
-              <div className="grid gap-8 lg:grid-cols-2">
+              <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
                 <ProductGallery series={product} />
                 <ProductHero series={product} locale={locale} t={t} />
               </div>
@@ -218,7 +219,7 @@ export const ProductDetailPage = ({
           )}
         </div>
       </main>
-    </div>
+    </PageShell>
   );
 };
 

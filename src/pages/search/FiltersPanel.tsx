@@ -43,7 +43,7 @@ const PriceRangeSlider = ({
   return (
     <div className="price-range-slider mt-3 w-full">
       <div className="relative h-8">
-        <div className="absolute left-0 right-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-slate-800" />
+        <div className="absolute left-0 right-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-outline" />
         <div
           className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full bg-primary"
           style={highlightStyle}
@@ -111,11 +111,11 @@ export const FiltersPanel = ({
   t,
 }: FiltersPanelProps) => (
   <aside
-    className={`rounded-3xl border border-slate-800 bg-surface/60 p-6 shadow-lg shadow-black/30 ${className}`}
+    className={`rounded-3xl border border-outline bg-surface/90 p-6 shadow-card ${className}`}
   >
-    <h2 className="text-xl font-semibold text-white">{t("filtersTitle")}</h2>
+    <h2 className="text-xl font-semibold text-ink">{t("filtersTitle")}</h2>
     <div className="mt-6 space-y-3">
-      <p className="text-sm font-semibold uppercase tracking-wide text-slate-400">
+      <p className="text-sm font-semibold uppercase tracking-wide text-muted">
         {t("filtersAvailability")}
       </p>
       <div className="flex flex-col gap-2">
@@ -132,8 +132,8 @@ export const FiltersPanel = ({
               onClick={() => onAvailabilityChange(value)}
               className={`w-full rounded-2xl border px-4 py-3 text-sm font-semibold transition ${
                 active
-                  ? "border-emerald-400/60 bg-emerald-500/10 text-emerald-200"
-                  : "border-slate-700 text-slate-300 hover:border-primary hover:text-white"
+                  ? "border-secondary/60 bg-secondary/15 text-secondary"
+                  : "border-outline text-muted hover:border-primary hover:text-ink"
               }`}
             >
               {label}
@@ -143,7 +143,7 @@ export const FiltersPanel = ({
       </div>
     </div>
     <div className="mt-6 space-y-3">
-      <p className="text-sm font-semibold uppercase tracking-wide text-slate-400">
+      <p className="text-sm font-semibold uppercase tracking-wide text-muted">
         {t("priceFilterTitle")}
       </p>
       <PriceRangeSlider
@@ -158,32 +158,32 @@ export const FiltersPanel = ({
           value={priceFilter.min}
           onChange={(event) => onPriceFilterChange("min", event.target.value)}
           placeholder="0"
-          className="w-full flex-1 rounded-2xl border border-slate-700 bg-black/30 px-4 py-2 text-sm font-semibold text-white outline-none transition focus:border-primary"
+          className="w-full flex-1 rounded-2xl border border-outline bg-white/70 px-4 py-2 text-sm font-semibold text-ink outline-none transition focus:border-primary"
         />
-        <span className="text-center text-slate-500 sm:w-auto">-</span>
+        <span className="text-center text-muted sm:w-auto">-</span>
         <input
           type="number"
           inputMode="decimal"
           value={priceFilter.max}
           onChange={(event) => onPriceFilterChange("max", event.target.value)}
           placeholder="1000"
-          className="w-full flex-1 rounded-2xl border border-slate-700 bg-black/30 px-4 py-2 text-sm font-semibold text-white outline-none transition focus:border-primary"
+          className="w-full flex-1 rounded-2xl border border-outline bg-white/70 px-4 py-2 text-sm font-semibold text-ink outline-none transition focus:border-primary"
         />
       </div>
-      <p className="text-xs text-slate-500">{t("priceFilterHint")}</p>
+      <p className="text-xs text-muted">{t("priceFilterHint")}</p>
     </div>
     {hasCategoryOptions ? (
       <div className="mt-6 space-y-3">
-        <p className="text-sm font-semibold uppercase tracking-wide text-slate-400">
+        <p className="text-sm font-semibold uppercase tracking-wide text-muted">
           {t("filtersCategoryTitle")}
         </p>
-        <div className="rounded-2xl border border-slate-800 bg-black/30 px-3 py-2 shadow-inner shadow-black/40">
+        <div className="rounded-2xl border border-outline bg-white/70 px-3 py-2 shadow-inner">
           <input
             type="text"
             value={categorySearchValue}
             onChange={(event) => onCategorySearchChange(event.target.value)}
             placeholder={t("filtersCategorySearchPlaceholder")}
-            className="w-full bg-transparent text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none"
+            className="w-full bg-transparent text-sm text-ink placeholder:text-muted focus:outline-none"
           />
         </div>
         <div className="custom-scrollbar flex max-h-60 flex-col gap-2 overflow-y-auto pr-1">
@@ -195,22 +195,22 @@ export const FiltersPanel = ({
                   key={category}
                   className={`flex cursor-pointer items-center gap-3 rounded-2xl border px-3 py-2 text-sm transition ${
                     checked
-                      ? "border-primary/60 bg-primary/10 text-white"
-                      : "border-slate-800 bg-black/30 text-slate-200 hover:border-primary/60"
+                      ? "border-primary/60 bg-primary/10 text-ink"
+                      : "border-outline bg-surface/70 text-muted hover:border-primary/60"
                   }`}
                 >
                   <input
                     type="checkbox"
                     checked={checked}
                     onChange={() => onCategoryToggle(category)}
-                    className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-primary focus:ring-primary"
+                    className="h-4 w-4 rounded border-outline bg-white text-primary focus:ring-primary"
                   />
                   <span className="flex-1">{category}</span>
                 </label>
               );
             })
           ) : (
-            <p className="rounded-2xl border border-dashed border-slate-700 px-3 py-2 text-center text-sm text-slate-500">
+            <p className="rounded-2xl border border-dashed border-outline px-3 py-2 text-center text-sm text-muted">
               {t("filtersCategoryEmpty")}
             </p>
           )}

@@ -82,12 +82,12 @@ export const ProductGallery = ({ series }: { series: ProductSeries }) => {
   }, [images.length]);
 
   return (
-    <div className="rounded-3xl border border-slate-800 bg-slate-950/60 p-3 lg:p-4">
+    <div className="rounded-3xl border border-outline bg-surface/90 p-3 shadow-card animate-fade-up lg:p-4">
       <div className="flex w-full flex-col gap-4">
         <div className="relative">
           <div
             ref={sliderRef}
-            className="custom-scrollbar flex snap-x snap-mandatory overflow-x-auto rounded-2xl bg-slate-900/40 px-2 py-4 scroll-smooth"
+            className="custom-scrollbar flex snap-x snap-mandatory overflow-x-auto rounded-2xl border border-outline bg-surface-muted px-2 py-4 scroll-smooth"
           >
             {images.length > 0 ? (
               images.map((url, index) => (
@@ -103,7 +103,7 @@ export const ProductGallery = ({ series }: { series: ProductSeries }) => {
                 </div>
               ))
             ) : (
-              <div className="flex aspect-video w-full items-center justify-center rounded-2xl bg-slate-900 text-6xl font-bold text-slate-700">
+              <div className="flex aspect-video w-full items-center justify-center rounded-2xl border border-dashed border-outline bg-surface-muted text-6xl font-bold text-muted">
                 {series.label.charAt(0)}
               </div>
             )}
@@ -118,8 +118,8 @@ export const ProductGallery = ({ series }: { series: ProductSeries }) => {
                 onClick={() => scrollToIndex(index)}
                 className={`h-20 w-20 flex-shrink-0 rounded-2xl border transition ${
                   index === activeIndex
-                    ? "border-primary ring-2 ring-primary/40"
-                    : "border-transparent opacity-70 hover:opacity-100"
+                    ? "border-primary ring-2 ring-primary/30"
+                    : "border-outline/40 opacity-70 hover:opacity-100"
                 }`}
               >
                 <img

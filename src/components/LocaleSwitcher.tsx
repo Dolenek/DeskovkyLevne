@@ -10,8 +10,8 @@ export const LocaleSwitcher = () => {
 
   return (
     <div className="flex items-center gap-3">
-      <span className="text-sm text-slate-300">{t("localeLabel")}:</span>
-      <div className="flex rounded-full bg-slate-800/70 p-1">
+      <span className="text-sm text-muted">{t("localeLabel")}:</span>
+      <div className="flex rounded-full border border-outline bg-surface-muted p-1">
         {OPTIONS.map((option) => {
           const isActive = option.value === locale;
           return (
@@ -19,10 +19,10 @@ export const LocaleSwitcher = () => {
               key={option.value}
               type="button"
               onClick={() => setLocale(option.value)}
-              className={`rounded-full px-4 py-1 text-sm font-medium transition ${
+              className={`rounded-full px-4 py-1 text-sm font-semibold transition ${
                 isActive
-                  ? "bg-primary text-white shadow-[0_0_12px_rgba(76,144,255,0.7)]"
-                  : "text-slate-300 hover:text-white"
+                  ? "bg-primary text-white shadow-[0_0_12px_rgba(224,122,47,0.35)]"
+                  : "text-muted hover:text-ink"
               }`}
             >
               {option.label}

@@ -54,24 +54,24 @@ const ChartTooltip = ({
   }
 
   return (
-    <div className="rounded-xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-sm text-white shadow-lg shadow-black/50">
-      <p className="text-slate-300">
-        {dateLabel}: <span className="font-semibold text-white">{label}</span>
+    <div className="rounded-xl border border-outline bg-surface/95 px-4 py-3 text-sm text-ink shadow-card">
+      <p className="text-muted">
+        {dateLabel}: <span className="font-semibold text-ink">{label}</span>
       </p>
-      <p className="mt-2 text-xs uppercase tracking-wide text-slate-500">
+      <p className="mt-2 text-xs uppercase tracking-wide text-muted">
         {priceLabel}
       </p>
       <ul className="mt-2 space-y-1">
         {payload.map((entry) => (
           <li key={entry.dataKey} className="flex items-center justify-between">
-            <span className="flex items-center gap-2 text-slate-300">
+            <span className="flex items-center gap-2 text-muted">
               <span
                 className="inline-block h-2 w-2 rounded-full"
                 style={{ backgroundColor: entry.color ?? "#fff" }}
               />
               {sellerLabels[entry.dataKey] ?? entry.dataKey}
             </span>
-            <span className="font-semibold text-accent">
+            <span className="font-semibold text-ink">
               {formatPrice(
                 entry.value,
                 currencyBySeller[entry.dataKey] ?? undefined,
@@ -85,7 +85,7 @@ const ChartTooltip = ({
   );
 };
 
-const SELLER_COLORS = ["#4f9dff", "#f472b6", "#34d399", "#f97316"];
+const SELLER_COLORS = ["#2f7d6a", "#e07a2f", "#c44536", "#6d4c41"];
 
 const buildSellerConfigs = (series: ProductSeries) =>
   series.sellers.map((seller, index) => {
@@ -151,15 +151,15 @@ export const ProductChart = ({
     <div className="h-64 w-full">
       <ResponsiveContainer>
         <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#e2d1c1" />
           <XAxis
             dataKey="date"
-            stroke="#64748b"
-            tick={{ fill: "#94a3b8", fontSize: 12 }}
+            stroke="#9a8979"
+            tick={{ fill: "#9a8979", fontSize: 12 }}
           />
           <YAxis
-            stroke="#64748b"
-            tick={{ fill: "#94a3b8", fontSize: 12 }}
+            stroke="#9a8979"
+            tick={{ fill: "#9a8979", fontSize: 12 }}
             width={80}
             tickFormatter={(value) =>
               formatPrice(Number(value), series.currency ?? undefined, locale)
@@ -176,7 +176,10 @@ export const ProductChart = ({
               />
             }
           />
-          <Legend formatter={(value) => sellerLabels[value] ?? value} />
+          <Legend
+            formatter={(value) => sellerLabels[value] ?? value}
+            wrapperStyle={{ color: "#6b5f53", fontSize: "0.85rem" }}
+          />
           {sellerConfigs.map((config) => (
             <Line
               key={config.id}
