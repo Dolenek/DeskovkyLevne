@@ -1,14 +1,15 @@
-import type {
-  ProductCatalogIndexRow,
-  ProductRow,
-  ProductSeries,
-  SupplementaryParameter,
-} from "../types/product";
+import type { ProductRow, ProductSeries, SupplementaryParameter } from "../types/product";
 import { toDateKey } from "./date";
 import {
   extractCategoryTags,
   normalizeSupplementaryParameters,
 } from "./supplementary";
+import {
+  normalizeGalleryArray,
+  slugify,
+  toNumericPrice,
+  toOptionalText,
+} from "./productTransformPrimitives";
 
 interface SellerDraft {
   slug: string;
@@ -61,15 +62,6 @@ const compareSellerDraft = (a: SellerDraft, b: SellerDraft): number => {
   return a.label.localeCompare(b.label, "cs");
 };
 
-const slugify = (value: string): string =>
-  value
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .trim();
-
 const resolveSlug = (row: ProductRow): string | null => {
   const normalized = row.product_name_normalized?.trim().toLowerCase();
   if (normalized) {
@@ -93,19 +85,6 @@ const toSeriesLabel = (row: ProductRow): string =>
   row.product_name_normalized?.trim() ||
   "Neznámý produkt";
 
-const toOptionalText = (value: string | null | undefined): string | null => {
-  if (!value) {
-    return null;
-  }
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
-};
-
-const toNumericPrice = (price: unknown): number | null => {
-  const numeric = typeof price === "number" ? price : Number(price);
-  return Number.isFinite(numeric) ? Number(numeric.toFixed(2)) : null;
-};
-
 const appendPoint = (draft: SellerDraft, row: ProductRow) => {
   const price = toNumericPrice(row.price_with_vat);
   if (price === null || !row.scraped_at) {
@@ -116,35 +95,6 @@ const appendPoint = (draft: SellerDraft, row: ProductRow) => {
     rawDate: toDateKey(row.scraped_at),
     price,
   });
-};
-
-const normalizeGalleryArray = (
-  value: ProductRow["gallery_image_urls"]
-): string[] => {
-  if (!value) {
-    return [];
-  }
-  if (Array.isArray(value)) {
-    return value.filter((entry): entry is string => typeof entry === "string" && entry.trim().length > 0);
-  }
-  if (typeof value === "string") {
-    try {
-      const parsed = JSON.parse(value) as unknown;
-      if (Array.isArray(parsed)) {
-        return parsed.filter(
-          (entry): entry is string =>
-            typeof entry === "string" && entry.trim().length > 0
-        );
-      }
-    } catch {
-      // fall through to delimiter-based parsing
-    }
-    return value
-      .split(/[\n,;]/g)
-      .map((entry) => entry.trim())
-      .filter((entry) => entry.length > 0);
-  }
-  return [];
 };
 
 const mergeGalleryImages = (draft: SellerDraft, row: ProductRow): void => {
@@ -359,113 +309,4 @@ export const buildProductSeries = (rows: ProductRow[]): ProductSeries[] => {
   });
 
   return seriesList.sort((a, b) => a.label.localeCompare(b.label, "cs"));
-};
-
-const toPointArray = (
-  pricePoints: ProductCatalogIndexRow["price_points"]
-): ProductSeries["points"] => {
-  if (!Array.isArray(pricePoints)) {
-    return [];
-  }
-  return pricePoints
-    .map((entry) => {
-      if (
-        !entry ||
-        typeof entry !== "object" ||
-        typeof (entry as Record<string, unknown>).rawDate !== "string"
-      ) {
-        return null;
-      }
-      const rawDate = (entry as Record<string, unknown>).rawDate as string;
-      const priceValue = (entry as Record<string, unknown>).price;
-      const price = toNumericPrice(priceValue);
-      if (!rawDate || price === null) {
-        return null;
-      }
-      return { rawDate, price };
-    })
-    .filter((point): point is ProductSeries["points"][number] => Boolean(point));
-};
-
-const resolveCatalogSlug = (row: ProductCatalogIndexRow): string => {
-  const normalized = row.product_name_normalized?.trim().toLowerCase();
-  if (normalized) {
-    return normalized;
-  }
-  const fallbackName =
-    row.product_name_original?.trim() ?? row.product_name?.trim() ?? "";
-  if (fallbackName) {
-    const slug = slugify(fallbackName);
-    if (slug) {
-      return slug;
-    }
-  }
-  const fallbackCode = row.product_code?.trim().toLowerCase();
-  if (fallbackCode) {
-    return fallbackCode;
-  }
-  return "unknown";
-};
-
-export const buildSeriesFromCatalogIndexRow = (
-  row: ProductCatalogIndexRow
-): ProductSeries => {
-  const normalizedSupplementary = normalizeSupplementaryParameters(
-    row.supplementary_parameters ?? null
-  );
-  const categoryTags = extractCategoryTags(normalizedSupplementary);
-  const points = toPointArray(row.price_points);
-  const slug = resolveCatalogSlug(row);
-  const label =
-    row.product_name_original?.trim() ??
-    row.product_name?.trim() ??
-    row.product_code ??
-    row.product_name_normalized ??
-    "Neznámý produkt";
-  const sellerId =
-    (typeof row.metadata === "object" && row.metadata
-      ? ((row.metadata as Record<string, unknown>).seller as string | undefined)
-      : null) ?? "catalog";
-
-  const sellerEntry: ProductSeries["sellers"][number] = {
-    seller: sellerId,
-    productCode: row.product_code ?? null,
-    label,
-    currency: row.currency_code ?? null,
-    url: row.source_url ?? null,
-    listPrice: toNumericPrice(row.list_price_with_vat),
-    heroImage: row.hero_image_url ?? null,
-    availabilityLabel: row.availability_label ?? null,
-    shortDescription: toOptionalText(row.short_description),
-    galleryImages: normalizeGalleryArray(row.gallery_image_urls),
-    supplementaryParameters: normalizedSupplementary,
-    categoryTags,
-    points,
-    latestPrice: toNumericPrice(row.latest_price),
-    firstPrice: toNumericPrice(row.first_price),
-    previousPrice: toNumericPrice(row.previous_price),
-    latestScrapedAt: row.latest_scraped_at ?? null,
-  };
-
-  return {
-    slug,
-    primaryProductCode: sellerEntry.productCode ?? null,
-    label,
-    currency: sellerEntry.currency,
-    url: sellerEntry.url,
-    listPrice: sellerEntry.listPrice,
-    heroImage: sellerEntry.heroImage,
-    availabilityLabel: sellerEntry.availabilityLabel,
-    shortDescription: sellerEntry.shortDescription,
-    galleryImages: sellerEntry.galleryImages,
-    supplementaryParameters: sellerEntry.supplementaryParameters,
-    categoryTags,
-    points,
-    latestPrice: sellerEntry.latestPrice,
-    firstPrice: sellerEntry.firstPrice,
-    previousPrice: sellerEntry.previousPrice,
-    latestScrapedAt: sellerEntry.latestScrapedAt,
-    sellers: [sellerEntry],
-    primarySeller: sellerEntry.seller,
-  };
 };

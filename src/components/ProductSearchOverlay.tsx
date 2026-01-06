@@ -1,4 +1,4 @@
-import type { ProductSeries } from "../types/product";
+import type { ProductSearchResult } from "../types/product";
 import { formatPrice } from "../utils/numberFormat";
 import type { TranslationHook } from "../hooks/useTranslation";
 import type { ReactNode } from "react";
@@ -7,18 +7,18 @@ interface ProductSearchOverlayProps {
   visible: boolean;
   loading: boolean;
   error: string | null;
-  results: ProductSeries[];
+  results: ProductSearchResult[];
   query: string;
   locale: Parameters<typeof formatPrice>[2];
   t: TranslationHook["t"];
   onRetry: () => void;
-  onSelect: (series: ProductSeries) => void;
+  onSelect: (series: ProductSearchResult) => void;
   onClose: () => void;
 }
 
 type OverlayContentProps = Omit<ProductSearchOverlayProps, "visible" | "onClose">;
 
-const getSeriesImage = (series: ProductSeries): string | null => {
+const getSeriesImage = (series: ProductSearchResult): string | null => {
   if (series.heroImage) {
     return series.heroImage;
   }
@@ -33,9 +33,9 @@ const OverlayResultsList = ({
   locale,
   onSelect,
 }: {
-  results: ProductSeries[];
+  results: ProductSearchResult[];
   locale: Parameters<typeof formatPrice>[2];
-  onSelect: (series: ProductSeries) => void;
+  onSelect: (series: ProductSearchResult) => void;
 }) => (
   <ul className="space-y-2">
     {results.map((series) => (

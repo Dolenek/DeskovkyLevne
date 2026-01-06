@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Seo } from "../components/Seo";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
-import { useProductPricing } from "../hooks/useProductPricing";
+import { useCatalogSearch } from "../hooks/useCatalogSearch";
 import { useChunkedProductCatalog } from "../hooks/useChunkedProductCatalog";
 import { useFilteredCatalogIndex } from "../hooks/useFilteredCatalogIndex";
 import { useTranslation } from "../hooks/useTranslation";
-import { searchSnapshotsByName } from "../services/productService";
-import type { ProductSeries } from "../types/product";
+import type { ProductSearchResult, ProductSeries } from "../types/product";
 import type { AvailabilityFilter } from "../types/filters";
 import { FiltersPanel } from "./search/FiltersPanel";
 import {
@@ -25,6 +24,7 @@ interface SearchPageProps {
 const MAX_SEARCH_SERIES = Number(
   import.meta.env.VITE_SEARCH_MAX_SERIES ?? "6"
 );
+const OVERLAY_SEARCH_LIMIT = MAX_SEARCH_SERIES * 6;
 
 const parsePriceInput = (value: string): number | null => {
   if (!value.trim()) {
@@ -53,19 +53,16 @@ const SearchPage = ({ onProductNavigate }: SearchPageProps) => {
   const [categorySearch, setCategorySearch] = useState("");
   const debouncedQuery = useDebouncedValue(searchValue, 400).trim();
 
-  const searchLoader = useCallback(() => {
-    if (debouncedQuery.length < 2) {
-      return Promise.resolve([]);
-    }
-    return searchSnapshotsByName(debouncedQuery, undefined, availabilityFilter);
-  }, [availabilityFilter, debouncedQuery]);
-
   const {
-    series: searchSeries,
+    results: searchResults,
     loading: searchLoading,
     error: searchError,
     reload: reloadSearch,
-  } = useProductPricing(searchLoader);
+  } = useCatalogSearch({
+    query: debouncedQuery,
+    availabilityFilter,
+    limit: OVERLAY_SEARCH_LIMIT,
+  });
 
   const priceRange = useMemo(
     () => ({
@@ -150,21 +147,29 @@ const SearchPage = ({ onProductNavigate }: SearchPageProps) => {
     setPricePage(1);
   }, [availabilityFilter, categoryFilters]);
 
+  const categoryTagIndex = useMemo(() => {
+    const map = new Map<string, string[]>();
+    allSeries.forEach((series) => map.set(series.slug, series.categoryTags));
+    return map;
+  }, [allSeries]);
+
   const matchesCategoryFilters = useCallback(
-    (series: ProductSeries) => {
+    (series: ProductSearchResult) => {
       if (categoryFilters.length === 0) {
         return true;
       }
-      return categoryFilters.some((category) =>
-        series.categoryTags.includes(category)
-      );
+      const tags = categoryTagIndex.get(series.slug);
+      if (!tags) {
+        return true;
+      }
+      return categoryFilters.some((category) => tags.includes(category));
     },
-    [categoryFilters]
+    [categoryFilters, categoryTagIndex]
   );
 
   const filteredSearchSeries = useMemo(
-    () => searchSeries.filter(matchesCategoryFilters),
-    [matchesCategoryFilters, searchSeries]
+    () => searchResults.filter(matchesCategoryFilters),
+    [matchesCategoryFilters, searchResults]
   );
 
   const visibleSeries = useMemo(() => {
@@ -182,9 +187,8 @@ const SearchPage = ({ onProductNavigate }: SearchPageProps) => {
       });
     };
     collect(allSeries);
-    collect(searchSeries);
     return Array.from(unique).sort((a, b) => a.localeCompare(b, "cs"));
-  }, [allSeries, searchSeries]);
+  }, [allSeries]);
 
   const filteredCategoryOptions = useMemo(() => {
     const query = categorySearch.trim().toLowerCase();
@@ -231,6 +235,8 @@ const SearchPage = ({ onProductNavigate }: SearchPageProps) => {
           setSearchValue(value);
           if (!value.trim()) {
             setSearchActive(false);
+          } else {
+            setSearchActive(true);
           }
         }}
         onSearchFocus={() => setSearchActive(true)}

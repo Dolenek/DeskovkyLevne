@@ -23,6 +23,11 @@
 - V overlays vyhledavani na detailu produktu ted kazdy vysledek zobrazuje i miniaturu hry (hero image), aby bylo snadnejsi vizualne identifikovat titul.
 - Mobilni overlay vyhledavani se uz posouva v ramci obrazovky a radky vysledku se lami tak, aby se dostupnost s cenou neprekryvaly.
 - Klik na logotyp/napis „DESKOVKY LEVNĚ“ v hlavicce kdykoliv presune uzivatele zpet na hlavni vyhledavaci stranku.
+- Rychle vyhledavani (overlay) uz necita raw snapshoty, ale primo katalogovy index: novy hook `useCatalogSearch` taha pouze nezbytne sloupce, cachuje vysledky (LRU + TTL) a chrani se proti zastaralym requestum, takze vysledky naskakuji okamzite bez narustu pameti.
+- Databaze dostala GIN trgm index `product_catalog_index_product_code_trgm_idx`, aby substring search pres `product_code` zustal rychly i pri uzkych dotazech; `product_name` uz pouziva trgm index z drivejska.
+- Transformace katalogu byly rozdeleny do `catalogTransforms` a sdilenych helperu (`productTransformPrimitives`), aby se product transformy drzelly pod limitem 500 radku a zustaly citelne.
+- Materializovany pohled `product_catalog_index` ted nese `product_name_normalized` a `product_name_search` (unaccent + lower), takze slugy v overlayi jdou vzdy pres kanonicky slug a hledani funguje i pri vynechane diakritice (napr. \"Loood\").
+- K tomu pribyl trgm index `product_catalog_index_product_name_search_trgm_idx` a btree na `product_name_normalized`, aby i unaccent dotazy zustaly rychle.
 
 ## Detail produktu /deskove-hry/:slug
 - Layout hlavni stranky presunut do pages/SearchPage.tsx, doplnen lehky router (usePathNavigation + App.tsx) pro URL / a /deskove-hry/:slug.

@@ -1,10 +1,10 @@
-import type { ProductSeries } from "../types/product";
+type Slugged = { slug: string };
 
-export const uniqueSeriesBySlug = (
-  seriesList: ProductSeries[]
-): ProductSeries[] => {
+export const uniqueSeriesBySlug = <T extends Slugged>(
+  seriesList: T[]
+): T[] => {
   const seen = new Set<string>();
-  const unique: ProductSeries[] = [];
+  const unique: T[] = [];
   seriesList.forEach((series) => {
     if (seen.has(series.slug)) {
       return;

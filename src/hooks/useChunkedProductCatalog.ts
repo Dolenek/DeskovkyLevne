@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { fetchCatalogIndexChunk } from "../services/productService";
 import type { ProductSeries } from "../types/product";
-import { buildSeriesFromCatalogIndexRow } from "../utils/productTransforms";
+import { buildSeriesFromCatalogIndexRow } from "../utils/catalogTransforms";
 
 const DEFAULT_INITIAL_CHUNK = Number(
   import.meta.env.VITE_SUPABASE_INITIAL_CHUNK ?? "400"

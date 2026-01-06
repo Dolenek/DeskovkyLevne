@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { AvailabilityFilter } from "../types/filters";
 import type { ProductSeries } from "../types/product";
 import { fetchFilteredCatalogIndex } from "../services/productService";
-import { buildSeriesFromCatalogIndexRow } from "../utils/productTransforms";
+import { buildSeriesFromCatalogIndexRow } from "../utils/catalogTransforms";
 
 interface UseFilteredCatalogIndexOptions {
   priceRange: { min: number | null; max: number | null };

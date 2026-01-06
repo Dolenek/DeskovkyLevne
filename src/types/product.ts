@@ -23,6 +23,7 @@ export interface ProductCatalogIndexRow {
   product_name?: string | null;
   product_name_original?: string | null;
   product_name_normalized?: string | null;
+  product_name_search?: string | null;
   currency_code: string | null;
   availability_label: string | null;
   stock_status_label: string | null;
@@ -39,6 +40,19 @@ export interface ProductCatalogIndexRow {
   metadata?: Record<string, unknown> | null;
   price_points?: Array<Record<string, unknown>> | null;
 }
+
+export type CatalogSearchRow = Pick<
+  ProductCatalogIndexRow,
+  | "product_code"
+  | "product_name"
+  | "product_name_normalized"
+  | "product_name_search"
+  | "currency_code"
+  | "availability_label"
+  | "latest_price"
+  | "hero_image_url"
+  | "gallery_image_urls"
+>;
 
 export interface ProductPoint {
   rawDate: string;
@@ -85,6 +99,17 @@ export interface ProductSeries {
   latestScrapedAt: string | null;
   sellers: SellerSeries[];
   primarySeller: string | null;
+}
+
+export interface ProductSearchResult {
+  slug: string;
+  label: string;
+  primaryProductCode: string | null;
+  heroImage?: string | null;
+  galleryImages?: string[];
+  availabilityLabel?: string | null;
+  latestPrice: number | null;
+  currency?: string | null;
 }
 
 export interface SupplementaryParameter {
