@@ -25,6 +25,8 @@
 - Hlavni vyhledavaci pole ted spousti stejny rozmazany overlay s vysledky jako na detailu; pokud nejsou zadane aspon dva znaky, overlay se vubec neukaze a zmizela i hlaska "Start typing at least 2 characters.".
 - V overlays vyhledavani na detailu produktu ted kazdy vysledek zobrazuje i miniaturu hry (hero image), aby bylo snadnejsi vizualne identifikovat titul.
 - Mobilni overlay vyhledavani se uz posouva v ramci obrazovky a radky vysledku se lami tak, aby se dostupnost s cenou neprekryvaly.
+- Hlavicka je na mobilu kompaktnejsi (logo + jazyk v jednom radku, mensi vyhledavaci pole) a overlay vyhledavani ma vetsi top offset, aby se vysledky neprekryvaly se search barem.
+- Mobilni filtry jsou schovane pod hamburgerem hned pod vyhledavanim: na malych obrazovkach se oteviraji jako bocni panel s vlastnim zaviracim tlacitkem a vyhledavani ma tlacitko pro rychle vymazani dotazu.
 - Klik na logotyp/napis „DESKOVKY LEVNĚ“ v hlavicce kdykoliv presune uzivatele zpet na hlavni vyhledavaci stranku.
 - Rychle vyhledavani (overlay) uz necita raw snapshoty, ale primo katalogovy index: novy hook `useCatalogSearch` taha pouze nezbytne sloupce, cachuje vysledky (LRU + TTL) a chrani se proti zastaralym requestum, takze vysledky naskakuji okamzite bez narustu pameti.
 - Databaze dostala GIN trgm index `product_catalog_index_product_code_trgm_idx`, aby substring search pres `product_code` zustal rychly i pri uzkych dotazech; `product_name` uz pouziva trgm index z drivejska.
@@ -43,6 +45,7 @@
 - Galerie na detailu ma zmensenou vysku, obrazek je posazeny vys a nahledy sedi hned pod hlavnim snimkem; hlavni slider je horizontalne posuvny (snap + scroll) pro rychle listovani vice snimky.
 - Scrollbary v galerii detailu pouzivaji stejny custom styl jako filtry/kategorie, aby vizualne ladily s ostatnimi castmi webu.
 - Popisek produktu (short_description) se zobrazuje primo pod nazvem v pravem panelu, ktery ma max-height=100vh a ceny jsou zarovnane ke spodku, aby CTA byla vzdy ve stejnem miste.
+- Detail produktu je na mobilu pohodlnejsi (bez vnoreneho scrollu v pravem panelu, mensi paddings, adaptivni velikosti nadpisu/cen a nizsi graf), aby se obsah nelepil pod hlavicku.
 - Spodni cast sekce „Historie ceny" uz nezobrazuje tabulku dat/datumů – misto toho se sem natahnou `supplementary_parameters` z databaze a prehledne se vypisou jako klic-hodnota; pokud dodatecne informace chybi, uzivatel dostane odpovidajici hlasku.
 - Build overen (npm run build), varovani o velikosti bundlu zatim ponechano.
 - Odstranen postranni panel "Detail produktu" na vyhledavaci strance, protoze kompletni detail zije na dedikovanem route.

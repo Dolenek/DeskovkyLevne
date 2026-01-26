@@ -98,7 +98,7 @@ export const ProductGallery = ({ series }: { series: ProductSeries }) => {
                   <img
                     src={toLargeImageUrl(url)}
                     alt={`${series.label} slide ${index + 1}`}
-                    className="max-h-[400px] w-full rounded-2xl object-contain"
+                    className="max-h-[320px] w-full rounded-2xl object-contain sm:max-h-[400px]"
                   />
                 </div>
               ))

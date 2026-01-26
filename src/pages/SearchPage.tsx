@@ -43,6 +43,7 @@ const SearchPage = ({ onProductNavigate }: SearchPageProps) => {
   );
   const [searchValue, setSearchValue] = useState("");
   const [searchActive, setSearchActive] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [availabilityFilter, setAvailabilityFilter] = useState<AvailabilityFilter>("all");
   const [selectedSeries, setSelectedSeries] = useState<ProductSeries | null>(
     null
@@ -257,10 +258,67 @@ const SearchPage = ({ onProductNavigate }: SearchPageProps) => {
         }}
         onClose={() => setSearchActive(false)}
       />
-      <main className="px-4 py-10 sm:px-6 lg:px-10">
+      {filtersOpen ? (
+        <div className="fixed inset-0 z-[60] flex lg:hidden">
+          <button
+            type="button"
+            aria-label={t("filtersClose")}
+            onClick={() => setFiltersOpen(false)}
+            className="absolute inset-0 bg-black/70"
+          />
+          <div className="relative z-10 h-full w-full max-w-sm overflow-hidden rounded-none border-r border-slate-800 bg-slate-950/95 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-800 px-5 py-4">
+              <p className="text-lg font-semibold text-white">
+                {t("filtersTitle")}
+              </p>
+              <button
+                type="button"
+                onClick={() => setFiltersOpen(false)}
+                className="rounded-full border border-slate-700 px-3 py-1 text-xs font-semibold text-slate-200 transition hover:border-primary hover:text-white"
+              >
+                {t("filtersClose")}
+              </button>
+            </div>
+            <FiltersPanel
+              showTitle={false}
+              className="h-[calc(100%-4.5rem)] overflow-y-auto rounded-none border-0 bg-transparent p-5 shadow-none"
+              availabilityFilter={availabilityFilter}
+              onAvailabilityChange={setAvailabilityFilter}
+              priceFilter={priceFilter}
+              priceRangeValues={priceRange}
+              priceBounds={priceBounds}
+              onPriceFilterChange={handlePriceFilterChange}
+              onSliderChange={handleSliderChange}
+              categoryOptions={filteredCategoryOptions}
+              selectedCategories={categoryFilters}
+              onCategoryToggle={handleCategoryToggle}
+              hasCategoryOptions={categoryOptions.length > 0}
+              categorySearchValue={categorySearch}
+              onCategorySearchChange={setCategorySearch}
+              t={t}
+            />
+          </div>
+        </div>
+      ) : null}
+      <main className="px-4 pt-4 pb-10 sm:px-6 sm:pt-8 lg:px-10 lg:pt-10">
         <div className="mx-auto flex max-w-6xl flex-col gap-8">
+          <div className="flex items-center justify-start lg:hidden">
+            <button
+              type="button"
+              onClick={() => setFiltersOpen(true)}
+              aria-label={t("filtersOpen")}
+              className="inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-900/60 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-primary hover:text-white"
+            >
+              <span className="flex h-3.5 w-3.5 flex-col justify-center gap-0.5">
+                <span className="h-0.5 w-full rounded-full bg-slate-300" />
+                <span className="h-0.5 w-full rounded-full bg-slate-300" />
+                <span className="h-0.5 w-full rounded-full bg-slate-300" />
+              </span>
+              {t("filtersTitle")}
+            </button>
+          </div>
           <div className="grid gap-8 lg:grid-cols-[260px_minmax(0,1fr)]">
-            <div className="lg:sticky lg:top-28 lg:h-[calc(100vh-7rem)] lg:self-start">
+            <div className="hidden lg:block lg:sticky lg:top-28 lg:h-[calc(100vh-7rem)] lg:self-start">
               <FiltersPanel
                 className="lg:flex lg:h-full lg:flex-col lg:overflow-y-auto"
                 availabilityFilter={availabilityFilter}

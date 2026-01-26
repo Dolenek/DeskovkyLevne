@@ -143,13 +143,13 @@ export const ProductSearchOverlay = ({
   const content = renderOverlayContent(contentProps);
 
   return (
-    <div className="fixed inset-0 z-40 flex items-start justify-center px-4 pt-24 sm:px-6 sm:pt-32 lg:px-10">
+    <div className="fixed inset-0 z-40 flex items-start justify-center px-4 pt-28 sm:px-6 sm:pt-32 lg:px-10 lg:pt-36">
       <div
         className="absolute inset-0 bg-black/70 backdrop-blur-md"
         onClick={onClose}
       />
       <div
-        className="relative z-10 flex w-full max-w-3xl flex-col rounded-3xl border border-slate-800 bg-slate-950/90 p-4 shadow-2xl max-h-[calc(100vh-7rem)] sm:max-h-[calc(100vh-10rem)]"
+        className="relative z-10 flex w-full max-w-3xl flex-col rounded-3xl border border-slate-800 bg-slate-950/90 p-4 shadow-2xl max-h-[calc(100vh-8.5rem)] sm:max-h-[calc(100vh-11rem)]"
         onClick={(event) => event.stopPropagation()}
       >
         <p className="mb-3 text-center text-sm uppercase tracking-wide text-slate-400">

@@ -20,12 +20,14 @@ export const ProductHero = ({ series, locale, t }: ProductHeroProps) => {
     : "--";
 
   return (
-    <section className="flex h-full max-h-screen flex-col overflow-y-auto rounded-3xl border border-slate-800 bg-surface/70 p-6 shadow-2xl shadow-black/40 backdrop-blur">
+    <section className="flex h-full flex-col rounded-3xl border border-slate-800 bg-surface/70 p-4 shadow-2xl shadow-black/40 backdrop-blur sm:p-6 lg:max-h-screen lg:overflow-y-auto">
       <div>
         <p className="text-sm uppercase tracking-wide text-slate-400">
           {t("productCodeLabel")}
         </p>
-        <h1 className="text-3xl font-semibold text-white">{series.label}</h1>
+        <h1 className="text-2xl font-semibold text-white sm:text-3xl">
+          {series.label}
+        </h1>
         <p className="text-sm text-slate-400">
           {series.primaryProductCode ?? series.slug}
         </p>
@@ -40,12 +42,14 @@ export const ProductHero = ({ series, locale, t }: ProductHeroProps) => {
           </p>
         ) : null}
       </div>
-      <div className="mt-auto flex flex-col gap-4 pt-6">
+      <div className="mt-6 flex flex-col gap-4 pt-6 lg:mt-auto">
         <div className="rounded-2xl border border-slate-700 bg-black/30 p-4">
           <p className="text-xs uppercase tracking-wide text-slate-400">
             {t("latestPrice")}
           </p>
-          <p className="text-4xl font-semibold text-accent">{latestPrice}</p>
+          <p className="text-3xl font-semibold text-accent sm:text-4xl">
+            {latestPrice}
+          </p>
           {series.listPrice !== null ? (
             <p className="text-xs text-slate-400">
               {t("listPriceLabel")}: {" "}

@@ -41,9 +41,9 @@ const HistorySection = ({
   locale: LocaleKey;
   t: Translator;
 }) => (
-  <section className="rounded-3xl border border-slate-800 bg-surface/70 p-6 shadow-xl shadow-black/40 backdrop-blur">
+  <section className="rounded-3xl border border-slate-800 bg-surface/70 p-4 shadow-xl shadow-black/40 backdrop-blur sm:p-6">
     <div className="flex flex-col gap-1">
-      <h2 className="text-2xl font-semibold text-white">
+      <h2 className="text-xl font-semibold text-white sm:text-2xl">
         {t("detailHistoryTitle")}
       </h2>
       <p className="text-sm text-slate-400">

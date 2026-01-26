@@ -148,7 +148,7 @@ export const ProductChart = ({
   }
 
   return (
-    <div className="h-64 w-full">
+    <div className="h-56 w-full sm:h-64">
       <ResponsiveContainer>
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />

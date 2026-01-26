@@ -77,6 +77,7 @@ const PriceRangeSlider = ({
 
 export interface FiltersPanelProps {
   className?: string;
+  showTitle?: boolean;
   availabilityFilter: AvailabilityFilter;
   onAvailabilityChange: (filter: AvailabilityFilter) => void;
   priceFilter: { min: string; max: string };
@@ -95,6 +96,7 @@ export interface FiltersPanelProps {
 
 export const FiltersPanel = ({
   className = "",
+  showTitle = true,
   availabilityFilter,
   onAvailabilityChange,
   priceFilter,
@@ -109,12 +111,17 @@ export const FiltersPanel = ({
   categorySearchValue,
   onCategorySearchChange,
   t,
-}: FiltersPanelProps) => (
-  <aside
-    className={`rounded-3xl border border-slate-800 bg-surface/60 p-6 shadow-lg shadow-black/30 ${className}`}
-  >
-    <h2 className="text-xl font-semibold text-white">{t("filtersTitle")}</h2>
-    <div className="mt-6 space-y-3">
+}: FiltersPanelProps) => {
+  const firstSectionSpacing = showTitle ? "mt-6" : "mt-0";
+
+  return (
+    <aside
+      className={`rounded-3xl border border-slate-800 bg-surface/60 p-6 shadow-lg shadow-black/30 ${className}`}
+    >
+      {showTitle ? (
+        <h2 className="text-xl font-semibold text-white">{t("filtersTitle")}</h2>
+      ) : null}
+      <div className={`${firstSectionSpacing} space-y-3`}>
       <p className="text-sm font-semibold uppercase tracking-wide text-slate-400">
         {t("filtersAvailability")}
       </p>
@@ -217,5 +224,6 @@ export const FiltersPanel = ({
         </div>
       </div>
     ) : null}
-  </aside>
-);
+    </aside>
+  );
+};
