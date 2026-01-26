@@ -32,6 +32,65 @@ export const HOME_SEO_COPY: Record<LocaleKey, { title: string; description: stri
   },
 };
 
+export const LANDING_SEO_COPY: Record<
+  LocaleKey,
+  {
+    levne: { title: string; description: string; keywords: string[] };
+    deskove: { title: string; description: string; keywords: string[] };
+  }
+> = {
+  cs: {
+    levne: {
+      title: "Levné deskovky | Akční ceny deskových her",
+      description:
+        "Levné deskovky v českých obchodech na jednom místě. Sledujte aktuální ceny, srovnejte dostupnost a projděte historii cen.",
+      keywords: [
+        "levné deskovky",
+        "sleva deskových her",
+        "akcni deskovky",
+        "deskové hry cena",
+        "srovnání cen deskových her",
+      ],
+    },
+    deskove: {
+      title: "Deskové hry | Přehled a ceny deskovek",
+      description:
+        "Deskové hry od českých prodejců. Prohlédněte si dostupnost, cenu a historii u každého slugu.",
+      keywords: [
+        "deskové hry",
+        "deskovky",
+        "srovnání deskových her",
+        "cena deskových her",
+        "herní kategorie",
+      ],
+    },
+  },
+  en: {
+    levne: {
+      title: "Affordable board games | Czech price tracker",
+      description:
+        "Affordable board games from Czech retailers. Compare current prices, availability, and price history by slug.",
+      keywords: [
+        "affordable board games",
+        "board game deals",
+        "Czech board games",
+        "board game price tracker",
+      ],
+    },
+    deskove: {
+      title: "Board games | Czech price overview",
+      description:
+        "Board games from Czech retailers. Explore availability, price, and history per slug.",
+      keywords: [
+        "board games",
+        "Czech board games",
+        "price comparison",
+        "board game availability",
+      ],
+    },
+  },
+};
+
 export const buildHomeStructuredData = (locale: LocaleKey) => {
   const content = HOME_SEO_COPY[locale];
   return {

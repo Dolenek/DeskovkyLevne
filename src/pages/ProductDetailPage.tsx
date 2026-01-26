@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import {
   EmptyState,
   ErrorState,
@@ -11,14 +11,12 @@ import { ProductGallery } from "../components/product-detail/ProductGallery";
 import { ProductHero } from "../components/product-detail/ProductHero";
 import { SupplementaryParametersPanel } from "../components/product-detail/SupplementaryParametersPanel";
 import { Seo } from "../components/Seo";
-import { useDebouncedValue } from "../hooks/useDebouncedValue";
-import { useCatalogSearch } from "../hooks/useCatalogSearch";
+import { useSearchOverlayState } from "../hooks/useSearchOverlayState";
 import { useTranslation } from "../hooks/useTranslation";
 import { useProductDetail } from "../hooks/useProductDetail";
 import type { ProductSeries } from "../types/product";
 import type { Translator } from "../types/i18n";
 import type { LocaleKey } from "../i18n/translations";
-import { uniqueSeriesBySlug } from "../utils/series";
 import {
   buildProductDescription,
   buildProductStructuredData,
@@ -88,30 +86,22 @@ export const ProductDetailPage = ({
 }: ProductDetailPageProps) => {
   const { t, locale } = useTranslation();
   const { product, loading, error, reload } = useProductDetail(productSlug);
-  const [searchValue, setSearchValue] = useState("");
-  const [searchActive, setSearchActive] = useState(false);
-  const debouncedQuery = useDebouncedValue(searchValue, 400).trim();
-
   const {
-    results: searchResults,
+    searchValue,
+    setSearchValue,
+    setSearchActive,
+    overlayVisible,
+    overlayResults,
     loading: searchLoading,
     error: searchError,
     reload: reloadSearch,
-  } = useCatalogSearch({
-    query: debouncedQuery,
-    availabilityFilter: "all",
-    limit: INLINE_SEARCH_LIMIT * 6,
-  });
+    debouncedQuery,
+  } = useSearchOverlayState(INLINE_SEARCH_LIMIT);
 
   useEffect(() => {
     setSearchActive(false);
   }, [productSlug]);
 
-  const overlayResults = useMemo(() => {
-    const unique = uniqueSeriesBySlug(searchResults);
-    return unique.slice(0, INLINE_SEARCH_LIMIT);
-  }, [searchResults]);
-  const overlayVisible = searchActive && debouncedQuery.length >= 2;
   const canonicalPath = useMemo(
     () => `/deskove-hry/${encodeURIComponent(productSlug)}`,
     [productSlug]

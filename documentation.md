@@ -2,6 +2,9 @@
 
 ## React + Vite frontend
 - Postavena nova React aplikace (Vite + TypeScript + Tailwind) v cerno-modrem vizualu.
+- Pridany SEO landing pages `/levne-deskovky` a `/deskove-hry` s vlastnim copy a internimi odkazy na produkty; pridan generátor sitemap (`scripts/generate-sitemap.mjs`) a `public/robots.txt`, sitemap se vytvari pri buildu a obsahuje home/landing routes + vsechny slugy z `product_catalog_index`.
+- Pridany prerender script (`scripts/prerender.mjs`) s Playwright, ktery po buildu vygeneruje staticke HTML pro `/`, landing pages a top N produktu podle posledniho scrape; limit lze zmenit pres `VITE_PRERENDER_LIMIT` a je potreba mit nainstalovany Playwright browsery.
+- Pro prerender je nutne na build machine spustit `npx playwright install chromium` (nebo mit kompatibilni systemovy Chrome) a pocitat s tim, ze build bude delsi o renderovani HTML stranek.
 - Pridana komponenta `Seo`, ktera nastavuje slugove canonical linky, Open Graph/Twitter meta a JSON-LD; domovska stranka publikuje schema.org `WebSite`, detail produktu `Product` s nabidkami pro kazdeho prodejce a obrazky preferuje hero snimek. Index.html ma predvyplneny popis, theme-color a jazyk `cs`.
 - Supabase klient + hook useProductPricing převádějí tabulku `product_price_snapshots` na časové řady podle `product_name_normalized` (slug). Slug je nově hlavním identifikátorem produktů i pro routing, takže více prodejců se stejným slagem sdílí jednu kartu/detail. Volitelný filtr `VITE_SUPABASE_FILTER_CODES` dál omezuje jen zdrojová product_code.
 - Pridany komponenty pro lokalizaci (CZ/EN), prepinac jazyka, karty s grafem (Recharts) a stavove obrazovky (nacitani/chyba/prazdno).
