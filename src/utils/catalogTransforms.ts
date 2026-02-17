@@ -116,7 +116,15 @@ export const buildSeriesFromCatalogIndexRow = (
   const normalizedSupplementary = normalizeSupplementaryParameters(
     row.supplementary_parameters ?? null
   );
-  const categoryTags = extractCategoryTags(normalizedSupplementary);
+  const categoryTagsFromRow = Array.isArray(row.category_tags)
+    ? row.category_tags.filter(
+        (tag): tag is string => typeof tag === "string" && tag.trim().length > 0
+      )
+    : [];
+  const categoryTags =
+    categoryTagsFromRow.length > 0
+      ? categoryTagsFromRow
+      : extractCategoryTags(normalizedSupplementary);
   const points = toPointArray(row.price_points);
   const slug = resolveCatalogSlug(toCatalogSearchRow(row));
   const label = buildCatalogLabel(row);

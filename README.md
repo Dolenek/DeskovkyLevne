@@ -8,3 +8,16 @@ Deskovky Levně is a React + Vite single-page app that tracks Czech board-game p
 - Routing: lightweight history-based navigation with slug-first URLs; logo click returns home.
 - Assets priority: hero text/images prefer Tlamagames/Tlamagase, then fall back to other sellers; galleries merge unique images across sellers.
 - SEO: dynamic titles, canonical links, Open Graph/Twitter tags, JSON-LD (`WebSite` on home, `Product` with per-seller `Offer` on detail), and `VITE_SITE_URL` can set the absolute origin.
+
+**Runtime architecture**
+- Frontend now reads catalog/search/detail data through a backend API (`/api/v1/...`) instead of browser-side direct Supabase reads.
+- New API service lives in `apps/api-go` (Go + Postgres + optional Redis cache).
+- Database read models for API are `catalog_slug_summary` and `catalog_slug_seller_summary` (slug-keyed materialized views).
+
+**Frontend env**
+- `VITE_API_BASE_URL` defaults to `http://localhost:8080` and should point to the API service in production.
+
+**API deploy files**
+- `apps/api-go`: Go backend source + Dockerfile.
+- `infra/rewrite/docker-compose.api-go.yml`: API + Redis compose stack.
+- `infra/rewrite/deploy-api-go.sh`: helper script for compose deployment (expects `DATABASE_URL`).

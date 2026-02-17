@@ -2,13 +2,14 @@ import { useMemo, useState } from "react";
 import { useCatalogSearch } from "./useCatalogSearch";
 import { useDebouncedValue } from "./useDebouncedValue";
 import { uniqueSeriesBySlug } from "../utils/series";
+import type { ProductSearchResult } from "../types/product";
 
 interface UseSearchOverlayStateResult {
   searchValue: string;
   setSearchValue: (value: string) => void;
   setSearchActive: (value: boolean) => void;
   overlayVisible: boolean;
-  overlayResults: ReturnType<typeof uniqueSeriesBySlug>;
+  overlayResults: ProductSearchResult[];
   loading: boolean;
   error: string | null;
   reload: () => void;

@@ -50,3 +50,16 @@
 - Build overen (npm run build), varovani o velikosti bundlu zatim ponechano.
 - Odstranen postranni panel "Detail produktu" na vyhledavaci strance, protoze kompletni detail zije na dedikovanem route.
 - Odstranen cenový souhrn (Lowest/Highest/Average) z detailu produktu, aby stranka zduraznila historii cen a doplnkove parametry misto statickych karet.
+
+## DB + backend optimalizace (Go API + read modely)
+- Pridany implementacni plan v `PLAN.md` a SQL migrace `infra/db/migrations/20260217_db_backend_optimization.sql`.
+- V databazi pribyly indexy nad `product_price_snapshots` pro hlavni read patterny: slug+cas, slug+seller+cas, recent cas a trigramy na `product_name_original` + `product_code`.
+- Pridany helper funkce `seller_priority` a `extract_category_tags`, plus nove materializovane pohledy:
+  - `catalog_slug_seller_summary` (slug + seller, price_points per seller),
+  - `catalog_slug_summary` (1 radka na slug, seller-priority projekce pro katalog/search).
+- Pridana DB funkce `refresh_catalog_aggregates()` pro obnovu obou read modelu.
+- Frontend runtime uz nepouziva browser-side Supabase dotazy v `productService`; misto toho vola backend API (`VITE_API_BASE_URL`, endpointy `/api/v1/catalog`, `/api/v1/search/suggest`, `/api/v1/products/:slug`, `/api/v1/snapshots/recent`, `/api/v1/meta/categories`).
+- Build-time skripty `generate-sitemap` a `prerender` ctou slugy z `catalog_slug_summary` (misto stareho `product_catalog_index`), aby sitemap/prerender jely nad canonical slug read modelem.
+- Build-time skripty zaroven umi fallback URL pres `SUPABASE_URL`/`DATABASE_URL`, pokud neni nastavene `VITE_SUPABASE_URL`.
+- Pridana nova sluzba `apps/api-go` (Go + chi + pgx + optional Redis cache), Dockerfile a compose soubor `infra/rewrite/docker-compose.api-go.yml`.
+- K API nasazeni je pripraven helper script `infra/rewrite/deploy-api-go.sh` (docker compose build/up, vyzaduje `DATABASE_URL`).

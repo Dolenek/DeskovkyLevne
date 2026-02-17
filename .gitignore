@@ -4,8 +4,13 @@ dist/
 
 # Env files
 .env
+**/.env
 .env.local
+**/.env.local
 .env.*.local
+**/.env.*.local
+!.env.example
+!**/.env.example
 
 # Logs / diagnostics
 npm-debug.log*
@@ -22,3 +27,11 @@ Thumbs.db
 # Coverage / reports
 coverage/
 .nyc_output/
+
+# Go artifacts
+*.test
+coverage.out
+
+# Rust artifacts
+target/
+**/target/

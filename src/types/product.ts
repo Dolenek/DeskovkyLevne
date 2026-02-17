@@ -39,6 +39,10 @@ export interface ProductCatalogIndexRow {
   supplementary_parameters?: Record<string, unknown> | unknown[] | string | null;
   metadata?: Record<string, unknown> | null;
   price_points?: Array<Record<string, unknown>> | null;
+  category_tags?: string[] | null;
+  is_available?: boolean | null;
+  is_preorder?: boolean | null;
+  primary_seller?: string | null;
 }
 
 export type CatalogSearchRow = Pick<
