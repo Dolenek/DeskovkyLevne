@@ -6,12 +6,15 @@ import { createReadStream } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
 import { chromium } from "playwright";
 
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
+const SUPABASE_URL =
+  process.env.VITE_SUPABASE_URL ??
+  process.env.SUPABASE_URL ??
+  process.env.DATABASE_URL;
 const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY;
 const SITE_URL = (process.env.VITE_SITE_URL || "https://www.deskovkylevne.com")
   .replace(/\/$/, "");
 const PRERENDER_LIMIT = Number(process.env.VITE_PRERENDER_LIMIT ?? "200");
-const TABLE_NAME = "product_catalog_index";
+const TABLE_NAME = "catalog_slug_summary";
 const PORT = Number(process.env.VITE_PRERENDER_PORT ?? "4173");
 
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {

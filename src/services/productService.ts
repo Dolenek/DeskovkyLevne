@@ -1,4 +1,3 @@
-import { getSupabaseClient } from "../lib/supabaseClient";
 import type {
   CatalogSearchRow,
   ProductCatalogIndexRow,
@@ -9,8 +8,10 @@ import type {
 import type { AvailabilityFilter } from "../types/filters";
 import { buildSearchResultFromCatalogRow } from "../utils/catalogTransforms";
 
-const TABLE_NAME =
-  import.meta.env.VITE_SUPABASE_PRODUCTS_TABLE ?? "product_price_snapshots";
+const API_BASE_URL = (
+  import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080"
+).replace(/\/+$/, "");
+const API_PREFIX = `${API_BASE_URL}/api/v1`;
 
 const FILTER_CODES = import.meta.env.VITE_SUPABASE_FILTER_CODES
   ? String(import.meta.env.VITE_SUPABASE_FILTER_CODES)
@@ -19,200 +20,24 @@ const FILTER_CODES = import.meta.env.VITE_SUPABASE_FILTER_CODES
       .filter(Boolean)
   : [];
 
-const SELECT_COLUMNS =
-  "id, product_code, product_name_original, product_name_normalized, price_with_vat, list_price_with_vat, currency_code, source_url, scraped_at, availability_label, stock_status_label, hero_image_url, gallery_image_urls, short_description, supplementary_parameters, metadata, seller";
-const CATALOG_INDEX_TABLE = "product_catalog_index";
-const CATALOG_INDEX_COLUMNS =
-  "product_code, product_name, product_name_normalized, product_name_search, currency_code, availability_label, stock_status_label, latest_price, previous_price, first_price, list_price_with_vat, source_url, latest_scraped_at, hero_image_url, gallery_image_urls, short_description, supplementary_parameters, metadata, price_points";
-const CATALOG_SEARCH_COLUMNS =
-  "product_code, product_name, product_name_normalized, product_name_search, currency_code, availability_label, latest_price, hero_image_url, gallery_image_urls";
-
-const SEARCH_LIMIT = Number(
-  import.meta.env.VITE_SUPABASE_SEARCH_LIMIT ?? "60"
-);
+const SEARCH_LIMIT = Number(import.meta.env.VITE_SUPABASE_SEARCH_LIMIT ?? "60");
 const RECENT_LOOKBACK_LIMIT = Number(
   import.meta.env.VITE_RECENT_DISCOUNT_LOOKBACK ?? "2000"
 );
 
-type SelectOptions = {
-  head?: boolean;
-  count?: "exact" | "planned" | "estimated";
-  distinct?: string;
-};
+interface CatalogResponse {
+  rows: ProductCatalogIndexRow[];
+  total: number;
+  total_estimate?: number;
+}
 
-const buildBaseQuery = (selectOptions?: SelectOptions) => {
-  const supabase = getSupabaseClient();
-  let query = supabase.from(TABLE_NAME).select(SELECT_COLUMNS, selectOptions);
-  if (FILTER_CODES.length > 0) {
-    query = query.in("product_code", FILTER_CODES);
-  }
-  return query;
-};
+interface SearchResponse {
+  rows: CatalogSearchRow[];
+}
 
-const runQuery = async (query: any): Promise<ProductRow[]> => {
-  const { data, error } = (await query) as {
-    data: ProductRow[] | null;
-    error: { message: string } | null;
-  };
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return data ?? [];
-};
-
-const runCatalogIndexQuery = async <T>(
-  query: any
-): Promise<T[]> => {
-  const { data, error } = (await query) as {
-    data: T[] | null;
-    error: { message: string } | null;
-  };
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return data ?? [];
-};
-
-const buildCatalogIndexQuery = (
-  columns = CATALOG_INDEX_COLUMNS,
-  selectOptions?: { count?: "exact" }
-) => {
-  const supabase = getSupabaseClient();
-  let query = supabase
-    .from(CATALOG_INDEX_TABLE)
-    .select(columns, selectOptions);
-  if (FILTER_CODES.length > 0) {
-    query = query.in("product_code", FILTER_CODES);
-  }
-  return query;
-};
-
-export const fetchProductRows: ProductFetcher = async () =>
-  runQuery(buildBaseQuery().order("scraped_at", { ascending: true }));
-
-export const fetchProductSnapshotsBySlug = async (
-  productSlug: string
-): Promise<ProductRow[]> => {
-  const normalized = productSlug.trim().toLowerCase();
-  if (!normalized) {
-    return [];
-  }
-  return runQuery(
-    buildBaseQuery()
-      .eq("product_name_normalized", normalized)
-      .order("scraped_at", { ascending: true })
-  );
-};
-
-export const fetchRecentSnapshots = async (
-  limit = RECENT_LOOKBACK_LIMIT
-): Promise<ProductRow[]> =>
-  runQuery(
-    buildBaseQuery()
-      .order("scraped_at", { ascending: false })
-      .limit(limit)
-  );
-
-const sanitizeSearchTerm = (term: string) => term.replace(/[,*]/g, " ").trim();
-const normalizeSearchTerm = (term: string) =>
-  term
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
-
-export const searchCatalogIndexByName = async (
-  term: string,
-  limit = SEARCH_LIMIT,
-  availabilityFilter: AvailabilityFilter = "all"
-): Promise<ProductSearchResult[]> => {
-  const safeTerm = sanitizeSearchTerm(term);
-  if (!safeTerm) {
-    return [];
-  }
-
-  const normalizedTerm = normalizeSearchTerm(safeTerm);
-  if (!normalizedTerm) {
-    return [];
-  }
-  const namePattern = `%${normalizedTerm}%`;
-  const codePattern = `%${safeTerm}%`;
-  let query = buildCatalogIndexQuery(CATALOG_SEARCH_COLUMNS).or(
-    `product_name_search.ilike.${namePattern},product_code.ilike.${codePattern}`
-  );
-  if (availabilityFilter === "available") {
-    query = query.ilike("availability_label", "%Skladem%");
-  } else if (availabilityFilter === "preorder") {
-    query = query.ilike("availability_label", "%Předprodej%");
-  }
-
-  const rows = await runCatalogIndexQuery<CatalogSearchRow>(
-    query.order("product_name", { ascending: true }).limit(limit)
-  );
-  return rows.map((row) => buildSearchResultFromCatalogRow(row));
-};
-
-export const fetchProductRowsChunk = async (
-  from: number,
-  size: number
-): Promise<ProductRow[]> => {
-  if (size <= 0) {
-    return [];
-  }
-  const start = Math.max(0, from);
-  const end = start + size - 1;
-  return runQuery(
-    buildBaseQuery()
-      .order("scraped_at", { ascending: false })
-      .order("product_name_normalized", { ascending: true })
-      .range(start, end)
-  );
-};
-
-export const fetchUniqueProductRowsChunk = async (
-  from: number,
-  size: number
-): Promise<ProductRow[]> => {
-  if (size <= 0) {
-    return [];
-  }
-  const start = Math.max(0, from);
-  const end = start + size - 1;
-  return runQuery(
-    buildBaseQuery({ distinct: "product_name_normalized" })
-      .order("product_name_normalized", { ascending: true })
-      .order("scraped_at", { ascending: false })
-      .range(start, end)
-  );
-};
-
-export const fetchCatalogIndexChunk = async (
-  from: number,
-  size: number
-): Promise<{ rows: ProductCatalogIndexRow[]; total: number | null }> => {
-  if (size <= 0) {
-    return { rows: [], total: null };
-  }
-  const start = Math.max(0, from);
-  const end = start + size - 1;
-  const { data, count, error } = (await buildCatalogIndexQuery(
-    CATALOG_INDEX_COLUMNS,
-    { count: "exact" }
-  )
-    .order("product_name", { ascending: true })
-    .range(start, end)) as {
-    data: ProductCatalogIndexRow[] | null;
-    count: number | null;
-    error: { message: string } | null;
-  };
-  if (error) {
-    throw new Error(error.message);
-  }
-  return { rows: data ?? [], total: count };
-};
+interface SnapshotResponse {
+  rows: ProductRow[];
+}
 
 interface CatalogFilterOptions {
   availability?: AvailabilityFilter;
@@ -226,57 +51,146 @@ interface FilteredCatalogResult {
   total: number;
 }
 
-const escapeIlikeValue = (value: string): string =>
-  value.replace(/[%_]/g, (match) => `\\${match}`);
-
-const applyAvailabilityFilter = (
-  query: ReturnType<typeof buildCatalogIndexQuery>,
-  availability?: AvailabilityFilter
+const buildApiUrl = (
+  path: string,
+  params?: Record<string, string | number | null | undefined>
 ) => {
-  if (availability === "available") {
-    return query.ilike("availability_label", "%Skladem%");
+  const url = new URL(`${API_PREFIX}${path}`);
+  if (!params) {
+    return url.toString();
   }
-  if (availability === "preorder") {
-    return query.ilike("availability_label", "%Předprodej%");
-  }
-  return query;
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === null || value === undefined || value === "") {
+      return;
+    }
+    url.searchParams.set(key, String(value));
+  });
+  return url.toString();
 };
 
-const applyPriceFilter = (
-  query: ReturnType<typeof buildCatalogIndexQuery>,
-  minPrice?: number | null,
-  maxPrice?: number | null
-) => {
-  let updated = query;
-  if (minPrice !== null && minPrice !== undefined) {
-    updated = updated.gte("latest_price", minPrice);
+const fetchApi = async <T>(path: string): Promise<T> => {
+  const response = await fetch(path, {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+    },
+  });
+  if (!response.ok) {
+    throw new Error(`API request failed (${response.status})`);
   }
-  if (maxPrice !== null && maxPrice !== undefined) {
-    updated = updated.lte("latest_price", maxPrice);
-  }
-  return updated;
+  return (await response.json()) as T;
 };
 
-const CATEGORY_JSON_PATH = "metadata->meta->>supplementaryParameters";
+const filterRowsByCode = <T extends { product_code?: string | null }>(
+  rows: T[]
+): T[] => {
+  if (FILTER_CODES.length === 0) {
+    return rows;
+  }
+  const allowed = new Set(FILTER_CODES);
+  return rows.filter((row) => {
+    if (!row.product_code) {
+      return false;
+    }
+    return allowed.has(row.product_code);
+  });
+};
 
-const applyCategoryFilter = (
-  query: ReturnType<typeof buildCatalogIndexQuery>,
-  categories?: string[]
-) => {
-  if (!categories?.length) {
-    return query;
+const sanitizeSearchTerm = (term: string) => term.replace(/[,*]/g, " ").trim();
+
+const normalizeSearchTerm = (term: string) =>
+  term
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+
+export const fetchProductRows: ProductFetcher = async () =>
+  fetchRecentSnapshots(RECENT_LOOKBACK_LIMIT);
+
+export const fetchProductSnapshotsBySlug = async (
+  productSlug: string
+): Promise<ProductRow[]> => {
+  const normalized = productSlug.trim().toLowerCase();
+  if (!normalized) {
+    return [];
   }
-  const clauses = categories
-    .map((category) => category.trim())
-    .filter((category) => category.length > 0)
-    .map((category) => {
-      const escaped = escapeIlikeValue(category);
-      return `${CATEGORY_JSON_PATH}.ilike.%${escaped}%`;
-    });
-  if (clauses.length === 0) {
-    return query;
+  const payload = await fetchApi<SnapshotResponse>(
+    buildApiUrl(`/products/${encodeURIComponent(normalized)}`)
+  );
+  return filterRowsByCode(payload.rows);
+};
+
+export const fetchRecentSnapshots = async (
+  limit = RECENT_LOOKBACK_LIMIT
+): Promise<ProductRow[]> => {
+  const payload = await fetchApi<SnapshotResponse>(
+    buildApiUrl("/snapshots/recent", { limit })
+  );
+  return filterRowsByCode(payload.rows);
+};
+
+export const searchCatalogIndexByName = async (
+  term: string,
+  limit = SEARCH_LIMIT,
+  availabilityFilter: AvailabilityFilter = "all"
+): Promise<ProductSearchResult[]> => {
+  const safeTerm = sanitizeSearchTerm(term);
+  if (!safeTerm) {
+    return [];
   }
-  return query.or(clauses.join(","));
+  const normalized = normalizeSearchTerm(safeTerm);
+  if (!normalized || normalized.length < 2) {
+    return [];
+  }
+  const payload = await fetchApi<SearchResponse>(
+    buildApiUrl("/search/suggest", {
+      q: normalized,
+      limit,
+      availability: availabilityFilter === "all" ? null : availabilityFilter,
+    })
+  );
+  const filtered = filterRowsByCode(payload.rows);
+  return filtered.map((row) => buildSearchResultFromCatalogRow(row));
+};
+
+export const fetchProductRowsChunk = async (
+  from: number,
+  size: number
+): Promise<ProductRow[]> => {
+  if (size <= 0) {
+    return [];
+  }
+  return fetchRecentSnapshots(Math.max(from + size, size));
+};
+
+export const fetchUniqueProductRowsChunk = async (
+  from: number,
+  size: number
+): Promise<ProductRow[]> => {
+  if (size <= 0) {
+    return [];
+  }
+  return fetchProductRowsChunk(from, size);
+};
+
+export const fetchCatalogIndexChunk = async (
+  from: number,
+  size: number
+): Promise<{ rows: ProductCatalogIndexRow[]; total: number | null }> => {
+  if (size <= 0) {
+    return { rows: [], total: 0 };
+  }
+  const payload = await fetchApi<CatalogResponse>(
+    buildApiUrl("/catalog", {
+      offset: Math.max(0, from),
+      limit: size,
+    })
+  );
+  return {
+    rows: filterRowsByCode(payload.rows),
+    total: payload.total ?? payload.total_estimate ?? 0,
+  };
 };
 
 export const fetchFilteredCatalogIndex = async (
@@ -287,28 +201,19 @@ export const fetchFilteredCatalogIndex = async (
   if (size <= 0) {
     return { rows: [], total: 0 };
   }
-  const start = Math.max(0, from);
-  const end = start + size - 1;
-
-  let query = buildCatalogIndexQuery(CATALOG_INDEX_COLUMNS, { count: "exact" });
-  query = applyAvailabilityFilter(query, filters.availability);
-  query = applyPriceFilter(query, filters.minPrice, filters.maxPrice);
-  query = applyCategoryFilter(query, filters.categories);
-
-  const { data, count, error } = (await query
-    .order("product_name", { ascending: true })
-    .range(start, end)) as {
-    data: ProductCatalogIndexRow[] | null;
-    count: number | null;
-    error: { message: string } | null;
-  };
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
+  const categories = (filters.categories ?? []).filter(Boolean).join(",");
+  const payload = await fetchApi<CatalogResponse>(
+    buildApiUrl("/catalog", {
+      offset: Math.max(0, from),
+      limit: size,
+      availability: filters.availability === "all" ? null : filters.availability,
+      min_price: filters.minPrice ?? null,
+      max_price: filters.maxPrice ?? null,
+      categories: categories || null,
+    })
+  );
   return {
-    rows: data ?? [],
-    total: count ?? 0,
+    rows: filterRowsByCode(payload.rows),
+    total: payload.total ?? payload.total_estimate ?? 0,
   };
 };

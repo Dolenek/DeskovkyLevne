@@ -3,7 +3,10 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createClient } from "@supabase/supabase-js";
 
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
+const SUPABASE_URL =
+  process.env.VITE_SUPABASE_URL ??
+  process.env.SUPABASE_URL ??
+  process.env.DATABASE_URL;
 const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY;
 const SITE_URL = (process.env.VITE_SITE_URL || "https://www.deskovkylevne.com")
   .replace(/\/$/, "");
@@ -20,7 +23,7 @@ const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
 });
 
 const PAGE_SIZE = 1000;
-const TABLE_NAME = "product_catalog_index";
+const TABLE_NAME = "catalog_slug_summary";
 
 const formatLastmod = (value) => {
   if (!value) {
