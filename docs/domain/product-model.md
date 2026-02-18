@@ -17,6 +17,7 @@
 
 ## Search and Filtering Semantics
 - Catalog and suggestion search are slug-centered but can match name and code.
+- Suggestion responses may use a reduced field projection, but slug/name/code/price/image semantics stay unchanged.
 - Category filtering uses extracted category tags from supplementary parameters.
 - Availability filters:
   - `available` maps to in-stock signal

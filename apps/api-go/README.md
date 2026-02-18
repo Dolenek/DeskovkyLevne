@@ -19,6 +19,7 @@ Canonical API and operations docs are in:
 Use `.env.example` and set:
 - `DATABASE_URL`
 - `FRONTEND_ORIGIN`
+- Optional DB pool/runtime tuning (`API_DB_*`, `API_TIMEOUT_*`)
 - Optional Redis (`REDIS_ADDR`, `REDIS_PASSWORD`, `REDIS_DB`)
 
 ## Run

@@ -7,7 +7,9 @@ const RECENT_RESULT_LIMIT = Number(
   import.meta.env.VITE_RECENT_DISCOUNT_RESULTS ?? "10"
 );
 const RECENT_LOOKBACK_LIMIT = Number(
-  import.meta.env.VITE_RECENT_DISCOUNT_LOOKBACK ?? "2000"
+  import.meta.env.VITE_API_RECENT_LOOKBACK ??
+    import.meta.env.VITE_RECENT_DISCOUNT_LOOKBACK ??
+    "2000"
 );
 
 interface UseRecentDiscountsState {

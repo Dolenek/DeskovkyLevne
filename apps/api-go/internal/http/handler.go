@@ -1,6 +1,8 @@
 package http
 
 import (
+	"context"
+	"errors"
 	"net/http"
 	"strings"
 
@@ -36,7 +38,7 @@ func (h *Handler) Catalog(w http.ResponseWriter, r *http.Request) {
 	}
 	rows, total, err := h.service.Catalog(r.Context(), filters)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeServiceError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
@@ -59,7 +61,7 @@ func (h *Handler) SearchSuggest(w http.ResponseWriter, r *http.Request) {
 	limit := parseLimit(values, 60, h.maxPageSize)
 	rows, err := h.service.Search(r.Context(), query, availability, limit)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeServiceError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"rows": rows})
@@ -73,7 +75,7 @@ func (h *Handler) ProductSnapshots(w http.ResponseWriter, r *http.Request) {
 	}
 	rows, err := h.service.ProductSnapshots(r.Context(), strings.ToLower(slug))
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeServiceError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"rows": rows})
@@ -84,7 +86,7 @@ func (h *Handler) RecentSnapshots(w http.ResponseWriter, r *http.Request) {
 	limit := parseLimit(values, 2000, 10000)
 	rows, err := h.service.RecentSnapshots(r.Context(), limit)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeServiceError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"rows": rows})
@@ -93,8 +95,16 @@ func (h *Handler) RecentSnapshots(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Categories(w http.ResponseWriter, r *http.Request) {
 	rows, err := h.service.CategoryCounts(r.Context())
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeServiceError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"rows": rows})
+}
+
+func writeServiceError(w http.ResponseWriter, err error) {
+	if errors.Is(err, context.DeadlineExceeded) {
+		writeError(w, http.StatusGatewayTimeout, "request timed out")
+		return
+	}
+	writeError(w, http.StatusInternalServerError, err.Error())
 }

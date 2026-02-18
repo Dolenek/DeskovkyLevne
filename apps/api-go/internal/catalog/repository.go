@@ -42,10 +42,10 @@ func (r *Repository) Search(
 	query string,
 	availability string,
 	limit int,
-) ([]Row, error) {
+) ([]SuggestionRow, error) {
 	safeQuery := strings.TrimSpace(query)
 	if safeQuery == "" {
-		return []Row{}, nil
+		return []SuggestionRow{}, nil
 	}
 	filters := Filters{
 		Availability: availability,
@@ -60,12 +60,10 @@ func (r *Repository) Search(
 		return nil, err
 	}
 	defer rows.Close()
-	return collectRows(rows)
+	return collectSuggestionRows(rows)
 }
 
-func (r *Repository) FetchCategoryCounts(
-	ctx context.Context,
-) ([]CategoryCount, error) {
+func (r *Repository) FetchCategoryCounts(ctx context.Context) ([]CategoryCount, error) {
 	query := `
 select tag as category, count(*)::bigint as count
 from (
@@ -80,6 +78,7 @@ order by count desc, category asc;
 		return nil, err
 	}
 	defer rows.Close()
+
 	results := make([]CategoryCount, 0, 256)
 	for rows.Next() {
 		var entry CategoryCount
@@ -119,6 +118,7 @@ select
 from public.catalog_slug_summary` + whereSQL + `
 order by product_name asc
 limit ` + limitPlaceholder + ` offset ` + offsetPlaceholder + `;`
+
 	rowArgs := append([]any{}, args...)
 	rowArgs = append(rowArgs, filters.Limit, filters.Offset)
 	return query, rowArgs
@@ -134,23 +134,13 @@ select
   product_name_search,
   currency_code,
   availability_label,
-  stock_status_label,
   latest_price::double precision,
-  previous_price::double precision,
-  first_price::double precision,
-  list_price_with_vat::double precision,
-  source_url,
-  latest_scraped_at::text,
   hero_image_url,
-  coalesce(gallery_image_urls, '{}'::text[]),
-  short_description,
-  coalesce(supplementary_parameters, '[]'::jsonb),
-  coalesce(metadata, '{}'::jsonb),
-  coalesce(price_points, '[]'::jsonb),
-  coalesce(category_tags, '{}'::text[])
+  coalesce(gallery_image_urls, '{}'::text[])
 from public.catalog_slug_summary` + whereSQL + `
 order by product_name asc
 limit ` + limitPlaceholder + `;`
+
 	queryArgs := append([]any{}, args...)
 	queryArgs = append(queryArgs, limit)
 	return query, queryArgs
@@ -159,10 +149,11 @@ limit ` + limitPlaceholder + `;`
 func buildWhere(filters Filters) (string, []any) {
 	clauses := make([]string, 0, 6)
 	args := make([]any, 0, 8)
-	if filters.Availability == "available" {
+	availability := strings.ToLower(strings.TrimSpace(filters.Availability))
+	if availability == "available" {
 		clauses = append(clauses, "is_available = true")
 	}
-	if filters.Availability == "preorder" {
+	if availability == "preorder" {
 		clauses = append(clauses, "is_preorder = true")
 	}
 	if filters.MinPrice != nil {
@@ -221,6 +212,28 @@ func collectRows(rows pgxRows) ([]Row, error) {
 			&row.Metadata,
 			&row.PricePoints,
 			&row.CategoryTags,
+		); err != nil {
+			return nil, err
+		}
+		results = append(results, row)
+	}
+	return results, rows.Err()
+}
+
+func collectSuggestionRows(rows pgxRows) ([]SuggestionRow, error) {
+	results := make([]SuggestionRow, 0, 64)
+	for rows.Next() {
+		var row SuggestionRow
+		if err := rows.Scan(
+			&row.ProductCode,
+			&row.ProductName,
+			&row.ProductNameNormalized,
+			&row.ProductNameSearch,
+			&row.CurrencyCode,
+			&row.AvailabilityLabel,
+			&row.LatestPrice,
+			&row.HeroImageURL,
+			&row.GalleryImageURLs,
 		); err != nil {
 			return nil, err
 		}

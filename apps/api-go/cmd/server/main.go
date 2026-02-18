@@ -28,8 +28,15 @@ func run() error {
 	if err != nil {
 		return err
 	}
+
 	ctx := context.Background()
-	pool, err := db.NewPool(ctx, cfg.DatabaseURL)
+	pool, err := db.NewPool(ctx, cfg.DatabaseURL, db.PoolOptions{
+		MaxConns:        cfg.DBMaxConns,
+		MinConns:        cfg.DBMinConns,
+		MaxConnIdleTime: cfg.DBMaxConnIdleTime,
+		MaxConnLifetime: cfg.DBMaxConnLifetime,
+		SimpleProtocol:  cfg.DBSimpleProtocol,
+	})
 	if err != nil {
 		return err
 	}
@@ -47,8 +54,15 @@ func run() error {
 	)
 	handler := api.NewHandler(service, cfg.MaxPageSize)
 	server := &http.Server{
-		Addr:         cfg.ServerAddress,
-		Handler:      api.NewRouter(handler, cfg.FrontendOrigin),
+		Addr: cfg.ServerAddress,
+		Handler: api.NewRouter(handler, cfg.FrontendOrigin, api.RouteTimeouts{
+			Health:     cfg.HealthTimeout,
+			Catalog:    cfg.CatalogTimeout,
+			Search:     cfg.SearchTimeout,
+			Product:    cfg.ProductTimeout,
+			Recent:     cfg.RecentTimeout,
+			Categories: cfg.CategoriesTimeout,
+		}),
 		ReadTimeout:  cfg.ReadTimeout,
 		WriteTimeout: cfg.WriteTimeout,
 		IdleTimeout:  cfg.IdleTimeout,

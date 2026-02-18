@@ -17,4 +17,4 @@ cd "${SCRIPT_DIR}"
 docker compose -f docker-compose.api-go.yml up -d --build
 
 echo "API deploy finished."
-echo "Health check: curl http://localhost:8080/health"
+echo "Health check: curl http://localhost:${API_GO_PORT:-18080}/health"

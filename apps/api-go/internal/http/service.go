@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
+	"golang.org/x/sync/singleflight"
 	"tlamasite/apps/api-go/internal/cache"
 	"tlamasite/apps/api-go/internal/catalog"
 	"tlamasite/apps/api-go/internal/snapshots"
@@ -16,6 +18,7 @@ type Service struct {
 	catalogRepo  *catalog.Repository
 	snapshotRepo *snapshots.Repository
 	cacheClient  cache.Client
+	requests     singleflight.Group
 }
 
 func NewService(
@@ -39,13 +42,24 @@ func (s *Service) Catalog(
 	if ok := s.readCache(ctx, key, &cached); ok {
 		return cached.Rows, cached.Total, nil
 	}
-	rows, total, err := s.catalogRepo.Fetch(ctx, filters)
+	value, err, _ := s.requests.Do("catalog:"+key, func() (any, error) {
+		var latest catalogResponse
+		if ok := s.readCache(ctx, key, &latest); ok {
+			return latest, nil
+		}
+		rows, total, fetchErr := s.catalogRepo.Fetch(ctx, filters)
+		if fetchErr != nil {
+			return nil, fetchErr
+		}
+		payload := catalogResponse{Rows: rows, Total: total}
+		s.writeCache(ctx, key, payload, 120*time.Second)
+		return payload, nil
+	})
 	if err != nil {
 		return nil, 0, err
 	}
-	payload := catalogResponse{Rows: rows, Total: total}
-	s.writeCache(ctx, key, payload, 120*time.Second)
-	return rows, total, nil
+	payload := value.(catalogResponse)
+	return payload.Rows, payload.Total, nil
 }
 
 func (s *Service) Search(
@@ -53,18 +67,34 @@ func (s *Service) Search(
 	query string,
 	availability string,
 	limit int,
-) ([]catalog.Row, error) {
-	key := fmt.Sprintf("suggest:%s:%s:%d", strings.ToLower(query), availability, limit)
-	var cached rowsResponse
+) ([]catalog.SuggestionRow, error) {
+	key := fmt.Sprintf(
+		"suggest:%s:%s:%d",
+		strings.ToLower(strings.TrimSpace(query)),
+		normalizeAvailability(availability),
+		limit,
+	)
+	var cached suggestionRowsResponse
 	if ok := s.readCache(ctx, key, &cached); ok {
 		return cached.Rows, nil
 	}
-	rows, err := s.catalogRepo.Search(ctx, query, availability, limit)
+	value, err, _ := s.requests.Do("search:"+key, func() (any, error) {
+		var latest suggestionRowsResponse
+		if ok := s.readCache(ctx, key, &latest); ok {
+			return latest, nil
+		}
+		rows, fetchErr := s.catalogRepo.Search(ctx, query, availability, limit)
+		if fetchErr != nil {
+			return nil, fetchErr
+		}
+		payload := suggestionRowsResponse{Rows: rows}
+		s.writeCache(ctx, key, payload, 60*time.Second)
+		return payload, nil
+	})
 	if err != nil {
 		return nil, err
 	}
-	s.writeCache(ctx, key, rowsResponse{Rows: rows}, 60*time.Second)
-	return rows, nil
+	return value.(suggestionRowsResponse).Rows, nil
 }
 
 func (s *Service) ProductSnapshots(
@@ -76,12 +106,23 @@ func (s *Service) ProductSnapshots(
 	if ok := s.readCache(ctx, key, &cached); ok {
 		return cached.Rows, nil
 	}
-	rows, err := s.snapshotRepo.BySlug(ctx, slug)
+	value, err, _ := s.requests.Do("product:"+key, func() (any, error) {
+		var latest snapshotRowsResponse
+		if ok := s.readCache(ctx, key, &latest); ok {
+			return latest, nil
+		}
+		rows, fetchErr := s.snapshotRepo.BySlug(ctx, slug)
+		if fetchErr != nil {
+			return nil, fetchErr
+		}
+		payload := snapshotRowsResponse{Rows: rows}
+		s.writeCache(ctx, key, payload, 300*time.Second)
+		return payload, nil
+	})
 	if err != nil {
 		return nil, err
 	}
-	s.writeCache(ctx, key, snapshotRowsResponse{Rows: rows}, 300*time.Second)
-	return rows, nil
+	return value.(snapshotRowsResponse).Rows, nil
 }
 
 func (s *Service) RecentSnapshots(
@@ -93,12 +134,23 @@ func (s *Service) RecentSnapshots(
 	if ok := s.readCache(ctx, key, &cached); ok {
 		return cached.Rows, nil
 	}
-	rows, err := s.snapshotRepo.Recent(ctx, limit)
+	value, err, _ := s.requests.Do("recent:"+key, func() (any, error) {
+		var latest snapshotRowsResponse
+		if ok := s.readCache(ctx, key, &latest); ok {
+			return latest, nil
+		}
+		rows, fetchErr := s.snapshotRepo.Recent(ctx, limit)
+		if fetchErr != nil {
+			return nil, fetchErr
+		}
+		payload := snapshotRowsResponse{Rows: rows}
+		s.writeCache(ctx, key, payload, 120*time.Second)
+		return payload, nil
+	})
 	if err != nil {
 		return nil, err
 	}
-	s.writeCache(ctx, key, snapshotRowsResponse{Rows: rows}, 120*time.Second)
-	return rows, nil
+	return value.(snapshotRowsResponse).Rows, nil
 }
 
 func (s *Service) CategoryCounts(ctx context.Context) ([]catalog.CategoryCount, error) {
@@ -107,12 +159,23 @@ func (s *Service) CategoryCounts(ctx context.Context) ([]catalog.CategoryCount, 
 	if ok := s.readCache(ctx, key, &cached); ok {
 		return cached.Rows, nil
 	}
-	rows, err := s.catalogRepo.FetchCategoryCounts(ctx)
+	value, err, _ := s.requests.Do("categories:"+key, func() (any, error) {
+		var latest categoryRowsResponse
+		if ok := s.readCache(ctx, key, &latest); ok {
+			return latest, nil
+		}
+		rows, fetchErr := s.catalogRepo.FetchCategoryCounts(ctx)
+		if fetchErr != nil {
+			return nil, fetchErr
+		}
+		payload := categoryRowsResponse{Rows: rows}
+		s.writeCache(ctx, key, payload, 600*time.Second)
+		return payload, nil
+	})
 	if err != nil {
 		return nil, err
 	}
-	s.writeCache(ctx, key, categoryRowsResponse{Rows: rows}, 600*time.Second)
-	return rows, nil
+	return value.(categoryRowsResponse).Rows, nil
 }
 
 func (s *Service) readCache(ctx context.Context, key string, target any) bool {
@@ -141,16 +204,29 @@ func (s *Service) writeCache(ctx context.Context, key string, value any, ttl tim
 }
 
 func catalogCacheKey(filters catalog.Filters) string {
+	categories := append([]string(nil), filters.Categories...)
+	sort.Strings(categories)
 	parts := []string{
-		filters.Availability,
-		fmt.Sprintf("min:%v", filters.MinPrice),
-		fmt.Sprintf("max:%v", filters.MaxPrice),
-		fmt.Sprintf("q:%s", strings.ToLower(filters.Query)),
-		fmt.Sprintf("cats:%s", strings.Join(filters.Categories, "|")),
+		normalizeAvailability(filters.Availability),
+		fmt.Sprintf("min:%s", floatPtrKey(filters.MinPrice)),
+		fmt.Sprintf("max:%s", floatPtrKey(filters.MaxPrice)),
+		fmt.Sprintf("q:%s", strings.ToLower(strings.TrimSpace(filters.Query))),
+		fmt.Sprintf("cats:%s", strings.Join(categories, "|")),
 		fmt.Sprintf("l:%d", filters.Limit),
 		fmt.Sprintf("o:%d", filters.Offset),
 	}
 	return "catalog:" + strings.Join(parts, ";")
+}
+
+func normalizeAvailability(value string) string {
+	return strings.ToLower(strings.TrimSpace(value))
+}
+
+func floatPtrKey(value *float64) string {
+	if value == nil {
+		return "nil"
+	}
+	return fmt.Sprintf("%.4f", *value)
 }
 
 type catalogResponse struct {
@@ -158,8 +234,8 @@ type catalogResponse struct {
 	Total int64         `json:"total"`
 }
 
-type rowsResponse struct {
-	Rows []catalog.Row `json:"rows"`
+type suggestionRowsResponse struct {
+	Rows []catalog.SuggestionRow `json:"rows"`
 }
 
 type snapshotRowsResponse struct {

@@ -9,7 +9,7 @@ All product navigation is slug-based.
 
 ## Data Access
 - Frontend runtime reads data through backend API (`VITE_API_BASE_URL`).
-- Runtime no longer depends on browser-side direct Supabase reads.
+- Runtime does not use browser-side direct PostgREST/Supabase reads for catalog/search/detail.
 - API requests automatically retry for transient failures (HTTP 429/5xx and network errors) before surfacing errors in UI.
 - Core API usage:
   - Catalog/filter: `/api/v1/catalog`
@@ -18,21 +18,18 @@ All product navigation is slug-based.
   - Recent snapshots: `/api/v1/snapshots/recent`
   - Categories: `/api/v1/meta/categories`
 
+## Runtime Tuning Environment Variables
+- `VITE_API_SEARCH_LIMIT` (fallback: `VITE_SUPABASE_SEARCH_LIMIT`)
+- `VITE_API_RECENT_LOOKBACK` (fallback: `VITE_RECENT_DISCOUNT_LOOKBACK`)
+- `VITE_API_FILTER_CODES` (fallback: `VITE_SUPABASE_FILTER_CODES`)
+- `VITE_API_INITIAL_CHUNK` (fallback: `VITE_SUPABASE_INITIAL_CHUNK`)
+- `VITE_API_CATALOG_CHUNK` (fallback: `VITE_SUPABASE_CATALOG_CHUNK`)
+- `VITE_API_CATALOG_PREFETCH_DELAY` (fallback: `VITE_SUPABASE_CATALOG_PREFETCH_DELAY`)
+
 ## Key UI Behaviors
 - Search overlay activates on debounced input and shows suggestions.
 - Filtered catalog supports availability, price range, and categories.
-- Product detail renders:
-  - hero + gallery
-  - availability and outbound CTA
-  - multi-seller history chart
-  - supplementary parameters panel
-
-## SEO Behavior
-- Canonical URLs are slug-first.
-- Meta tags include Open Graph and Twitter metadata.
-- Structured data:
-  - Home: `WebSite`
-  - Product detail: `Product` with seller offer context
+- Product detail renders hero/gallery, availability, outbound CTA, multi-seller history chart, and supplementary parameters panel.
 
 ## Seller Content Rule in UI
 - Prefer `tlamagames`/`tlamagase` content fields where available.

@@ -4,13 +4,19 @@ import type { ProductSeries } from "../types/product";
 import { buildSeriesFromCatalogIndexRow } from "../utils/catalogTransforms";
 
 const DEFAULT_INITIAL_CHUNK = Number(
-  import.meta.env.VITE_SUPABASE_INITIAL_CHUNK ?? "400"
+  import.meta.env.VITE_API_INITIAL_CHUNK ??
+    import.meta.env.VITE_SUPABASE_INITIAL_CHUNK ??
+    "400"
 );
 const DEFAULT_CHUNK_SIZE = Number(
-  import.meta.env.VITE_SUPABASE_CATALOG_CHUNK ?? "2000"
+  import.meta.env.VITE_API_CATALOG_CHUNK ??
+    import.meta.env.VITE_SUPABASE_CATALOG_CHUNK ??
+    "2000"
 );
 const DEFAULT_PREFETCH_DELAY = Number(
-  import.meta.env.VITE_SUPABASE_CATALOG_PREFETCH_DELAY ?? "150"
+  import.meta.env.VITE_API_CATALOG_PREFETCH_DELAY ??
+    import.meta.env.VITE_SUPABASE_CATALOG_PREFETCH_DELAY ??
+    "150"
 );
 
 interface UseChunkedProductCatalogOptions {

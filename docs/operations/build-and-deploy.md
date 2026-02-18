@@ -17,25 +17,25 @@ Pipeline stages:
 - Build scripts use Supabase client credentials from env vars.
 
 ## Fallback Behavior Without Supabase Credentials
-If `VITE_SUPABASE_URL` or `VITE_SUPABASE_ANON_KEY` is missing:
-- sitemap generation logs warning and outputs static-only routes:
-  - `/`
-  - `/levne-deskovky`
-  - `/deskove-hry`
-- prerender logs warning and prerenders static-only routes.
-- build continues successfully.
+If `VITE_SUPABASE_URL` or `VITE_SUPABASE_ANON_KEY` is missing, sitemap/prerender run in static-only mode and build still succeeds.
 
 ## Prerender Requirements
-- Playwright is used for prerendering.
-- Install browser runtime on build hosts:
 ```bash
 npx playwright install chromium
 ```
 
-## Backend Deployment Pointers
-- API service code: `apps/api-go`
+## Backend Deployment (Go API)
+- Service code: `apps/api-go`
 - Compose stack: `infra/rewrite/docker-compose.api-go.yml`
-- Helper deployment script: `infra/rewrite/deploy-api-go.sh`
+- Deployment helper: `infra/rewrite/deploy-api-go.sh`
+- Default published port: `${API_GO_PORT:-18080}`
 
-Required for API runtime:
+Required runtime env:
 - `DATABASE_URL`
+
+## SQL Operations Used in Deployment/Cutover
+- Recent endpoint index migration: `infra/db/migrations/20260218_recent_snapshots_index.sql`
+- Non-blocking aggregate refresh: `infra/rewrite/sql/refresh-catalog-aggregates-concurrently.sql`
+- Legacy direct-read cutover: `infra/rewrite/sql/legacy-read-cutover.sql`
+- Cutover rollback: `infra/rewrite/sql/legacy-read-cutover-rollback.sql`
+- Legacy artifact cleanup: `infra/rewrite/sql/drop-legacy-product-catalog-index.sql`

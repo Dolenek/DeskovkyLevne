@@ -12,9 +12,10 @@
 
 ## Runtime Data Flow
 1. Browser requests catalog/search/detail data from Go API.
-2. API reads Postgres materialized views (and raw snapshots where needed).
-3. API optionally serves cached responses from Redis.
-4. Frontend renders slug-keyed pages and multi-seller history.
+2. API reads Postgres materialized views and snapshot table.
+3. API applies route-level request deadlines and DB context cancellation.
+4. API optionally serves cached responses from Redis with singleflight cache-miss coalescing.
+5. Frontend renders slug-keyed pages and multi-seller history.
 
 ## Build-Time Data Flow
 1. `scripts/generate-sitemap.mjs` generates `public/sitemap.xml`.
@@ -27,3 +28,4 @@ Build-time slug source is `catalog_slug_summary`. If Supabase credentials are mi
 - Slug-first routing and data identity (`product_name_normalized`).
 - Multi-seller history remains parallel, never merged into one synthetic series.
 - Seller-priority content selection: prefer `tlamagames`/`tlamagase`, then fallback.
+- Go API is the canonical runtime read interface; direct client reads from raw snapshot tables are operationally deprecated and gated by explicit cutover SQL.

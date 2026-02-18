@@ -17,6 +17,7 @@ A code task is incomplete until impacted docs are updated in the same task when 
 ## Stale Content Rule
 - If a code change invalidates existing docs, remove or rewrite stale sections in the same task.
 - Do not leave historical notes or cleanup logs in canonical docs.
+- If legacy paths are decommissioned (for example direct DB read APIs), remove them from canonical runtime docs in the same task.
 
 ## Author Checklist
 1. Identify impacted docs pages before coding.

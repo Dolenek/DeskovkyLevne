@@ -21,16 +21,27 @@ const API_RETRY_DELAY_MS = Math.max(
   Number(import.meta.env.VITE_API_RETRY_DELAY_MS ?? "250")
 );
 
-const FILTER_CODES = import.meta.env.VITE_SUPABASE_FILTER_CODES
+const FILTER_CODES = import.meta.env.VITE_API_FILTER_CODES
+  ? String(import.meta.env.VITE_API_FILTER_CODES)
+      .split(",")
+      .map((code) => code.trim())
+      .filter(Boolean)
+  : import.meta.env.VITE_SUPABASE_FILTER_CODES
   ? String(import.meta.env.VITE_SUPABASE_FILTER_CODES)
       .split(",")
       .map((code) => code.trim())
       .filter(Boolean)
   : [];
 
-const SEARCH_LIMIT = Number(import.meta.env.VITE_SUPABASE_SEARCH_LIMIT ?? "60");
+const SEARCH_LIMIT = Number(
+  import.meta.env.VITE_API_SEARCH_LIMIT ??
+    import.meta.env.VITE_SUPABASE_SEARCH_LIMIT ??
+    "60"
+);
 const RECENT_LOOKBACK_LIMIT = Number(
-  import.meta.env.VITE_RECENT_DISCOUNT_LOOKBACK ?? "2000"
+  import.meta.env.VITE_API_RECENT_LOOKBACK ??
+    import.meta.env.VITE_RECENT_DISCOUNT_LOOKBACK ??
+    "2000"
 );
 
 interface CatalogResponse {

@@ -44,12 +44,16 @@ Query params:
 - `availability` (optional): same semantics as catalog.
 - `limit` (optional, int): default `60`, capped by backend max page size.
 
-Response shape:
-```json
-{
-  "rows": []
-}
-```
+Response row fields:
+- `product_code`
+- `product_name`
+- `product_name_normalized`
+- `product_name_search`
+- `currency_code`
+- `availability_label`
+- `latest_price`
+- `hero_image_url`
+- `gallery_image_urls`
 
 ## Product Snapshots
 ### `GET /api/v1/products/{slug}`
@@ -74,6 +78,8 @@ Returns latest snapshots for discount/recency features.
 
 Query params:
 - `limit` (optional, int): default `2000`, capped at `10000`.
+
+Rows are sorted by `scraped_at desc, id desc`.
 
 Response shape:
 ```json
@@ -101,3 +107,8 @@ Response shape:
 - Product detail snapshots: TTL 300s.
 - Recent snapshots: TTL 120s.
 - Category list: TTL 600s.
+- Cache miss fan-in is coalesced per key to reduce duplicate DB queries under burst load.
+
+## Timeout Behavior
+- Route-level timeouts are enforced in middleware.
+- Timeout responses return `504` with `{"error":"request timed out"}`.

@@ -8,16 +8,34 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func NewPool(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
+type PoolOptions struct {
+	MaxConns        int32
+	MinConns        int32
+	MaxConnIdleTime time.Duration
+	MaxConnLifetime time.Duration
+	SimpleProtocol  bool
+}
+
+func NewPool(ctx context.Context, databaseURL string, options PoolOptions) (*pgxpool.Pool, error) {
 	cfg, err := pgxpool.ParseConfig(databaseURL)
 	if err != nil {
 		return nil, err
 	}
-	// Required for PgBouncer transaction pooling compatibility (Supabase pooler).
-	cfg.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
-	cfg.MaxConns = 30
-	cfg.MinConns = 5
-	cfg.MaxConnIdleTime = 5 * time.Minute
-	cfg.MaxConnLifetime = 2 * time.Hour
+	if options.SimpleProtocol {
+		// Required for PgBouncer transaction pooling compatibility.
+		cfg.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
+	}
+	if options.MaxConns > 0 {
+		cfg.MaxConns = options.MaxConns
+	}
+	if options.MinConns >= 0 {
+		cfg.MinConns = options.MinConns
+	}
+	if options.MaxConnIdleTime > 0 {
+		cfg.MaxConnIdleTime = options.MaxConnIdleTime
+	}
+	if options.MaxConnLifetime > 0 {
+		cfg.MaxConnLifetime = options.MaxConnLifetime
+	}
 	return pgxpool.NewWithConfig(ctx, cfg)
 }
