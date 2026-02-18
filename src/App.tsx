@@ -3,55 +3,56 @@ import SearchPage from "./pages/SearchPage";
 import { ProductDetailPage } from "./pages/ProductDetailPage";
 import { usePathNavigation } from "./hooks/usePathNavigation";
 import { LandingPage } from "./pages/landing/LandingPage";
-
-const DETAIL_ROUTE = /^\/deskove-hry\/([^/]+)\/?$/i;
-const LEVNE_ROUTE = "/levne-deskovky";
-const DESKOVE_ROUTE = "/deskove-hry";
-
-const buildDetailPath = (slug: string) =>
-  `/deskove-hry/${encodeURIComponent(slug)}`;
+import { NotFoundPage } from "./pages/NotFoundPage";
+import { buildProductDetailPath, parseRoute } from "./routing/routes";
 
 const App = () => {
   const { path, navigate } = usePathNavigation();
 
-  const productSlug = useMemo(() => {
-    const match = path.match(DETAIL_ROUTE);
-    return match ? decodeURIComponent(match[1]) : null;
-  }, [path]);
+  const route = useMemo(() => parseRoute(path), [path]);
 
-  if (path === LEVNE_ROUTE) {
+  if (route.kind === "landing-levne") {
     return (
       <LandingPage
         variant="levne"
-        onNavigateToProduct={(slug) => navigate(buildDetailPath(slug))}
+        onNavigateToProduct={(slug) => navigate(buildProductDetailPath(slug))}
         onNavigateHome={() => navigate("/")}
       />
     );
   }
 
-  if (path === DESKOVE_ROUTE) {
+  if (route.kind === "landing-deskove") {
     return (
       <LandingPage
         variant="deskove"
-        onNavigateToProduct={(slug) => navigate(buildDetailPath(slug))}
+        onNavigateToProduct={(slug) => navigate(buildProductDetailPath(slug))}
         onNavigateHome={() => navigate("/")}
       />
     );
   }
 
-  if (productSlug) {
+  if (route.kind === "detail") {
     return (
       <ProductDetailPage
-        productSlug={productSlug}
-        onNavigateToProduct={(slug) => navigate(buildDetailPath(slug))}
+        productSlug={route.slug}
+        onNavigateToProduct={(slug) => navigate(buildProductDetailPath(slug))}
         onNavigateHome={() => navigate("/")}
+      />
+    );
+  }
+
+  if (route.kind === "not-found") {
+    return (
+      <NotFoundPage
+        path={route.path}
+        onNavigateHome={() => navigate("/", { replace: true })}
       />
     );
   }
 
   return (
     <SearchPage
-      onProductNavigate={(slug) => navigate(buildDetailPath(slug))}
+      onProductNavigate={(slug) => navigate(buildProductDetailPath(slug))}
     />
   );
 };

@@ -63,17 +63,21 @@ func (r *Repository) Search(
 	return collectSuggestionRows(rows)
 }
 
-func (r *Repository) FetchCategoryCounts(ctx context.Context) ([]CategoryCount, error) {
+func (r *Repository) FetchCategoryCounts(
+	ctx context.Context,
+	filters CategoryFilters,
+) ([]CategoryCount, error) {
+	whereSQL, args := buildWhere(Filters{Availability: filters.Availability})
 	query := `
 select tag as category, count(*)::bigint as count
 from (
   select unnest(category_tags) as tag
-  from public.catalog_slug_summary
+  from public.catalog_slug_summary` + whereSQL + `
 ) expanded
 group by tag
 order by count desc, category asc;
 `
-	rows, err := r.db.Query(ctx, query)
+	rows, err := r.db.Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -88,6 +92,30 @@ order by count desc, category asc;
 		results = append(results, entry)
 	}
 	return results, rows.Err()
+}
+
+func (r *Repository) FetchPriceRange(
+	ctx context.Context,
+	filters PriceRangeFilters,
+) (PriceRange, error) {
+	whereSQL, args := buildWhere(Filters{
+		Availability: filters.Availability,
+		Categories:   filters.Categories,
+	})
+	query := `
+select
+  min(latest_price)::double precision,
+  max(latest_price)::double precision
+from public.catalog_slug_summary` + whereSQL + `;`
+
+	var bounds PriceRange
+	if err := r.db.QueryRow(ctx, query, args...).Scan(
+		&bounds.MinPrice,
+		&bounds.MaxPrice,
+	); err != nil {
+		return PriceRange{}, err
+	}
+	return bounds, nil
 }
 
 func buildRowsQuery(whereSQL string, args []any, filters Filters) (string, []any) {
@@ -136,7 +164,8 @@ select
   availability_label,
   latest_price::double precision,
   hero_image_url,
-  coalesce(gallery_image_urls, '{}'::text[])
+  coalesce(gallery_image_urls, '{}'::text[]),
+  coalesce(category_tags, '{}'::text[])
 from public.catalog_slug_summary` + whereSQL + `
 order by product_name asc
 limit ` + limitPlaceholder + `;`
@@ -234,6 +263,7 @@ func collectSuggestionRows(rows pgxRows) ([]SuggestionRow, error) {
 			&row.LatestPrice,
 			&row.HeroImageURL,
 			&row.GalleryImageURLs,
+			&row.CategoryTags,
 		); err != nil {
 			return nil, err
 		}

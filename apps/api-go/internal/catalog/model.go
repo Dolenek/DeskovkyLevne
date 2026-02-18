@@ -40,6 +40,20 @@ type CategoryCount struct {
 	Count    int64  `json:"count"`
 }
 
+type CategoryFilters struct {
+	Availability string
+}
+
+type PriceRangeFilters struct {
+	Availability string
+	Categories   []string
+}
+
+type PriceRange struct {
+	MinPrice *float64 `json:"min_price"`
+	MaxPrice *float64 `json:"max_price"`
+}
+
 type SuggestionRow struct {
 	ProductCode           *string  `json:"product_code"`
 	ProductName           *string  `json:"product_name"`
@@ -50,4 +64,5 @@ type SuggestionRow struct {
 	LatestPrice           *float64 `json:"latest_price"`
 	HeroImageURL          *string  `json:"hero_image_url"`
 	GalleryImageURLs      []string `json:"gallery_image_urls"`
+	CategoryTags          []string `json:"category_tags"`
 }

@@ -1,6 +1,7 @@
 package http
 
 import (
+	"log"
 	"net/http"
 	"time"
 
@@ -16,12 +17,15 @@ type RouteTimeouts struct {
 	Product    time.Duration
 	Recent     time.Duration
 	Categories time.Duration
+	PriceRange time.Duration
 }
 
 func NewRouter(handler *Handler, allowedOrigin string, timeouts RouteTimeouts) http.Handler {
 	router := chi.NewRouter()
 	router.Use(middleware.RealIP)
+	router.Use(middleware.RequestID)
 	router.Use(middleware.Recoverer)
+	router.Use(requestLogger)
 	router.Use(cors.Handler(cors.Options{
 		AllowedOrigins: []string{allowedOrigin},
 		AllowedMethods: []string{
@@ -39,6 +43,7 @@ func NewRouter(handler *Handler, allowedOrigin string, timeouts RouteTimeouts) h
 		withRouteTimeout(r, timeouts.Product, "/products/{slug}", handler.ProductSnapshots)
 		withRouteTimeout(r, timeouts.Recent, "/snapshots/recent", handler.RecentSnapshots)
 		withRouteTimeout(r, timeouts.Categories, "/meta/categories", handler.Categories)
+		withRouteTimeout(r, timeouts.PriceRange, "/meta/price-range", handler.PriceRange)
 	})
 	return router
 }
@@ -49,4 +54,22 @@ func withRouteTimeout(router chi.Router, timeout time.Duration, pattern string, 
 		return
 	}
 	router.With(middleware.Timeout(timeout)).Get(pattern, handler)
+}
+
+func requestLogger(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		startedAt := time.Now()
+		writer := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
+		next.ServeHTTP(writer, r)
+		log.Printf(
+			"request_id=%s method=%s path=%s status=%d bytes=%d duration_ms=%d ip=%s",
+			middleware.GetReqID(r.Context()),
+			r.Method,
+			r.URL.Path,
+			writer.Status(),
+			writer.BytesWritten(),
+			time.Since(startedAt).Milliseconds(),
+			r.RemoteAddr,
+		)
+	})
 }

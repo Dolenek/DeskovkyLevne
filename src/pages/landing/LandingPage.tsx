@@ -8,6 +8,7 @@ import { useSearchOverlayState } from "../../hooks/useSearchOverlayState";
 import { useTranslation } from "../../hooks/useTranslation";
 import type { ProductSeries } from "../../types/product";
 import { formatPrice } from "../../utils/numberFormat";
+import { handleInAppNavigation } from "../../utils/navigation";
 import { buildAbsoluteUrl } from "../../utils/urls";
 import { LANDING_SEO_COPY } from "../../utils/seoContent";
 
@@ -87,18 +88,7 @@ const ProductCard = ({
     <a
       href={href}
       onClick={(event) => {
-        if (
-          event.defaultPrevented ||
-          event.button !== 0 ||
-          event.metaKey ||
-          event.ctrlKey ||
-          event.altKey ||
-          event.shiftKey
-        ) {
-          return;
-        }
-        event.preventDefault();
-        onNavigate(series.slug);
+        handleInAppNavigation(event, () => onNavigate(series.slug));
       }}
       className="flex flex-col gap-3 rounded-3xl border border-slate-800 bg-black/20 p-5 transition hover:border-primary/60"
     >
@@ -156,18 +146,7 @@ const DiscountCard = ({
     <a
       href={href}
       onClick={(event) => {
-        if (
-          event.defaultPrevented ||
-          event.button !== 0 ||
-          event.metaKey ||
-          event.ctrlKey ||
-          event.altKey ||
-          event.shiftKey
-        ) {
-          return;
-        }
-        event.preventDefault();
-        onNavigate(discount.productSlug);
+        handleInAppNavigation(event, () => onNavigate(discount.productSlug));
       }}
       className="flex flex-col gap-2 rounded-3xl border border-slate-800 bg-black/20 p-5 transition hover:border-primary/60"
     >

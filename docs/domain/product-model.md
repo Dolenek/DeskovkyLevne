@@ -17,8 +17,9 @@
 
 ## Search and Filtering Semantics
 - Catalog and suggestion search are slug-centered but can match name and code.
-- Suggestion responses may use a reduced field projection, but slug/name/code/price/image semantics stay unchanged.
+- Suggestion responses may use a reduced field projection, but slug/name/code/price/image/category-tag semantics stay unchanged.
 - Category filtering uses extracted category tags from supplementary parameters.
+- Filter metadata (category list and price bounds) is served through API metadata endpoints, not from full client-side catalog scans.
 - Availability filters:
   - `available` maps to in-stock signal
   - `preorder` maps to pre-order signal

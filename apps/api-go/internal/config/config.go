@@ -32,6 +32,15 @@ type Config struct {
 	ProductTimeout    time.Duration
 	RecentTimeout     time.Duration
 	CategoriesTimeout time.Duration
+	PriceRangeTimeout time.Duration
+
+	CacheNamespace    string
+	CacheTTLCatalog   time.Duration
+	CacheTTLSearch    time.Duration
+	CacheTTLProduct   time.Duration
+	CacheTTLRecent    time.Duration
+	CacheTTLCategories time.Duration
+	CacheTTLPriceRange time.Duration
 }
 
 func Load() (Config, error) {
@@ -59,6 +68,15 @@ func Load() (Config, error) {
 		ProductTimeout:    readDuration("API_TIMEOUT_PRODUCT", 6*time.Second),
 		RecentTimeout:     readDuration("API_TIMEOUT_RECENT", 12*time.Second),
 		CategoriesTimeout: readDuration("API_TIMEOUT_CATEGORIES", 4*time.Second),
+		PriceRangeTimeout: readDuration("API_TIMEOUT_PRICE_RANGE", 4*time.Second),
+
+		CacheNamespace:     getenv("API_CACHE_NAMESPACE", "api-v1"),
+		CacheTTLCatalog:    readDuration("API_CACHE_TTL_CATALOG", 120*time.Second),
+		CacheTTLSearch:     readDuration("API_CACHE_TTL_SEARCH", 60*time.Second),
+		CacheTTLProduct:    readDuration("API_CACHE_TTL_PRODUCT", 300*time.Second),
+		CacheTTLRecent:     readDuration("API_CACHE_TTL_RECENT", 120*time.Second),
+		CacheTTLCategories: readDuration("API_CACHE_TTL_CATEGORIES", 600*time.Second),
+		CacheTTLPriceRange: readDuration("API_CACHE_TTL_PRICE_RANGE", 180*time.Second),
 	}
 	if cfg.DatabaseURL == "" {
 		return Config{}, errors.New("DATABASE_URL is required")
@@ -74,6 +92,9 @@ func Load() (Config, error) {
 	}
 	if cfg.DBMinConns > cfg.DBMaxConns {
 		cfg.DBMinConns = cfg.DBMaxConns
+	}
+	if cfg.CacheNamespace == "" {
+		cfg.CacheNamespace = "api-v1"
 	}
 	return cfg, nil
 }

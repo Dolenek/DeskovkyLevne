@@ -2,6 +2,7 @@ import type { MouseEvent } from "react";
 import type { ProductSeries } from "../types/product";
 import type { LocaleKey } from "../i18n/translations";
 import { formatPrice } from "../utils/numberFormat";
+import { handleInAppNavigation } from "../utils/navigation";
 
 interface ProductListItemProps {
   series: ProductSeries;
@@ -34,18 +35,7 @@ export const ProductListItem = ({
   const href = `/deskove-hry/${encodeURIComponent(series.slug)}`;
 
   const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
-    if (
-      event.defaultPrevented ||
-      event.button !== 0 ||
-      event.metaKey ||
-      event.ctrlKey ||
-      event.altKey ||
-      event.shiftKey
-    ) {
-      return;
-    }
-    event.preventDefault();
-    onNavigate(series);
+    handleInAppNavigation(event, () => onNavigate(series));
   };
 
   return (

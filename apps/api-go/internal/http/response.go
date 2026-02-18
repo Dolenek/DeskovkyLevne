@@ -14,5 +14,13 @@ func writeJSON(w http.ResponseWriter, status int, payload any) {
 }
 
 func writeError(w http.ResponseWriter, status int, message string) {
-	writeJSON(w, status, map[string]string{"error": message})
+	writeErrorCode(w, status, "", message)
+}
+
+func writeErrorCode(w http.ResponseWriter, status int, code string, message string) {
+	payload := map[string]string{"error": message}
+	if code != "" {
+		payload["code"] = code
+	}
+	writeJSON(w, status, payload)
 }

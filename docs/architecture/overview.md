@@ -5,6 +5,7 @@
 - Backend read API: Go service (`apps/api-go`) exposing `/api/v1/*`.
 - Database: Postgres/Supabase as source of truth.
 - Optional cache: Redis for API read-path caching.
+- `apps/web-astro` is not part of the active runtime path and is treated as inactive artifact storage.
 
 ## Read Models
 - `catalog_slug_summary`: one row per canonical slug for catalog/search/filter.
@@ -14,8 +15,8 @@
 1. Browser requests catalog/search/detail data from Go API.
 2. API reads Postgres materialized views and snapshot table.
 3. API applies route-level request deadlines and DB context cancellation.
-4. API optionally serves cached responses from Redis with singleflight cache-miss coalescing.
-5. Frontend renders slug-keyed pages and multi-seller history.
+4. API optionally serves cached responses from Redis with singleflight cache-miss coalescing and a configurable cache namespace.
+5. Frontend renders slug-keyed pages, explicit not-found routes, and multi-seller history.
 
 ## Build-Time Data Flow
 1. `scripts/generate-sitemap.mjs` generates `public/sitemap.xml`.

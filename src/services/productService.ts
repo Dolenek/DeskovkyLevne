@@ -1,5 +1,7 @@
 import type {
   CatalogSearchRow,
+  CategoryCountRow,
+  PriceRangeResponse,
   ProductCatalogIndexRow,
   ProductFetcher,
   ProductRow,
@@ -58,6 +60,10 @@ interface SnapshotResponse {
   rows: ProductRow[];
 }
 
+interface CategoriesResponse {
+  rows: CategoryCountRow[];
+}
+
 interface CatalogFilterOptions {
   availability?: AvailabilityFilter;
   minPrice?: number | null;
@@ -68,6 +74,10 @@ interface CatalogFilterOptions {
 interface FilteredCatalogResult {
   rows: ProductCatalogIndexRow[];
   total: number;
+}
+
+interface ApiRequestOptions {
+  signal?: AbortSignal;
 }
 
 const buildApiUrl = (
@@ -98,17 +108,43 @@ class ApiRequestError extends Error {
 
 const shouldRetryStatus = (status: number) => status === 429 || status >= 500;
 
-const waitForRetry = async (attempt: number) => {
+const isAbortError = (error: unknown) =>
+  error instanceof DOMException && error.name === "AbortError";
+
+const waitForRetry = async (attempt: number, signal?: AbortSignal) => {
   const delayMs = API_RETRY_DELAY_MS * attempt;
   if (delayMs <= 0) {
     return;
   }
-  await new Promise((resolve) => {
-    setTimeout(resolve, delayMs);
+  await new Promise<void>((resolve, reject) => {
+    const abortSignal = signal;
+    const timer = setTimeout(() => {
+      if (abortSignal) {
+        abortSignal.removeEventListener("abort", cancelTimer);
+      }
+      resolve();
+    }, delayMs);
+    if (!abortSignal) {
+      return;
+    }
+    function cancelTimer() {
+      clearTimeout(timer);
+      abortSignal!.removeEventListener("abort", cancelTimer);
+      reject(new DOMException("The operation was aborted.", "AbortError"));
+    }
+    if (abortSignal.aborted) {
+      cancelTimer();
+      return;
+    }
+    abortSignal.addEventListener("abort", cancelTimer, { once: true });
   });
 };
 
-const fetchApi = async <T>(path: string): Promise<T> => {
+const fetchApi = async <T>(
+  path: string,
+  options: ApiRequestOptions = {}
+): Promise<T> => {
+  const { signal } = options;
   let attempt = 0;
   let lastError: unknown = null;
   while (attempt < API_RETRY_ATTEMPTS) {
@@ -119,6 +155,7 @@ const fetchApi = async <T>(path: string): Promise<T> => {
         headers: {
           Accept: "application/json",
         },
+        signal,
       });
       if (!response.ok) {
         const error = new ApiRequestError(response.status);
@@ -126,7 +163,7 @@ const fetchApi = async <T>(path: string): Promise<T> => {
           attempt < API_RETRY_ATTEMPTS &&
           shouldRetryStatus(response.status)
         ) {
-          await waitForRetry(attempt);
+          await waitForRetry(attempt, signal);
           continue;
         }
         throw error;
@@ -134,13 +171,16 @@ const fetchApi = async <T>(path: string): Promise<T> => {
       return (await response.json()) as T;
     } catch (error) {
       lastError = error;
+      if (isAbortError(error)) {
+        throw error;
+      }
       if (error instanceof ApiRequestError) {
         throw error;
       }
       if (attempt >= API_RETRY_ATTEMPTS) {
         break;
       }
-      await waitForRetry(attempt);
+      await waitForRetry(attempt, signal);
     }
   }
   if (lastError instanceof Error) {
@@ -177,23 +217,27 @@ export const fetchProductRows: ProductFetcher = async () =>
   fetchRecentSnapshots(RECENT_LOOKBACK_LIMIT);
 
 export const fetchProductSnapshotsBySlug = async (
-  productSlug: string
+  productSlug: string,
+  signal?: AbortSignal
 ): Promise<ProductRow[]> => {
   const normalized = productSlug.trim().toLowerCase();
   if (!normalized) {
     return [];
   }
   const payload = await fetchApi<SnapshotResponse>(
-    buildApiUrl(`/products/${encodeURIComponent(normalized)}`)
+    buildApiUrl(`/products/${encodeURIComponent(normalized)}`),
+    { signal }
   );
   return filterRowsByCode(payload.rows);
 };
 
 export const fetchRecentSnapshots = async (
-  limit = RECENT_LOOKBACK_LIMIT
+  limit = RECENT_LOOKBACK_LIMIT,
+  signal?: AbortSignal
 ): Promise<ProductRow[]> => {
   const payload = await fetchApi<SnapshotResponse>(
-    buildApiUrl("/snapshots/recent", { limit })
+    buildApiUrl("/snapshots/recent", { limit }),
+    { signal }
   );
   return filterRowsByCode(payload.rows);
 };
@@ -201,7 +245,8 @@ export const fetchRecentSnapshots = async (
 export const searchCatalogIndexByName = async (
   term: string,
   limit = SEARCH_LIMIT,
-  availabilityFilter: AvailabilityFilter = "all"
+  availabilityFilter: AvailabilityFilter = "all",
+  signal?: AbortSignal
 ): Promise<ProductSearchResult[]> => {
   const safeTerm = sanitizeSearchTerm(term);
   if (!safeTerm) {
@@ -216,45 +261,18 @@ export const searchCatalogIndexByName = async (
       q: normalized,
       limit,
       availability: availabilityFilter === "all" ? null : availabilityFilter,
-    })
+    }),
+    { signal }
   );
   const filtered = filterRowsByCode(payload.rows);
   return filtered.map((row) => buildSearchResultFromCatalogRow(row));
 };
 
-export const fetchProductRowsChunk = async (
-  from: number,
-  size: number
-): Promise<ProductRow[]> => {
-  if (size <= 0) {
-    return [];
-  }
-  return fetchRecentSnapshots(Math.max(from + size, size));
-};
-
-export const fetchCatalogIndexChunk = async (
-  from: number,
-  size: number
-): Promise<{ rows: ProductCatalogIndexRow[]; total: number | null }> => {
-  if (size <= 0) {
-    return { rows: [], total: 0 };
-  }
-  const payload = await fetchApi<CatalogResponse>(
-    buildApiUrl("/catalog", {
-      offset: Math.max(0, from),
-      limit: size,
-    })
-  );
-  return {
-    rows: filterRowsByCode(payload.rows),
-    total: payload.total ?? payload.total_estimate ?? 0,
-  };
-};
-
 export const fetchFilteredCatalogIndex = async (
   from: number,
   size: number,
-  filters: CatalogFilterOptions
+  filters: CatalogFilterOptions,
+  signal?: AbortSignal
 ): Promise<FilteredCatalogResult> => {
   if (size <= 0) {
     return { rows: [], total: 0 };
@@ -268,10 +286,39 @@ export const fetchFilteredCatalogIndex = async (
       min_price: filters.minPrice ?? null,
       max_price: filters.maxPrice ?? null,
       categories: categories || null,
-    })
+    }),
+    { signal }
   );
   return {
     rows: filterRowsByCode(payload.rows),
     total: payload.total ?? payload.total_estimate ?? 0,
   };
+};
+
+export const fetchCategoryCounts = async (
+  availabilityFilter: AvailabilityFilter = "all",
+  signal?: AbortSignal
+): Promise<CategoryCountRow[]> => {
+  const payload = await fetchApi<CategoriesResponse>(
+    buildApiUrl("/meta/categories", {
+      availability: availabilityFilter === "all" ? null : availabilityFilter,
+    }),
+    { signal }
+  );
+  return payload.rows;
+};
+
+export const fetchCatalogPriceRange = async (
+  availabilityFilter: AvailabilityFilter,
+  categoryFilters: string[],
+  signal?: AbortSignal
+): Promise<PriceRangeResponse> => {
+  const categories = categoryFilters.filter(Boolean).join(",");
+  return fetchApi<PriceRangeResponse>(
+    buildApiUrl("/meta/price-range", {
+      availability: availabilityFilter === "all" ? null : availabilityFilter,
+      categories: categories || null,
+    }),
+    { signal }
+  );
 };

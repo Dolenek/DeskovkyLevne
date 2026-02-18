@@ -51,6 +51,17 @@ func run() error {
 		catalog.NewRepository(pool),
 		snapshots.NewRepository(pool),
 		cacheClient,
+		api.ServiceOptions{
+			CacheNamespace: cfg.CacheNamespace,
+			CacheTTL: api.CacheTTLConfig{
+				Catalog:    cfg.CacheTTLCatalog,
+				Search:     cfg.CacheTTLSearch,
+				Product:    cfg.CacheTTLProduct,
+				Recent:     cfg.CacheTTLRecent,
+				Categories: cfg.CacheTTLCategories,
+				PriceRange: cfg.CacheTTLPriceRange,
+			},
+		},
 	)
 	handler := api.NewHandler(service, cfg.MaxPageSize)
 	server := &http.Server{
@@ -62,6 +73,7 @@ func run() error {
 			Product:    cfg.ProductTimeout,
 			Recent:     cfg.RecentTimeout,
 			Categories: cfg.CategoriesTimeout,
+			PriceRange: cfg.PriceRangeTimeout,
 		}),
 		ReadTimeout:  cfg.ReadTimeout,
 		WriteTimeout: cfg.WriteTimeout,

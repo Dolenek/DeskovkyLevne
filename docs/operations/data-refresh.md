@@ -1,7 +1,7 @@
 # Data Refresh Runbook
 
 ## Why Refresh Is Needed
-Catalog/search API reads from materialized views:
+Catalog/search/metadata API reads from materialized views:
 - `catalog_slug_seller_summary`
 - `catalog_slug_summary`
 

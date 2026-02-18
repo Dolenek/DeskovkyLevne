@@ -37,7 +37,7 @@ export const useFilteredCatalogIndex = (
   );
 
   useEffect(() => {
-    let cancelled = false;
+    const controller = new AbortController();
     const requestId = requestRef.current + 1;
     requestRef.current = requestId;
     setLoading(true);
@@ -50,22 +50,22 @@ export const useFilteredCatalogIndex = (
           minPrice: priceRange.min,
           maxPrice: priceRange.max,
           categories: normalizedCategories,
-        });
-        if (cancelled || requestRef.current !== requestId) {
+        }, controller.signal);
+        if (controller.signal.aborted || requestRef.current !== requestId) {
           return;
         }
         setSeries(rows.map((row) => buildSeriesFromCatalogIndexRow(row)));
         setTotal(total);
         setError(null);
       } catch (err) {
-        if (cancelled || requestRef.current !== requestId) {
+        if (controller.signal.aborted || requestRef.current !== requestId) {
           return;
         }
         setSeries([]);
         setTotal(0);
         setError(err instanceof Error ? err.message : "Unknown error");
       } finally {
-        if (!cancelled && requestRef.current === requestId) {
+        if (!controller.signal.aborted && requestRef.current === requestId) {
           setLoading(false);
         }
       }
@@ -74,7 +74,7 @@ export const useFilteredCatalogIndex = (
     void load();
 
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, [
     availabilityFilter,

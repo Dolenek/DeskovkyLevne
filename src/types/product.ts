@@ -56,6 +56,7 @@ export type CatalogSearchRow = Pick<
   | "latest_price"
   | "hero_image_url"
   | "gallery_image_urls"
+  | "category_tags"
 >;
 
 export interface ProductPoint {
@@ -111,6 +112,7 @@ export interface ProductSearchResult {
   primaryProductCode: string | null;
   heroImage?: string | null;
   galleryImages?: string[];
+  categoryTags: string[];
   availabilityLabel?: string | null;
   latestPrice: number | null;
   currency?: string | null;
@@ -131,4 +133,14 @@ export interface DiscountEntry {
   previousPrice: number;
   currentPrice: number;
   changedAt: string;
+}
+
+export interface CategoryCountRow {
+  category: string;
+  count: number;
+}
+
+export interface PriceRangeResponse {
+  min_price: number | null;
+  max_price: number | null;
 }

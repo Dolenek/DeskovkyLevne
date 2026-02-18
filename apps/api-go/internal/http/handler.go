@@ -70,7 +70,12 @@ func (h *Handler) SearchSuggest(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) ProductSnapshots(w http.ResponseWriter, r *http.Request) {
 	slug := strings.TrimSpace(chi.URLParam(r, "slug"))
 	if slug == "" {
-		writeError(w, http.StatusBadRequest, "slug is required")
+		writeErrorCode(
+			w,
+			http.StatusBadRequest,
+			"validation_error",
+			"slug is required",
+		)
 		return
 	}
 	rows, err := h.service.ProductSnapshots(r.Context(), strings.ToLower(slug))
@@ -93,7 +98,8 @@ func (h *Handler) RecentSnapshots(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Categories(w http.ResponseWriter, r *http.Request) {
-	rows, err := h.service.CategoryCounts(r.Context())
+	availability := strings.TrimSpace(r.URL.Query().Get("availability"))
+	rows, err := h.service.CategoryCounts(r.Context(), availability)
 	if err != nil {
 		writeServiceError(w, err)
 		return
@@ -101,10 +107,28 @@ func (h *Handler) Categories(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"rows": rows})
 }
 
-func writeServiceError(w http.ResponseWriter, err error) {
-	if errors.Is(err, context.DeadlineExceeded) {
-		writeError(w, http.StatusGatewayTimeout, "request timed out")
+func (h *Handler) PriceRange(w http.ResponseWriter, r *http.Request) {
+	values := r.URL.Query()
+	filters := catalog.PriceRangeFilters{
+		Availability: strings.TrimSpace(values.Get("availability")),
+		Categories:   parseCategories(values.Get("categories")),
+	}
+	row, err := h.service.PriceRange(r.Context(), filters)
+	if err != nil {
+		writeServiceError(w, err)
 		return
 	}
-	writeError(w, http.StatusInternalServerError, err.Error())
+	writeJSON(w, http.StatusOK, row)
+}
+
+func writeServiceError(w http.ResponseWriter, err error) {
+	if errors.Is(err, context.DeadlineExceeded) {
+		writeErrorCode(w, http.StatusGatewayTimeout, "timeout", "request timed out")
+		return
+	}
+	if errors.Is(err, context.Canceled) {
+		writeErrorCode(w, http.StatusRequestTimeout, "request_canceled", "request canceled")
+		return
+	}
+	writeErrorCode(w, http.StatusInternalServerError, "internal_error", "internal server error")
 }

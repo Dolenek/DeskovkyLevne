@@ -54,6 +54,7 @@ Response row fields:
 - `latest_price`
 - `hero_image_url`
 - `gallery_image_urls`
+- `category_tags`
 
 ## Product Snapshots
 ### `GET /api/v1/products/{slug}`
@@ -63,7 +64,7 @@ Path params:
 - `slug` (required): lowercased by server before query.
 
 Error behavior:
-- empty slug returns `400`.
+- empty slug returns `400` with code `validation_error`.
 
 Response shape:
 ```json
@@ -92,6 +93,9 @@ Response shape:
 ### `GET /api/v1/meta/categories`
 Returns category list with counts.
 
+Query params:
+- `availability` (optional): supports `available` or `preorder`; other values behave as no availability filter.
+
 Response shape:
 ```json
 {
@@ -101,14 +105,48 @@ Response shape:
 }
 ```
 
+## Price Range Metadata
+### `GET /api/v1/meta/price-range`
+Returns latest-price bounds used by filters.
+
+Query params:
+- `availability` (optional): supports `available` or `preorder`; other values behave as no availability filter.
+- `categories` (optional, comma-separated string): OR-match via overlap against `category_tags`.
+
+Response shape:
+```json
+{
+  "min_price": 199.0,
+  "max_price": 1899.0
+}
+```
+
+## Error Envelope
+Error responses return:
+```json
+{
+  "error": "human readable message",
+  "code": "stable_machine_code"
+}
+```
+
+Current codes:
+- `validation_error`
+- `timeout`
+- `request_canceled`
+- `internal_error`
+
 ## Caching Notes (Server-side)
-- Catalog responses: TTL 120s.
-- Suggest responses: TTL 60s.
-- Product detail snapshots: TTL 300s.
-- Recent snapshots: TTL 120s.
-- Category list: TTL 600s.
-- Cache miss fan-in is coalesced per key to reduce duplicate DB queries under burst load.
+All endpoint cache TTLs are configurable through environment variables:
+- `API_CACHE_TTL_CATALOG`
+- `API_CACHE_TTL_SEARCH`
+- `API_CACHE_TTL_PRODUCT`
+- `API_CACHE_TTL_RECENT`
+- `API_CACHE_TTL_CATEGORIES`
+- `API_CACHE_TTL_PRICE_RANGE`
+
+Cache namespace is controlled by `API_CACHE_NAMESPACE`.
 
 ## Timeout Behavior
 - Route-level timeouts are enforced in middleware.
-- Timeout responses return `504` with `{"error":"request timed out"}`.
+- Timeout responses return `504` with `{"error":"request timed out","code":"timeout"}`.

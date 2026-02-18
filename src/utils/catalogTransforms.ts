@@ -82,6 +82,7 @@ const toCatalogSearchRow = (row: ProductCatalogIndexRow): CatalogSearchRow => ({
   latest_price: row.latest_price,
   hero_image_url: row.hero_image_url,
   gallery_image_urls: row.gallery_image_urls,
+  category_tags: row.category_tags,
 });
 
 const buildCatalogSellerEntry = (
@@ -168,6 +169,11 @@ export const buildSearchResultFromCatalogRow = (
   primaryProductCode: row.product_code ?? null,
   heroImage: row.hero_image_url ?? null,
   galleryImages: normalizeGalleryArray(row.gallery_image_urls),
+  categoryTags: Array.isArray(row.category_tags)
+    ? row.category_tags.filter(
+        (tag): tag is string => typeof tag === "string" && tag.trim().length > 0
+      )
+    : [],
   availabilityLabel: row.availability_label ?? null,
   latestPrice: toNumericPrice(row.latest_price),
   currency: row.currency_code ?? null,

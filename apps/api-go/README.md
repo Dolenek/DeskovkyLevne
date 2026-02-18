@@ -14,6 +14,7 @@ Canonical API and operations docs are in:
 - `GET /api/v1/products/{slug}`
 - `GET /api/v1/snapshots/recent`
 - `GET /api/v1/meta/categories`
+- `GET /api/v1/meta/price-range`
 
 ## Environment
 Use `.env.example` and set:
@@ -21,6 +22,7 @@ Use `.env.example` and set:
 - `FRONTEND_ORIGIN`
 - Optional DB pool/runtime tuning (`API_DB_*`, `API_TIMEOUT_*`)
 - Optional Redis (`REDIS_ADDR`, `REDIS_PASSWORD`, `REDIS_DB`)
+- Optional cache tuning (`API_CACHE_*`)
 
 ## Run
 ```bash

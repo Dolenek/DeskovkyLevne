@@ -14,10 +14,11 @@ Pipeline stages:
 
 ## Build-Time Data Sources
 - Dynamic sitemap/prerender slugs come from `catalog_slug_summary`.
-- Build scripts use Supabase client credentials from env vars.
+- Build scripts read `VITE_SUPABASE_URL` first, then `SUPABASE_URL`, then `DATABASE_URL` for URL resolution.
+- Build scripts require `VITE_SUPABASE_ANON_KEY` for dynamic DB reads.
 
 ## Fallback Behavior Without Supabase Credentials
-If `VITE_SUPABASE_URL` or `VITE_SUPABASE_ANON_KEY` is missing, sitemap/prerender run in static-only mode and build still succeeds.
+If no URL is resolved (`VITE_SUPABASE_URL`/`SUPABASE_URL`/`DATABASE_URL`) or `VITE_SUPABASE_ANON_KEY` is missing, sitemap/prerender run in static-only mode and build still succeeds.
 
 ## Prerender Requirements
 ```bash
