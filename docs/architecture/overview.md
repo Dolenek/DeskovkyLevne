@@ -5,7 +5,6 @@
 - Backend read API: Go service (`apps/api-go`) exposing `/api/v1/*`.
 - Database: Postgres/Supabase as source of truth.
 - Optional cache: Redis for API read-path caching.
-- `apps/web-astro` is not part of the active runtime path and is treated as inactive artifact storage.
 
 ## Read Models
 - `catalog_slug_summary`: one row per canonical slug for catalog/search/filter.

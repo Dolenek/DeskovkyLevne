@@ -27,6 +27,8 @@ Thumbs.db
 # Coverage / reports
 coverage/
 .nyc_output/
+playwright-report/
+test-results/
 
 # Windows helper scripts
 *.bat

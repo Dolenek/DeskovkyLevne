@@ -14,6 +14,11 @@ Backend API:
 npm run api:dev
 ```
 
+Tests:
+```bash
+npm test
+```
+
 ## Documentation
 Canonical repository documentation lives in `docs/`.
 

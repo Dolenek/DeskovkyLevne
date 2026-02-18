@@ -8,14 +8,24 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"tlamasite/apps/api-go/internal/catalog"
+	"tlamasite/apps/api-go/internal/snapshots"
 )
 
+type serviceContract interface {
+	Catalog(ctx context.Context, filters catalog.Filters) ([]catalog.Row, int64, error)
+	Search(ctx context.Context, query string, availability string, limit int) ([]catalog.SuggestionRow, error)
+	ProductSnapshots(ctx context.Context, slug string) ([]snapshots.Row, error)
+	RecentSnapshots(ctx context.Context, limit int) ([]snapshots.Row, error)
+	CategoryCounts(ctx context.Context, availability string) ([]catalog.CategoryCount, error)
+	PriceRange(ctx context.Context, filters catalog.PriceRangeFilters) (catalog.PriceRange, error)
+}
+
 type Handler struct {
-	service     *Service
+	service     serviceContract
 	maxPageSize int
 }
 
-func NewHandler(service *Service, maxPageSize int) *Handler {
+func NewHandler(service serviceContract, maxPageSize int) *Handler {
 	return &Handler{service: service, maxPageSize: maxPageSize}
 }
 
