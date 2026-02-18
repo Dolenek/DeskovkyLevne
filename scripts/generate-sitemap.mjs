@@ -10,17 +10,19 @@ const SUPABASE_URL =
 const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY;
 const SITE_URL = (process.env.VITE_SITE_URL || "https://www.deskovkylevne.com")
   .replace(/\/$/, "");
+const HAS_SUPABASE_CREDENTIALS = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  console.error(
-    "Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY for sitemap generation."
+if (!HAS_SUPABASE_CREDENTIALS) {
+  console.warn(
+    "Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY; generating static-only sitemap."
   );
-  process.exit(1);
 }
 
-const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: { persistSession: false },
-});
+const client = HAS_SUPABASE_CREDENTIALS
+  ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession: false },
+    })
+  : null;
 
 const PAGE_SIZE = 1000;
 const TABLE_NAME = "catalog_slug_summary";
@@ -39,6 +41,10 @@ const formatLastmod = (value) => {
 const buildUrl = (pathname) => `${SITE_URL}${pathname}`;
 
 const fetchAllSlugs = async () => {
+  if (!client) {
+    return [];
+  }
+
   const rows = [];
   let offset = 0;
   while (true) {

@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { EmptyState, ErrorState, LoadingState } from "../../components/AsyncStates";
 import { ProductListItem } from "../../components/ProductListItem";
 import type { TranslationHook } from "../../hooks/useTranslation";
@@ -39,6 +38,7 @@ export const FilteredProductsSection = ({
 }: FilteredProductsSectionProps) => {
   const rawPageCount = Math.ceil(total / FILTERED_PAGE_SIZE);
   const pageCount = Math.max(1, rawPageCount);
+  const pageSeries = series.slice(0, FILTERED_PAGE_SIZE);
 
   if (loading) {
     return <LoadingState />;
@@ -64,11 +64,6 @@ export const FilteredProductsSection = ({
     priceRange.max !== null ? priceRange.max.toString() : t("priceFilterAny");
   const showingFrom = (page - 1) * FILTERED_PAGE_SIZE + 1;
   const showingTo = Math.min(page * FILTERED_PAGE_SIZE, total);
-
-  const pageSeries = useMemo(
-    () => series.slice(0, FILTERED_PAGE_SIZE),
-    [series]
-  );
 
   return (
     <section className="flex flex-col gap-4">

@@ -100,7 +100,7 @@ export const ProductDetailPage = ({
 
   useEffect(() => {
     setSearchActive(false);
-  }, [productSlug]);
+  }, [productSlug, setSearchActive]);
 
   const canonicalPath = useMemo(
     () => `/deskove-hry/${encodeURIComponent(productSlug)}`,

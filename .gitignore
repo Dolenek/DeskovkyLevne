@@ -28,6 +28,9 @@ Thumbs.db
 coverage/
 .nyc_output/
 
+# Windows helper scripts
+*.bat
+
 # Go artifacts
 *.test
 coverage.out

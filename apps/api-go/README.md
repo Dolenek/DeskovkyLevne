@@ -2,6 +2,11 @@
 
 Backend read API for catalog/search/product snapshot endpoints.
 
+Canonical API and operations docs are in:
+- `../../docs/api/http-api.md`
+- `../../docs/operations/configuration.md`
+- `../../docs/operations/build-and-deploy.md`
+
 ## Endpoints
 - `GET /health`
 - `GET /api/v1/catalog`

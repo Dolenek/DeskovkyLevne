@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { useLocale } from "../contexts/LocaleContext";
+import { useLocale } from "../contexts/useLocale";
 import {
   interpolate,
   translations,

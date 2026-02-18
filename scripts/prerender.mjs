@@ -16,12 +16,12 @@ const SITE_URL = (process.env.VITE_SITE_URL || "https://www.deskovkylevne.com")
 const PRERENDER_LIMIT = Number(process.env.VITE_PRERENDER_LIMIT ?? "200");
 const TABLE_NAME = "catalog_slug_summary";
 const PORT = Number(process.env.VITE_PRERENDER_PORT ?? "4173");
+const HAS_SUPABASE_CREDENTIALS = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  console.error(
-    "Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY for prerender."
+if (!HAS_SUPABASE_CREDENTIALS) {
+  console.warn(
+    "Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY; prerendering static routes only."
   );
-  process.exit(1);
 }
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -68,6 +68,10 @@ const serveDist = () =>
   });
 
 const fetchPrerenderSlugs = async () => {
+  if (!HAS_SUPABASE_CREDENTIALS) {
+    return [];
+  }
+
   const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: { persistSession: false },
   });

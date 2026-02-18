@@ -12,6 +12,14 @@ const API_BASE_URL = (
   import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080"
 ).replace(/\/+$/, "");
 const API_PREFIX = `${API_BASE_URL}/api/v1`;
+const API_RETRY_ATTEMPTS = Math.max(
+  1,
+  Number(import.meta.env.VITE_API_RETRY_ATTEMPTS ?? "2")
+);
+const API_RETRY_DELAY_MS = Math.max(
+  0,
+  Number(import.meta.env.VITE_API_RETRY_DELAY_MS ?? "250")
+);
 
 const FILTER_CODES = import.meta.env.VITE_SUPABASE_FILTER_CODES
   ? String(import.meta.env.VITE_SUPABASE_FILTER_CODES)
@@ -68,17 +76,66 @@ const buildApiUrl = (
   return url.toString();
 };
 
-const fetchApi = async <T>(path: string): Promise<T> => {
-  const response = await fetch(path, {
-    method: "GET",
-    headers: {
-      Accept: "application/json",
-    },
-  });
-  if (!response.ok) {
-    throw new Error(`API request failed (${response.status})`);
+class ApiRequestError extends Error {
+  status: number;
+
+  constructor(status: number) {
+    super(`API request failed (${status})`);
+    this.status = status;
   }
-  return (await response.json()) as T;
+}
+
+const shouldRetryStatus = (status: number) => status === 429 || status >= 500;
+
+const waitForRetry = async (attempt: number) => {
+  const delayMs = API_RETRY_DELAY_MS * attempt;
+  if (delayMs <= 0) {
+    return;
+  }
+  await new Promise((resolve) => {
+    setTimeout(resolve, delayMs);
+  });
+};
+
+const fetchApi = async <T>(path: string): Promise<T> => {
+  let attempt = 0;
+  let lastError: unknown = null;
+  while (attempt < API_RETRY_ATTEMPTS) {
+    attempt += 1;
+    try {
+      const response = await fetch(path, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+        },
+      });
+      if (!response.ok) {
+        const error = new ApiRequestError(response.status);
+        if (
+          attempt < API_RETRY_ATTEMPTS &&
+          shouldRetryStatus(response.status)
+        ) {
+          await waitForRetry(attempt);
+          continue;
+        }
+        throw error;
+      }
+      return (await response.json()) as T;
+    } catch (error) {
+      lastError = error;
+      if (error instanceof ApiRequestError) {
+        throw error;
+      }
+      if (attempt >= API_RETRY_ATTEMPTS) {
+        break;
+      }
+      await waitForRetry(attempt);
+    }
+  }
+  if (lastError instanceof Error) {
+    throw lastError;
+  }
+  throw new Error("API request failed");
 };
 
 const filterRowsByCode = <T extends { product_code?: string | null }>(
@@ -162,16 +219,6 @@ export const fetchProductRowsChunk = async (
     return [];
   }
   return fetchRecentSnapshots(Math.max(from + size, size));
-};
-
-export const fetchUniqueProductRowsChunk = async (
-  from: number,
-  size: number
-): Promise<ProductRow[]> => {
-  if (size <= 0) {
-    return [];
-  }
-  return fetchProductRowsChunk(from, size);
 };
 
 export const fetchCatalogIndexChunk = async (
