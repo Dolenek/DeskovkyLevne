@@ -14,7 +14,7 @@ import (
 type serviceContract interface {
 	Catalog(ctx context.Context, filters catalog.Filters) ([]catalog.Row, int64, error)
 	Search(ctx context.Context, query string, availability string, limit int) ([]catalog.SuggestionRow, error)
-	ProductSnapshots(ctx context.Context, slug string) ([]snapshots.Row, error)
+	ProductSnapshots(ctx context.Context, slug string, historyPoints int) ([]snapshots.Row, error)
 	RecentSnapshots(ctx context.Context, limit int) ([]snapshots.Row, error)
 	CategoryCounts(ctx context.Context, availability string) ([]catalog.CategoryCount, error)
 	PriceRange(ctx context.Context, filters catalog.PriceRangeFilters) (catalog.PriceRange, error)
@@ -48,7 +48,7 @@ func (h *Handler) Catalog(w http.ResponseWriter, r *http.Request) {
 	}
 	rows, total, err := h.service.Catalog(r.Context(), filters)
 	if err != nil {
-		writeServiceError(w, err)
+		writeServiceError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
@@ -71,7 +71,7 @@ func (h *Handler) SearchSuggest(w http.ResponseWriter, r *http.Request) {
 	limit := parseLimit(values, 60, h.maxPageSize)
 	rows, err := h.service.Search(r.Context(), query, availability, limit)
 	if err != nil {
-		writeServiceError(w, err)
+		writeServiceError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"rows": rows})
@@ -82,15 +82,22 @@ func (h *Handler) ProductSnapshots(w http.ResponseWriter, r *http.Request) {
 	if slug == "" {
 		writeErrorCode(
 			w,
+			r,
 			http.StatusBadRequest,
 			"validation_error",
 			"slug is required",
 		)
 		return
 	}
-	rows, err := h.service.ProductSnapshots(r.Context(), strings.ToLower(slug))
+	values := r.URL.Query()
+	historyPoints := parseProductHistoryPoints(values)
+	rows, err := h.service.ProductSnapshots(
+		r.Context(),
+		strings.ToLower(slug),
+		historyPoints,
+	)
 	if err != nil {
-		writeServiceError(w, err)
+		writeServiceError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"rows": rows})
@@ -101,7 +108,7 @@ func (h *Handler) RecentSnapshots(w http.ResponseWriter, r *http.Request) {
 	limit := parseLimit(values, 2000, 10000)
 	rows, err := h.service.RecentSnapshots(r.Context(), limit)
 	if err != nil {
-		writeServiceError(w, err)
+		writeServiceError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"rows": rows})
@@ -111,7 +118,7 @@ func (h *Handler) Categories(w http.ResponseWriter, r *http.Request) {
 	availability := strings.TrimSpace(r.URL.Query().Get("availability"))
 	rows, err := h.service.CategoryCounts(r.Context(), availability)
 	if err != nil {
-		writeServiceError(w, err)
+		writeServiceError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"rows": rows})
@@ -125,20 +132,32 @@ func (h *Handler) PriceRange(w http.ResponseWriter, r *http.Request) {
 	}
 	row, err := h.service.PriceRange(r.Context(), filters)
 	if err != nil {
-		writeServiceError(w, err)
+		writeServiceError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, row)
 }
 
-func writeServiceError(w http.ResponseWriter, err error) {
+func writeServiceError(w http.ResponseWriter, r *http.Request, err error) {
 	if errors.Is(err, context.DeadlineExceeded) {
-		writeErrorCode(w, http.StatusGatewayTimeout, "timeout", "request timed out")
+		writeErrorCode(w, r, http.StatusGatewayTimeout, "timeout", "request timed out")
 		return
 	}
 	if errors.Is(err, context.Canceled) {
-		writeErrorCode(w, http.StatusRequestTimeout, "request_canceled", "request canceled")
+		writeErrorCode(
+			w,
+			r,
+			http.StatusRequestTimeout,
+			"request_canceled",
+			"request canceled",
+		)
 		return
 	}
-	writeErrorCode(w, http.StatusInternalServerError, "internal_error", "internal server error")
+	writeErrorCode(
+		w,
+		r,
+		http.StatusInternalServerError,
+		"internal_error",
+		"internal server error",
+	)
 }

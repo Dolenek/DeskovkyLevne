@@ -9,11 +9,13 @@ import (
 	"testing"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"tlamasite/apps/api-go/internal/catalog"
 	"tlamasite/apps/api-go/internal/snapshots"
 )
 
 type fakeService struct {
+	productSnapshots func(ctx context.Context, slug string, historyPoints int) ([]snapshots.Row, error)
 	priceRange func(ctx context.Context, filters catalog.PriceRangeFilters) (catalog.PriceRange, error)
 }
 
@@ -25,7 +27,14 @@ func (f *fakeService) Search(_ context.Context, _ string, _ string, _ int) ([]ca
 	return nil, nil
 }
 
-func (f *fakeService) ProductSnapshots(_ context.Context, _ string) ([]snapshots.Row, error) {
+func (f *fakeService) ProductSnapshots(
+	ctx context.Context,
+	slug string,
+	historyPoints int,
+) ([]snapshots.Row, error) {
+	if f.productSnapshots != nil {
+		return f.productSnapshots(ctx, slug, historyPoints)
+	}
 	return nil, nil
 }
 
@@ -108,6 +117,39 @@ func TestHandlerProductSnapshotsValidationError(t *testing.T) {
 	}
 }
 
+func TestHandlerProductSnapshotsParsesHistoryPoints(t *testing.T) {
+	var capturedHistoryPoints int
+	handler := NewHandler(&fakeService{
+		productSnapshots: func(
+			_ context.Context,
+			_ string,
+			historyPoints int,
+		) ([]snapshots.Row, error) {
+			capturedHistoryPoints = historyPoints
+			return []snapshots.Row{}, nil
+		},
+	}, 200)
+
+	req := httptest.NewRequest(
+		http.MethodGet,
+		"/api/v1/products/alpha-game?history_points=250",
+		nil,
+	)
+	routeCtx := chi.NewRouteContext()
+	routeCtx.URLParams.Add("slug", "alpha-game")
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, routeCtx))
+	rec := httptest.NewRecorder()
+
+	handler.ProductSnapshots(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rec.Code)
+	}
+	if capturedHistoryPoints != 250 {
+		t.Fatalf("expected historyPoints=250, got %d", capturedHistoryPoints)
+	}
+}
+
 func TestWriteServiceErrorCodes(t *testing.T) {
 	cases := []struct {
 		name       string
@@ -138,19 +180,46 @@ func TestWriteServiceErrorCodes(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			rec := httptest.NewRecorder()
-			writeServiceError(rec, tc.err)
+			req := httptest.NewRequest(http.MethodGet, "/api/v1/catalog", nil)
+			writeServiceError(rec, req, tc.err)
 
 			if rec.Code != tc.statusCode {
 				t.Fatalf("expected %d, got %d", tc.statusCode, rec.Code)
 			}
-			var payload map[string]string
+			var payload map[string]any
 			if err := json.Unmarshal(rec.Body.Bytes(), &payload); err != nil {
 				t.Fatalf("decode response: %v", err)
 			}
 			if payload["code"] != tc.code {
-				t.Fatalf("expected code %q, got %q", tc.code, payload["code"])
+				t.Fatalf("expected code %q, got %v", tc.code, payload["code"])
 			}
 		})
+	}
+}
+
+func TestWriteErrorCodeIncludesRequestID(t *testing.T) {
+	router := chi.NewRouter()
+	router.Use(middleware.RequestID)
+	router.Get("/err", func(w http.ResponseWriter, r *http.Request) {
+		writeErrorCode(
+			w,
+			r,
+			http.StatusBadRequest,
+			"validation_error",
+			"invalid",
+		)
+	})
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/err", nil)
+	router.ServeHTTP(rec, req)
+
+	var payload map[string]string
+	if err := json.Unmarshal(rec.Body.Bytes(), &payload); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if payload["request_id"] == "" {
+		t.Fatalf("expected request_id to be present")
 	}
 }
 

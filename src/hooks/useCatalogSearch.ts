@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { AvailabilityFilter } from "../types/filters";
 import type { ProductSearchResult } from "../types/product";
-import { searchCatalogIndexByName } from "../services/productService";
+import { searchCatalogIndexByName } from "../services/api/catalogApi";
 
 const MIN_QUERY_LENGTH = 2;
 const MAX_CACHE_ENTRIES = 50;

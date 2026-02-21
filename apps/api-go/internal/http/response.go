@@ -3,6 +3,8 @@ package http
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 func writeJSON(w http.ResponseWriter, status int, payload any) {
@@ -13,14 +15,19 @@ func writeJSON(w http.ResponseWriter, status int, payload any) {
 	_ = encoder.Encode(payload)
 }
 
-func writeError(w http.ResponseWriter, status int, message string) {
-	writeErrorCode(w, status, "", message)
-}
-
-func writeErrorCode(w http.ResponseWriter, status int, code string, message string) {
+func writeErrorCode(
+	w http.ResponseWriter,
+	r *http.Request,
+	status int,
+	code string,
+	message string,
+) {
 	payload := map[string]string{"error": message}
 	if code != "" {
 		payload["code"] = code
+	}
+	if requestID := middleware.GetReqID(r.Context()); requestID != "" {
+		payload["request_id"] = requestID
 	}
 	writeJSON(w, status, payload)
 }

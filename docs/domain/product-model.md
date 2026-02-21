@@ -9,6 +9,7 @@
 - Snapshot and history data must be preserved per seller.
 - Price history visualization must show all available sellers in parallel.
 - No seller history merging into a single synthetic line.
+- History bounding controls (for example API `history_points`) may reduce returned rows but must not merge sellers.
 
 ## Presentation Priority Rule
 - For hero image, description, and similar display text:
@@ -27,4 +28,7 @@
 ## Read-Model Expectations
 - `catalog_slug_summary` must remain one row per slug.
 - `catalog_slug_seller_summary` must remain one row per `slug + seller`.
+- Optional incremental-state replacements:
+  - `catalog_slug_state` one row per slug
+  - `catalog_slug_seller_state` one row per `slug + seller`
 - Any schema or query change must preserve these invariants.

@@ -63,6 +63,9 @@ Returns snapshot rows for a canonical slug.
 Path params:
 - `slug` (required): lowercased by server before query.
 
+Query params:
+- `history_points` (optional, int): limits response to the latest N points for the slug; backend cap is `5000`. `0` or omitted returns full history.
+
 Error behavior:
 - empty slug returns `400` with code `validation_error`.
 
@@ -126,7 +129,8 @@ Error responses return:
 ```json
 {
   "error": "human readable message",
-  "code": "stable_machine_code"
+  "code": "stable_machine_code",
+  "request_id": "request-correlation-id"
 }
 ```
 

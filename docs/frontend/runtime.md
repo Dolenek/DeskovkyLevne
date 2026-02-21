@@ -11,6 +11,7 @@ All product navigation is slug-based.
 ## Data Access
 - Frontend runtime reads data through backend API (`VITE_API_BASE_URL`).
 - Runtime does not use browser-side direct PostgREST/Supabase reads for catalog/search/detail.
+- Runtime API calls are organized through shared client/config modules (`src/services/api/*`).
 - API requests retry for transient failures (HTTP 429/5xx and network errors).
 - Search requests are cancelable; stale in-flight requests are aborted when query/filter changes.
 - Core API usage:
@@ -24,6 +25,7 @@ All product navigation is slug-based.
 ## Runtime Tuning Environment Variables
 - `VITE_API_SEARCH_LIMIT` (fallback: `VITE_SUPABASE_SEARCH_LIMIT`)
 - `VITE_API_RECENT_LOOKBACK` (fallback: `VITE_RECENT_DISCOUNT_LOOKBACK`)
+- `VITE_API_PRODUCT_HISTORY_POINTS`
 - `VITE_API_FILTER_CODES` (fallback: `VITE_SUPABASE_FILTER_CODES`)
 - `VITE_API_RETRY_ATTEMPTS`
 - `VITE_API_RETRY_DELAY_MS`

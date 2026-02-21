@@ -1,15 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
-import { fetchRecentSnapshots } from "../services/productService";
+import { fetchRecentSnapshots } from "../services/api/snapshotApi";
+import { RECENT_LOOKBACK_LIMIT } from "../services/api/config";
 import type { DiscountEntry } from "../types/product";
 import { detectRecentDiscounts } from "../utils/discounts";
 
 const RECENT_RESULT_LIMIT = Number(
   import.meta.env.VITE_RECENT_DISCOUNT_RESULTS ?? "10"
-);
-const RECENT_LOOKBACK_LIMIT = Number(
-  import.meta.env.VITE_API_RECENT_LOOKBACK ??
-    import.meta.env.VITE_RECENT_DISCOUNT_LOOKBACK ??
-    "2000"
 );
 
 interface UseRecentDiscountsState {

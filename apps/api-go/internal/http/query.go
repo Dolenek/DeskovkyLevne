@@ -6,6 +6,8 @@ import (
 	"strings"
 )
 
+const maxHistoryPoints = 5000
+
 func parseLimit(values url.Values, fallback int, max int) int {
 	limit := parseInt(values.Get("limit"), fallback)
 	if limit < 1 {
@@ -49,6 +51,7 @@ func parseCategories(raw string) []string {
 	if strings.TrimSpace(raw) == "" {
 		return nil
 	}
+
 	parts := strings.Split(raw, ",")
 	result := make([]string, 0, len(parts))
 	seen := make(map[string]struct{}, len(parts))
@@ -64,4 +67,15 @@ func parseCategories(raw string) []string {
 		result = append(result, clean)
 	}
 	return result
+}
+
+func parseProductHistoryPoints(values url.Values) int {
+	historyPoints := parseInt(values.Get("history_points"), 0)
+	if historyPoints <= 0 {
+		return 0
+	}
+	if historyPoints > maxHistoryPoints {
+		return maxHistoryPoints
+	}
+	return historyPoints
 }

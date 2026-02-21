@@ -14,30 +14,9 @@ func NewRepository(db *pgxpool.Pool) *Repository {
 	return &Repository{db: db}
 }
 
-func (r *Repository) BySlug(ctx context.Context, slug string) ([]Row, error) {
-	query := `
-select
-  id,
-  product_code,
-  product_name_original,
-  product_name_normalized,
-  price_with_vat::double precision,
-  list_price_with_vat::double precision,
-  currency_code,
-  source_url,
-  scraped_at::text,
-  availability_label,
-  stock_status_label,
-  hero_image_url,
-  coalesce(gallery_image_urls, '{}'::text[]),
-  short_description,
-  coalesce(supplementary_parameters, '[]'::jsonb),
-  coalesce(metadata, '{}'::jsonb),
-  seller
-from public.product_price_snapshots
-where product_name_normalized = $1
-order by scraped_at asc;`
-	rows, err := r.db.Query(ctx, query, slug)
+func (r *Repository) BySlug(ctx context.Context, slug string, historyPoints int) ([]Row, error) {
+	query, args := buildBySlugQuery(slug, historyPoints)
+	rows, err := r.db.Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -116,6 +95,50 @@ func scanSnapshotRow(rows pgxRows) (Row, error) {
 		&item.Seller,
 	)
 	return item, err
+}
+
+func buildBySlugQuery(slug string, historyPoints int) (string, []any) {
+	selectClause := `
+select
+  p.id,
+  p.product_code,
+  p.product_name_original,
+  p.product_name_normalized,
+  p.price_with_vat::double precision,
+  p.list_price_with_vat::double precision,
+  p.currency_code,
+  p.source_url,
+  p.scraped_at::text,
+  p.availability_label,
+  p.stock_status_label,
+  p.hero_image_url,
+  coalesce(p.gallery_image_urls, '{}'::text[]),
+  p.short_description,
+  coalesce(p.supplementary_parameters, '[]'::jsonb),
+  coalesce(p.metadata, '{}'::jsonb),
+  p.seller`
+
+	if historyPoints <= 0 {
+		query := selectClause + `
+from public.product_price_snapshots p
+where p.product_name_normalized = $1
+order by p.scraped_at asc;`
+		return query, []any{slug}
+	}
+
+	query := `
+with recent_ids as (
+select id
+from public.product_price_snapshots
+where product_name_normalized = $1
+order by scraped_at desc, id desc
+limit $2
+)
+` + selectClause + `
+from recent_ids r
+join public.product_price_snapshots p on p.id = r.id
+order by p.scraped_at asc, p.id asc;`
+	return query, []any{slug, historyPoints}
 }
 
 type pgxRows interface {

@@ -12,6 +12,7 @@ type Config struct {
 	ServerAddress  string
 	DatabaseURL    string
 	FrontendOrigin string
+	CatalogSummaryRelation string
 	ReadTimeout    time.Duration
 	WriteTimeout   time.Duration
 	IdleTimeout    time.Duration
@@ -48,6 +49,10 @@ func Load() (Config, error) {
 		ServerAddress:  getenv("API_ADDRESS", ":8080"),
 		DatabaseURL:    strings.TrimSpace(os.Getenv("DATABASE_URL")),
 		FrontendOrigin: getenv("FRONTEND_ORIGIN", "*"),
+		CatalogSummaryRelation: getenv(
+			"API_CATALOG_SUMMARY_RELATION",
+			"public.catalog_slug_summary",
+		),
 		ReadTimeout:    readDuration("API_READ_TIMEOUT", 10*time.Second),
 		WriteTimeout:   readDuration("API_WRITE_TIMEOUT", 15*time.Second),
 		IdleTimeout:    readDuration("API_IDLE_TIMEOUT", 60*time.Second),
@@ -95,6 +100,9 @@ func Load() (Config, error) {
 	}
 	if cfg.CacheNamespace == "" {
 		cfg.CacheNamespace = "api-v1"
+	}
+	if cfg.CatalogSummaryRelation == "" {
+		cfg.CatalogSummaryRelation = "public.catalog_slug_summary"
 	}
 	return cfg, nil
 }

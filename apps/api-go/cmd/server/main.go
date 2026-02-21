@@ -48,7 +48,12 @@ func run() error {
 	}
 
 	service := api.NewService(
-		catalog.NewRepository(pool),
+		catalog.NewRepository(
+			pool,
+			catalog.RepositoryOptions{
+				SummaryRelation: cfg.CatalogSummaryRelation,
+			},
+		),
 		snapshots.NewRepository(pool),
 		cacheClient,
 		api.ServiceOptions{

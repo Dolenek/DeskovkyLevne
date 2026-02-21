@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { AvailabilityFilter } from "../types/filters";
-import { fetchCatalogPriceRange } from "../services/productService";
+import { fetchCatalogPriceRange } from "../services/api/catalogApi";
 
 const FALLBACK_BOUNDS = { min: 0, max: 1000 };
 

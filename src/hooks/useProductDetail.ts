@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { fetchProductSnapshotsBySlug } from "../services/productService";
+import { fetchProductSnapshotsBySlug } from "../services/api/snapshotApi";
 import type { ProductSeries } from "../types/product";
 import { useProductPricing } from "./useProductPricing";
 

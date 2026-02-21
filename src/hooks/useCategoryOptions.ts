@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { AvailabilityFilter } from "../types/filters";
-import { fetchCategoryCounts } from "../services/productService";
+import { fetchCategoryCounts } from "../services/api/catalogApi";
 
 interface UseCategoryOptionsResult {
   categories: string[];

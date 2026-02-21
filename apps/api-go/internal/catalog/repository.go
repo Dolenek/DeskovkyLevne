@@ -3,22 +3,39 @@ package catalog
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Repository struct {
-	db *pgxpool.Pool
+	db              *pgxpool.Pool
+	summaryRelation string
 }
 
-func NewRepository(db *pgxpool.Pool) *Repository {
-	return &Repository{db: db}
+type RepositoryOptions struct {
+	SummaryRelation string
+}
+
+const defaultSummaryRelation = "public.catalog_slug_summary"
+
+var relationNamePattern = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*)?$`)
+
+func NewRepository(db *pgxpool.Pool, options ...RepositoryOptions) *Repository {
+	config := RepositoryOptions{SummaryRelation: defaultSummaryRelation}
+	if len(options) > 0 {
+		config = options[0]
+	}
+	return &Repository{
+		db:              db,
+		summaryRelation: normalizeRelationName(config.SummaryRelation),
+	}
 }
 
 func (r *Repository) Fetch(ctx context.Context, filters Filters) ([]Row, int64, error) {
 	whereSQL, args := buildWhere(filters)
-	rowsSQL, rowArgs := buildRowsQuery(whereSQL, args, filters)
+	rowsSQL, rowArgs := buildRowsQuery(r.summaryRelation, whereSQL, args, filters)
 	rows, err := r.db.Query(ctx, rowsSQL, rowArgs...)
 	if err != nil {
 		return nil, 0, err
@@ -29,7 +46,7 @@ func (r *Repository) Fetch(ctx context.Context, filters Filters) ([]Row, int64, 
 	if err != nil {
 		return nil, 0, err
 	}
-	countSQL := "select count(*) from public.catalog_slug_summary" + whereSQL
+	countSQL := "select count(*) from " + r.summaryRelation + whereSQL
 	var total int64
 	if err := r.db.QueryRow(ctx, countSQL, args...).Scan(&total); err != nil {
 		return nil, 0, err
@@ -54,7 +71,12 @@ func (r *Repository) Search(
 		Offset:       0,
 	}
 	whereSQL, args := buildWhere(filters)
-	querySQL, queryArgs := buildSearchQuery(whereSQL, args, filters.Limit)
+	querySQL, queryArgs := buildSearchQuery(
+		r.summaryRelation,
+		whereSQL,
+		args,
+		filters.Limit,
+	)
 	rows, err := r.db.Query(ctx, querySQL, queryArgs...)
 	if err != nil {
 		return nil, err
@@ -72,7 +94,7 @@ func (r *Repository) FetchCategoryCounts(
 select tag as category, count(*)::bigint as count
 from (
   select unnest(category_tags) as tag
-  from public.catalog_slug_summary` + whereSQL + `
+  from ` + r.summaryRelation + whereSQL + `
 ) expanded
 group by tag
 order by count desc, category asc;
@@ -106,7 +128,7 @@ func (r *Repository) FetchPriceRange(
 select
   min(latest_price)::double precision,
   max(latest_price)::double precision
-from public.catalog_slug_summary` + whereSQL + `;`
+from ` + r.summaryRelation + whereSQL + `;`
 
 	var bounds PriceRange
 	if err := r.db.QueryRow(ctx, query, args...).Scan(
@@ -118,7 +140,23 @@ from public.catalog_slug_summary` + whereSQL + `;`
 	return bounds, nil
 }
 
-func buildRowsQuery(whereSQL string, args []any, filters Filters) (string, []any) {
+func normalizeRelationName(value string) string {
+	normalized := strings.TrimSpace(value)
+	if normalized == "" {
+		return defaultSummaryRelation
+	}
+	if !relationNamePattern.MatchString(normalized) {
+		return defaultSummaryRelation
+	}
+	return normalized
+}
+
+func buildRowsQuery(
+	relation string,
+	whereSQL string,
+	args []any,
+	filters Filters,
+) (string, []any) {
 	limitPlaceholder := fmt.Sprintf("$%d", len(args)+1)
 	offsetPlaceholder := fmt.Sprintf("$%d", len(args)+2)
 	query := `
@@ -143,7 +181,7 @@ select
   coalesce(metadata, '{}'::jsonb),
   coalesce(price_points, '[]'::jsonb),
   coalesce(category_tags, '{}'::text[])
-from public.catalog_slug_summary` + whereSQL + `
+from ` + relation + whereSQL + `
 order by product_name asc
 limit ` + limitPlaceholder + ` offset ` + offsetPlaceholder + `;`
 
@@ -152,7 +190,12 @@ limit ` + limitPlaceholder + ` offset ` + offsetPlaceholder + `;`
 	return query, rowArgs
 }
 
-func buildSearchQuery(whereSQL string, args []any, limit int) (string, []any) {
+func buildSearchQuery(
+	relation string,
+	whereSQL string,
+	args []any,
+	limit int,
+) (string, []any) {
 	limitPlaceholder := fmt.Sprintf("$%d", len(args)+1)
 	query := `
 select
@@ -166,7 +209,7 @@ select
   hero_image_url,
   coalesce(gallery_image_urls, '{}'::text[]),
   coalesce(category_tags, '{}'::text[])
-from public.catalog_slug_summary` + whereSQL + `
+from ` + relation + whereSQL + `
 order by product_name asc
 limit ` + limitPlaceholder + `;`
 

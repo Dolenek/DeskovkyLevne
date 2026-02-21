@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { fetchProductRows } from "../services/productService";
+import { fetchProductRows } from "../services/api/snapshotApi";
 import type { ProductFetcher, ProductSeries } from "../types/product";
 import { buildProductSeries } from "../utils/productTransforms";
 
