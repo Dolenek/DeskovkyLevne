@@ -39,6 +39,8 @@ interface ChartTooltipProps {
   dateLabel: string;
 }
 
+const SELLER_COLORS = ["#079455", "#f97316", "#0b6b5b", "#2563eb", "#9333ea"];
+
 const ChartTooltip = ({
   active,
   payload,
@@ -54,29 +56,24 @@ const ChartTooltip = ({
   }
 
   return (
-    <div className="rounded-xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-sm text-white shadow-lg shadow-black/50">
-      <p className="text-slate-300">
-        {dateLabel}: <span className="font-semibold text-white">{label}</span>
+    <div className="rounded-lg border border-line bg-white px-4 py-3 text-sm text-navy shadow-xl">
+      <p className="text-muted">
+        {dateLabel}: <span className="font-bold text-navy">{label}</span>
       </p>
-      <p className="mt-2 text-xs uppercase tracking-wide text-slate-500">
-        {priceLabel}
-      </p>
+      <p className="mt-2 text-xs font-extrabold uppercase text-muted">{priceLabel}</p>
       <ul className="mt-2 space-y-1">
         {payload.map((entry) => (
-          <li key={entry.dataKey} className="flex items-center justify-between">
-            <span className="flex items-center gap-2 text-slate-300">
+          <li key={entry.dataKey} className="flex items-center justify-between gap-6">
+            <span className="flex items-center gap-2 text-muted">
               <span
                 className="inline-block h-2 w-2 rounded-full"
-                style={{ backgroundColor: entry.color ?? "#fff" }}
+                style={{ backgroundColor: entry.color ?? "#079455" }}
               />
               {sellerLabels[entry.dataKey] ?? entry.dataKey}
             </span>
-            <span className="font-semibold text-accent">
-              {formatPrice(
-                entry.value,
-                currencyBySeller[entry.dataKey] ?? undefined,
-                locale
-              ) ?? "--"}
+            <span className="font-extrabold text-primary">
+              {formatPrice(entry.value, currencyBySeller[entry.dataKey] ?? undefined, locale) ??
+                "--"}
             </span>
           </li>
         ))}
@@ -84,8 +81,6 @@ const ChartTooltip = ({
     </div>
   );
 };
-
-const SELLER_COLORS = ["#4f9dff", "#f472b6", "#34d399", "#f97316"];
 
 const buildSellerConfigs = (series: ProductSeries) =>
   series.sellers.map((seller, index) => {
@@ -148,21 +143,23 @@ export const ProductChart = ({
   }
 
   return (
-    <div className="h-56 w-full sm:h-64">
+    <div className="h-64 w-full">
       <ResponsiveContainer>
-        <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
-          <XAxis
-            dataKey="date"
-            stroke="#64748b"
-            tick={{ fill: "#94a3b8", fontSize: 12 }}
-          />
+        <LineChart data={data} margin={{ top: 8, right: 18, bottom: 4, left: 0 }}>
+          <defs>
+            <linearGradient id="chartSoftFill" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stopColor="#079455" stopOpacity={0.18} />
+              <stop offset="100%" stopColor="#079455" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid stroke="#e7edf5" vertical={false} />
+          <XAxis dataKey="date" stroke="#60708c" tick={{ fill: "#60708c", fontSize: 12 }} />
           <YAxis
-            stroke="#64748b"
-            tick={{ fill: "#94a3b8", fontSize: 12 }}
-            width={80}
+            stroke="#60708c"
+            tick={{ fill: "#60708c", fontSize: 12 }}
+            width={78}
             tickFormatter={(value) =>
-              formatPrice(Number(value), series.currency ?? undefined, locale)
+              formatPrice(Number(value), series.currency ?? undefined, locale) ?? ""
             }
           />
           <Tooltip
@@ -176,15 +173,24 @@ export const ProductChart = ({
               />
             }
           />
-          <Legend formatter={(value) => sellerLabels[value] ?? value} />
+          <Legend
+            iconType="circle"
+            formatter={(value) => (
+              <span className="text-xs font-bold text-muted">
+                {sellerLabels[String(value)] ?? String(value)}
+              </span>
+            )}
+          />
           {sellerConfigs.map((config) => (
             <Line
               key={config.id}
               type="monotone"
               dataKey={config.id}
               stroke={config.color}
-              strokeWidth={2}
-              dot={false}
+              strokeWidth={3}
+              dot={{ r: 3, strokeWidth: 2, fill: "#fff" }}
+              activeDot={{ r: 5 }}
+              connectNulls
               isAnimationActive={false}
             />
           ))}

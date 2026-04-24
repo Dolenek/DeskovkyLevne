@@ -1,7 +1,8 @@
 import { EmptyState, ErrorState, LoadingState } from "../../components/AsyncStates";
-import { ProductListItem } from "../../components/ProductListItem";
+import { ProductTile } from "../../components/ProductTile";
 import type { TranslationHook } from "../../hooks/useTranslation";
 import type { ProductSeries } from "../../types/product";
+import { Icon } from "../../components/ui/Icon";
 
 export const FILTERED_PAGE_SIZE = 10;
 
@@ -17,9 +18,13 @@ export interface FilteredProductsSectionProps {
   page: number;
   onPageChange: (page: number) => void;
   onNavigateToSeries: (series: ProductSeries) => void;
-  selectedSeries: ProductSeries | null;
-  onSelectSeries: (series: ProductSeries) => void;
 }
+
+const benefits = [
+  ["barChart", "Historie cen u každé hry", "Sledujte vývoj cen v čase."],
+  ["store", "Porovnání nabídek e-shopů", "Najděte nejnižší cenu mezi prodejci."],
+  ["bell", "Upozornění na pokles ceny", "Připraveno pro budoucí hlídání."],
+] as const;
 
 export const FilteredProductsSection = ({
   series,
@@ -33,90 +38,109 @@ export const FilteredProductsSection = ({
   page,
   onPageChange,
   onNavigateToSeries,
-  selectedSeries,
-  onSelectSeries,
 }: FilteredProductsSectionProps) => {
-  const rawPageCount = Math.ceil(total / FILTERED_PAGE_SIZE);
-  const pageCount = Math.max(1, rawPageCount);
+  const pageCount = Math.max(1, Math.ceil(total / FILTERED_PAGE_SIZE));
   const pageSeries = series.slice(0, FILTERED_PAGE_SIZE);
 
   if (loading) {
     return <LoadingState />;
   }
-
   if (error) {
-    return (
-      <ErrorState
-        message={error}
-        retryLabel={t("retry")}
-        onRetry={reload}
-      />
-    );
+    return <ErrorState message={error} retryLabel={t("retry")} onRetry={reload} />;
   }
-
   if (total === 0) {
     return <EmptyState message={t("filteredResultsEmpty")} />;
   }
 
-  const minLabel =
-    priceRange.min !== null ? priceRange.min.toString() : t("priceFilterAny");
-  const maxLabel =
-    priceRange.max !== null ? priceRange.max.toString() : t("priceFilterAny");
+  const minLabel = priceRange.min !== null ? `${priceRange.min} Kč` : t("priceFilterAny");
+  const maxLabel = priceRange.max !== null ? `${priceRange.max} Kč` : t("priceFilterAny");
   const showingFrom = (page - 1) * FILTERED_PAGE_SIZE + 1;
   const showingTo = Math.min(page * FILTERED_PAGE_SIZE, total);
 
   return (
-    <section className="flex flex-col gap-4">
-      <div>
-        <h2 className="text-2xl font-semibold text-white">
-          {t("filteredResultsTitle")}
-        </h2>
-        <p className="text-sm text-slate-400">
-          {t("filteredResultsSubtitle", { min: minLabel, max: maxLabel })}
-        </p>
+    <section className="flex flex-col gap-5">
+      <div className="flex flex-col gap-4 rounded-lg border border-line bg-white p-5 shadow-sm">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h2 className="text-xl font-extrabold text-navy">
+              Zobrazeno {showingFrom}-{showingTo} z {total.toLocaleString("cs-CZ")} her
+            </h2>
+            <p className="mt-1 text-sm text-muted">
+              Rozsah ceny: {minLabel} - {maxLabel}
+            </p>
+          </div>
+          <select className="rounded-lg border border-line bg-white px-4 py-3 text-sm font-bold text-navy outline-none focus:border-primary">
+            <option>Nejvýhodnější ceny</option>
+            <option>Nejnovější v katalogu</option>
+          </select>
+        </div>
+        <div className="grid gap-4 md:grid-cols-3">
+          {benefits.map(([icon, title, body]) => (
+            <div key={title} className="flex items-center gap-3 border-line md:border-r last:border-r-0">
+              <Icon name={icon} className="h-8 w-8 text-primary" />
+              <div>
+                <p className="font-extrabold text-navy">{title}</p>
+                <p className="text-sm text-muted">{body}</p>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
-      <div className="flex flex-col gap-4">
+
+      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
         {pageSeries.map((entry) => (
-          <ProductListItem
+          <ProductTile
             key={entry.slug}
             series={entry}
             locale={locale}
-            selected={selectedSeries?.slug === entry.slug}
-            onSelect={onSelectSeries}
-            onNavigate={onNavigateToSeries}
+            onNavigate={() => onNavigateToSeries(entry)}
           />
         ))}
       </div>
+
+      <button
+        type="button"
+        disabled={page === pageCount}
+        onClick={() => onPageChange(Math.min(page + 1, pageCount))}
+        className="rounded-lg border border-dashed border-line bg-white px-4 py-4 text-sm font-extrabold text-muted transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        Načíst více
+      </button>
+
       {total > FILTERED_PAGE_SIZE ? (
-        <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-slate-400">
-            {t("filteredPaginationLabel", {
-              from: showingFrom,
-              to: showingTo,
-              total,
-            })}
-          </p>
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => onPageChange(page - 1)}
-              disabled={page === 1}
-              className="rounded-full border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-200 transition disabled:cursor-not-allowed disabled:opacity-40 hover:border-primary hover:text-white"
-            >
-              {t("filteredPaginationPrev")}
-            </button>
-            <span className="text-sm text-slate-400">
-              {page} / {pageCount}
-            </span>
-            <button
-              type="button"
-              onClick={() => onPageChange(page + 1)}
-              disabled={page === pageCount}
-              className="rounded-full border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-200 transition disabled:cursor-not-allowed disabled:opacity-40 hover:border-primary hover:text-white"
-            >
-              {t("filteredPaginationNext")}
-            </button>
-          </div>
+        <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+          <button
+            type="button"
+            onClick={() => onPageChange(page - 1)}
+            disabled={page === 1}
+            className="rounded-lg border border-line bg-white px-4 py-2 text-sm font-bold text-muted disabled:opacity-40"
+          >
+            Předchozí
+          </button>
+          {Array.from({ length: Math.min(pageCount, 5) }, (_, index) => index + 1).map(
+            (pageNumber) => (
+              <button
+                key={pageNumber}
+                type="button"
+                onClick={() => onPageChange(pageNumber)}
+                className={`h-10 w-10 rounded-lg border text-sm font-extrabold ${
+                  pageNumber === page
+                    ? "border-primary bg-primary text-white"
+                    : "border-line bg-white text-navy"
+                }`}
+              >
+                {pageNumber}
+              </button>
+            )
+          )}
+          <button
+            type="button"
+            onClick={() => onPageChange(page + 1)}
+            disabled={page === pageCount}
+            className="rounded-lg border border-line bg-white px-4 py-2 text-sm font-bold text-muted disabled:opacity-40"
+          >
+            Další
+          </button>
         </div>
       ) : null}
     </section>

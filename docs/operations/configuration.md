@@ -2,10 +2,14 @@
 
 ## Frontend Environment Variables
 
-### Required for runtime
+### Runtime API
 - `VITE_API_BASE_URL`
-  - Default: `http://localhost:8080`
+  - Default: empty string, meaning same-origin `/api/v1`.
   - Purpose: backend API base URL used by browser runtime.
+- `VITE_API_PROXY_TARGET`
+  - Default: `VITE_API_BASE_URL`, then `https://www.deskovkylevne.com`.
+  - Purpose: Vite dev-server proxy target for same-origin local `/api/*`
+    requests.
 
 ### Recommended for production SEO
 - `VITE_SITE_URL`

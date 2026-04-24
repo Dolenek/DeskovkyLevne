@@ -1,7 +1,7 @@
 export const LoadingState = ({ message }: { message?: string }) => (
-  <div className="flex flex-col items-center gap-4 rounded-3xl border border-dashed border-slate-700 bg-slate-900/40 p-10 text-center text-slate-300">
-    <div className="h-10 w-10 animate-spin rounded-full border-2 border-slate-600 border-t-primary" />
-    {message ? <p className="text-sm text-slate-400">{message}</p> : null}
+  <div className="flex flex-col items-center gap-4 rounded-lg border border-dashed border-line bg-white p-10 text-center text-muted shadow-sm">
+    <div className="h-10 w-10 animate-spin rounded-full border-2 border-line border-t-primary" />
+    {message ? <p className="text-sm text-muted">{message}</p> : null}
   </div>
 );
 
@@ -14,12 +14,12 @@ export const ErrorState = ({
   retryLabel: string;
   onRetry: () => void;
 }) => (
-  <div className="rounded-3xl border border-rose-900 bg-rose-950/40 p-10 text-center text-rose-200">
+  <div className="rounded-lg border border-rose-200 bg-rose-50 p-10 text-center text-rose-700">
     <p className="mb-4 font-semibold">{message}</p>
     <button
       type="button"
       onClick={onRetry}
-      className="rounded-full bg-primary px-6 py-2 font-medium text-white transition hover:drop-shadow-glow"
+      className="rounded-lg bg-primary px-6 py-2 font-bold text-white transition hover:bg-emerald-700"
     >
       {retryLabel}
     </button>
@@ -27,7 +27,7 @@ export const ErrorState = ({
 );
 
 export const EmptyState = ({ message }: { message: string }) => (
-  <div className="rounded-3xl border border-slate-800 bg-slate-900/40 p-10 text-center text-slate-300">
+  <div className="rounded-lg border border-line bg-white p-10 text-center text-muted shadow-sm">
     {message}
   </div>
 );

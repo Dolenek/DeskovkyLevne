@@ -11,11 +11,11 @@
 
 @layer base {
   body {
-    @apply bg-background text-white antialiased;
+    @apply bg-background text-navy antialiased;
   }
 
   ::selection {
-    @apply bg-secondary text-white;
+    @apply bg-primary text-white;
   }
 }
 
@@ -25,18 +25,18 @@
   }
 
   .price-range-slider input[type="range"]::-webkit-slider-thumb {
-    @apply h-4 w-4 cursor-pointer rounded-full border-2 border-slate-900 bg-primary shadow-[0_0_0_2px_rgba(0,0,0,0.35)];
+    @apply h-4 w-4 cursor-pointer rounded-full border-2 border-white bg-primary shadow;
     -webkit-appearance: none;
     pointer-events: auto;
   }
 
   .price-range-slider input[type="range"]::-moz-range-thumb {
-    @apply h-4 w-4 cursor-pointer rounded-full border-2 border-slate-900 bg-primary shadow-[0_0_0_2px_rgba(0,0,0,0.35)];
+    @apply h-4 w-4 cursor-pointer rounded-full border-2 border-white bg-primary shadow;
     pointer-events: auto;
   }
 
   .price-range-slider input[type="range"]::-ms-thumb {
-    @apply h-4 w-4 cursor-pointer rounded-full border-2 border-slate-900 bg-primary shadow-[0_0_0_2px_rgba(0,0,0,0.35)];
+    @apply h-4 w-4 cursor-pointer rounded-full border-2 border-white bg-primary shadow;
     pointer-events: auto;
   }
 
@@ -54,7 +54,7 @@
 
   .custom-scrollbar {
     scrollbar-width: thin;
-    scrollbar-color: #475569 #0f172a;
+    scrollbar-color: #9aa8bd #eef4fb;
   }
 
   .custom-scrollbar::-webkit-scrollbar {
@@ -62,12 +62,12 @@
   }
 
   .custom-scrollbar::-webkit-scrollbar-track {
-    background: #0f172a;
+    background: #eef4fb;
     border-radius: 9999px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, #38bdf8, #6366f1);
+    background: #079455;
     border-radius: 9999px;
   }
 }

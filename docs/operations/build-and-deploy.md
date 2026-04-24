@@ -28,6 +28,10 @@ If no URL is resolved (`VITE_SUPABASE_URL`/`SUPABASE_URL`/`DATABASE_URL`) or `VI
 npx playwright install chromium
 ```
 
+Prerender waits for `domcontentloaded` and the SEO robots marker instead of
+`networkidle`, because catalog pages can keep API activity open after the first
+paint.
+
 ## Backend Deployment (Go API)
 - Service code: `apps/api-go`
 - Compose stack: `infra/rewrite/docker-compose.api-go.yml`

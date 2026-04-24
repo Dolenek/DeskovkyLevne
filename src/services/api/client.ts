@@ -51,7 +51,9 @@ export const buildApiUrl = (
   path: string,
   params?: Record<string, string | number | null | undefined>
 ) => {
-  const url = new URL(`${API_PREFIX}${path}`);
+  const baseOrigin =
+    typeof window === "undefined" ? "http://localhost" : window.location.origin;
+  const url = new URL(`${API_PREFIX}${path}`, baseOrigin);
   if (!params) {
     return url.toString();
   }

@@ -1,15 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ProductSeries } from "../../types/product";
 
-const toLargeImageUrl = (url: string): string => {
-  if (!url) {
-    return url;
-  }
-  if (url.includes("/related/")) {
-    return url.replace("/related/", "/big/");
-  }
-  return url;
-};
+const toLargeImageUrl = (url: string): string =>
+  url.includes("/related/") ? url.replace("/related/", "/big/") : url;
 
 export const ProductGallery = ({ series }: { series: ProductSeries }) => {
   const images = useMemo(() => {
@@ -37,11 +30,9 @@ export const ProductGallery = ({ series }: { series: ProductSeries }) => {
       const targetIndex = Math.min(Math.max(index, 0), maxIndex);
       setActiveIndex(targetIndex);
       const container = sliderRef.current;
-      if (!container) {
-        return;
+      if (container) {
+        container.scrollTo({ left: container.clientWidth * targetIndex, behavior });
       }
-      const slideWidth = container.clientWidth;
-      container.scrollTo({ left: slideWidth * targetIndex, behavior });
     },
     [images.length]
   );
@@ -51,87 +42,47 @@ export const ProductGallery = ({ series }: { series: ProductSeries }) => {
     scrollToIndex(0, "auto");
   }, [scrollToIndex, series.slug]);
 
-  useEffect(() => {
-    const container = sliderRef.current;
-    if (!container) {
-      return;
-    }
-    let frame: number | null = null;
-    const handleScroll = () => {
-      if (frame) {
-        cancelAnimationFrame(frame);
-      }
-      frame = requestAnimationFrame(() => {
-        const width = container.clientWidth;
-        if (width === 0) {
-          return;
-        }
-        const nextIndex = Math.round(container.scrollLeft / width);
-        setActiveIndex((current) =>
-          current === nextIndex ? current : nextIndex
-        );
-      });
-    };
-    container.addEventListener("scroll", handleScroll, { passive: true });
-    return () => {
-      if (frame) {
-        cancelAnimationFrame(frame);
-      }
-      container.removeEventListener("scroll", handleScroll);
-    };
-  }, [images.length]);
-
   return (
-    <div className="rounded-3xl border border-slate-800 bg-slate-950/60 p-3 lg:p-4">
-      <div className="flex w-full flex-col gap-4">
-        <div className="relative">
-          <div
-            ref={sliderRef}
-            className="custom-scrollbar flex snap-x snap-mandatory overflow-x-auto rounded-2xl bg-slate-900/40 px-2 py-4 scroll-smooth"
-          >
-            {images.length > 0 ? (
-              images.map((url, index) => (
-                <div
-                  key={`${url}-${index}`}
-                  className="flex w-full flex-shrink-0 snap-center items-center justify-center px-2"
-                >
-                  <img
-                    src={toLargeImageUrl(url)}
-                    alt={`${series.label} slide ${index + 1}`}
-                    className="max-h-[320px] w-full rounded-2xl object-contain sm:max-h-[400px]"
-                  />
-                </div>
-              ))
-            ) : (
-              <div className="flex aspect-video w-full items-center justify-center rounded-2xl bg-slate-900 text-6xl font-bold text-slate-700">
-                {series.label.charAt(0)}
-              </div>
-            )}
+    <div className="rounded-lg bg-white">
+      <div
+        ref={sliderRef}
+        className="custom-scrollbar flex snap-x snap-mandatory overflow-x-auto rounded-lg bg-white scroll-smooth"
+      >
+        {images.length > 0 ? (
+          images.map((url, index) => (
+            <div
+              key={`${url}-${index}`}
+              className="flex w-full flex-shrink-0 snap-center items-center justify-center"
+            >
+              <img
+                src={toLargeImageUrl(url)}
+                alt={`${series.label} ${index + 1}`}
+                className="max-h-[430px] w-full rounded-lg object-contain"
+              />
+            </div>
+          ))
+        ) : (
+          <div className="flex aspect-[4/3] w-full items-center justify-center rounded-lg bg-slate-100 text-7xl font-black text-line">
+            {series.label.charAt(0)}
           </div>
-        </div>
-        {images.length > 1 ? (
-          <div className="custom-scrollbar flex flex-nowrap gap-3 overflow-x-auto pb-1">
-            {images.map((url, index) => (
-              <button
-                key={`${url}-${index}`}
-                type="button"
-                onClick={() => scrollToIndex(index)}
-                className={`h-20 w-20 flex-shrink-0 rounded-2xl border transition ${
-                  index === activeIndex
-                    ? "border-primary ring-2 ring-primary/40"
-                    : "border-transparent opacity-70 hover:opacity-100"
-                }`}
-              >
-                <img
-                  src={url}
-                  alt={`${series.label} thumbnail ${index + 1}`}
-                  className="h-full w-full rounded-2xl object-cover"
-                />
-              </button>
-            ))}
-          </div>
-        ) : null}
+        )}
       </div>
+      {images.length > 1 ? (
+        <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
+          {images.map((url, index) => (
+            <button
+              key={`${url}-${index}`}
+              type="button"
+              onClick={() => scrollToIndex(index)}
+              className={`h-20 w-24 flex-shrink-0 rounded-lg border bg-white p-1 transition ${
+                index === activeIndex ? "border-primary ring-2 ring-primary/20" : "border-line"
+              }`}
+            >
+              <img src={url} alt="" className="h-full w-full rounded-md object-cover" />
+            </button>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 };

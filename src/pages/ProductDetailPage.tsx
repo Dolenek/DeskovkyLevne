@@ -1,91 +1,119 @@
 import { useEffect, useMemo } from "react";
-import {
-  EmptyState,
-  ErrorState,
-  LoadingState,
-} from "../components/AsyncStates";
+import { EmptyState, ErrorState, LoadingState } from "../components/AsyncStates";
 import { ProductChart } from "../components/ProductChart";
 import { AppHeader } from "../components/AppHeader";
 import { ProductSearchOverlay } from "../components/ProductSearchOverlay";
 import { ProductGallery } from "../components/product-detail/ProductGallery";
 import { ProductHero } from "../components/product-detail/ProductHero";
 import { SupplementaryParametersPanel } from "../components/product-detail/SupplementaryParametersPanel";
+import { ProductTile } from "../components/ProductTile";
+import { SellerOfferTable } from "../components/SellerOfferTable";
 import { Seo } from "../components/Seo";
+import { AppFooter } from "../components/ui/AppFooter";
+import { CtaBanner } from "../components/ui/CtaBanner";
+import { Icon } from "../components/ui/Icon";
+import { useFilteredCatalogIndex } from "../hooks/useFilteredCatalogIndex";
 import { useSearchOverlayState } from "../hooks/useSearchOverlayState";
 import { useTranslation } from "../hooks/useTranslation";
 import { useProductDetail } from "../hooks/useProductDetail";
 import type { ProductSeries } from "../types/product";
-import type { Translator } from "../types/i18n";
-import type { LocaleKey } from "../i18n/translations";
 import {
   buildProductDescription,
   buildProductStructuredData,
   pickPrimaryImage,
 } from "../utils/productSeo";
+import { formatPrice } from "../utils/numberFormat";
+import { getPriceStats } from "../utils/priceStats";
 import { buildAbsoluteUrl } from "../utils/urls";
 
 interface ProductDetailPageProps {
   productSlug: string;
   onNavigateToProduct: (productSlug: string) => void;
   onNavigateHome: () => void;
+  onNavigatePath: (path: string) => void;
+  activePath: string;
 }
 
 const INLINE_SEARCH_LIMIT = 6;
 
-const HistorySection = ({
-  series,
+const PriceStatsCards = ({
+  product,
   locale,
-  t,
 }: {
-  series: ProductSeries;
-  locale: LocaleKey;
-  t: Translator;
-}) => (
-  <section className="rounded-3xl border border-slate-800 bg-surface/70 p-4 shadow-xl shadow-black/40 backdrop-blur sm:p-6">
-    <div className="flex flex-col gap-1">
-      <h2 className="text-xl font-semibold text-white sm:text-2xl">
-        {t("detailHistoryTitle")}
-      </h2>
-      <p className="text-sm text-slate-400">
-        {t("detailHistorySubtitle", {
-          count: series.sellers.reduce(
-            (sum, seller) => sum + seller.points.length,
-            0
-          ),
-        })}
-      </p>
-    </div>
-    <div className="mt-6">
-      {series.points.length > 0 ? (
-        <ProductChart
-          series={series}
-          locale={locale}
-          priceLabel={t("price")}
-          dateLabel={t("date")}
-        />
-      ) : (
-        <p className="rounded-2xl border border-dashed border-slate-700 p-6 text-center text-slate-400">
-          {t("detailTimelineEmpty")}
-        </p>
-      )}
-    </div>
-    <div className="mt-6">
-      <SupplementaryParametersPanel
-        parameters={series.supplementaryParameters}
-        t={t}
-      />
-    </div>
-  </section>
-);
+  product: ProductSeries;
+  locale: "cs" | "en";
+}) => {
+  const stats = getPriceStats(product);
+  const cards = [
+    { icon: "barChart" as const, label: "Aktuální cena", value: product.latestPrice },
+    { icon: "tag" as const, label: "Běžná cena", value: product.listPrice },
+    { icon: "trophy" as const, label: "Historické minimum", value: stats.minimum },
+    { icon: "store" as const, label: "Počet obchodů", text: `${product.sellers.length} nabídek` },
+  ];
 
+  return (
+    <section>
+      <h2 className="mb-5 text-2xl font-extrabold text-navy">Cenové statistiky</h2>
+      <div className="grid gap-4 md:grid-cols-4">
+        {cards.map((card) => (
+          <article key={card.label} className="rounded-lg border border-line bg-white p-5 shadow-sm">
+            <Icon name={card.icon} className="h-8 w-8 text-primary" />
+            <p className="mt-3 text-sm font-bold text-muted">{card.label}</p>
+            <p className="mt-1 text-xl font-black text-primary">
+              {card.text ?? formatPrice(card.value ?? null, product.currency ?? undefined, locale) ?? "--"}
+            </p>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+};
+
+const QuickSummary = ({ product }: { product: ProductSeries }) => (
+  <aside className="rounded-lg border border-line bg-white p-5 shadow-sm">
+    <h2 className="text-lg font-extrabold text-navy">Rychlé shrnutí</h2>
+    <div className="mt-5 space-y-5">
+      <div className="flex items-center gap-4">
+        <Icon name="tag" className="h-8 w-8 text-primary" />
+        <div>
+          <p className="font-extrabold text-navy">Nejlepší cena dnes</p>
+          <p className="text-sm text-muted">{product.latestPrice ? "Dostupná v datech" : "Čekáme na cenu"}</p>
+        </div>
+      </div>
+      <div className="flex items-center gap-4">
+        <Icon name="barChart" className="h-8 w-8 text-primary" />
+        <div>
+          <p className="font-extrabold text-navy">Historie po prodejcích</p>
+          <p className="text-sm text-muted">{product.sellers.length} aktivních řad</p>
+        </div>
+      </div>
+      <div className="flex items-center gap-4">
+        <Icon name="store" className="h-8 w-8 text-primary" />
+        <div>
+          <p className="font-extrabold text-navy">Skladem dle e-shopů</p>
+          <p className="text-sm text-muted">{product.availabilityLabel ?? "Dle posledního scrape"}</p>
+        </div>
+      </div>
+    </div>
+  </aside>
+);
 
 export const ProductDetailPage = ({
   productSlug,
   onNavigateToProduct,
   onNavigateHome,
+  onNavigatePath,
+  activePath,
 }: ProductDetailPageProps) => {
   const { t, locale } = useTranslation();
   const { product, loading, error, reload } = useProductDetail(productSlug);
+  const relatedCatalog = useFilteredCatalogIndex({
+    priceRange: { min: null, max: null },
+    availabilityFilter: "all",
+    categoryFilters: product?.categoryTags.slice(0, 1) ?? [],
+    page: 1,
+    pageSize: 8,
+  });
   const {
     searchValue,
     setSearchValue,
@@ -115,43 +143,34 @@ export const ProductDetailPage = ({
       return null;
     }
     const canonicalUrl = buildAbsoluteUrl(canonicalPath) ?? canonicalPath;
-    return buildProductStructuredData(
-      product,
-      canonicalUrl,
-      locale,
-      seoDescription
-    );
+    return buildProductStructuredData(product, canonicalUrl, locale, seoDescription);
   }, [canonicalPath, locale, product, seoDescription]);
-  const ogImage = useMemo(
-    () => (product ? pickPrimaryImage(product) : null),
-    [product]
+  const relatedSeries = useMemo(
+    () => relatedCatalog.series.filter((series) => series.slug !== productSlug).slice(0, 4),
+    [productSlug, relatedCatalog.series]
   );
+  const ogImage = useMemo(() => (product ? pickPrimaryImage(product) : null), [product]);
   const keywords = useMemo(
-    () =>
-      product ? [product.label, ...product.categoryTags].slice(0, 8) : undefined,
+    () => (product ? [product.label, ...product.categoryTags].slice(0, 8) : undefined),
     [product]
   );
-  const defaultDescription =
-    locale === "en"
-      ? "Track price history and availability for Czech board games."
-      : "Sledujte vývoj ceny a dostupnosti českých deskových her.";
-  const fallbackTitle =
-    locale === "en"
-      ? "Deskovky Levně | Board game price tracker"
-      : "Deskovky Levně | Srovnávač cen deskových her";
-  const pageTitle = product ? `${product.label} | Deskovky Levně` : fallbackTitle;
-  const shouldNoIndex = !product || Boolean(error);
+
+  const pageTitle = product
+    ? `${product.label} | Deskovky Levně`
+    : "Deskovky Levně | Srovnávač cen deskových her";
 
   return (
-    <div className="min-h-screen bg-background text-white">
+    <div className="min-h-screen bg-background text-navy">
       <Seo
         title={pageTitle}
-        description={seoDescription ?? defaultDescription}
+        description={
+          seoDescription ?? "Sledujte vývoj ceny a dostupnosti českých deskových her."
+        }
         path={canonicalPath}
         imageUrl={ogImage}
         locale={locale}
         type={product ? "product" : "website"}
-        noIndex={shouldNoIndex}
+        noIndex={!product || Boolean(error)}
         keywords={keywords}
         structuredData={structuredData ?? undefined}
       />
@@ -159,17 +178,12 @@ export const ProductDetailPage = ({
         searchValue={searchValue}
         onSearchChange={(value) => {
           setSearchValue(value);
-          if (!value.trim()) {
-            setSearchActive(false);
-          } else {
-            setSearchActive(true);
-          }
+          setSearchActive(Boolean(value.trim()));
         }}
         onSearchFocus={() => setSearchActive(true)}
-        onLogoClick={() => {
-          setSearchActive(false);
-          onNavigateHome();
-        }}
+        onLogoClick={onNavigateHome}
+        onNavigatePath={onNavigatePath}
+        activePath={activePath}
         t={t}
       />
       <ProductSearchOverlay
@@ -187,27 +201,116 @@ export const ProductDetailPage = ({
         }}
         onClose={() => setSearchActive(false)}
       />
-      <main className="px-4 pt-6 pb-10 sm:px-6 lg:px-10 lg:pt-8">
-        <div className="mx-auto flex max-w-6xl flex-col gap-8">
-          {loading ? (
-            <LoadingState />
-          ) : error ? (
-            <ErrorState message={error} retryLabel={t("retry")} onRetry={reload} />
-          ) : product ? (
+      <main className="px-4 pb-12 pt-6 sm:px-6 lg:px-10">
+        <div className="mx-auto flex max-w-7xl flex-col gap-8">
+          {loading ? <LoadingState /> : null}
+          {error ? <ErrorState message={error} retryLabel={t("retry")} onRetry={reload} /> : null}
+          {!loading && !error && !product ? (
+            <EmptyState message={t("detailNotFoundDescription", { code: productSlug })} />
+          ) : null}
+          {product ? (
             <>
-              <div className="grid gap-8 lg:grid-cols-2">
+              <section className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr_260px]">
                 <ProductGallery series={product} />
                 <ProductHero series={product} locale={locale} t={t} />
-              </div>
-              <HistorySection series={product} locale={locale} t={t} />
+                <QuickSummary product={product} />
+              </section>
+
+              <section className="rounded-lg border border-line bg-white p-5 shadow-sm">
+                <div className="mb-4 flex items-center justify-between gap-4">
+                  <h2 className="text-2xl font-extrabold text-navy">Historie ceny</h2>
+                  <div className="flex gap-2 text-xs font-bold text-muted">
+                    {["1M", "3M", "6M", "1R", "MAX"].map((range) => (
+                      <span
+                        key={range}
+                        className={`rounded-md border px-3 py-1 ${
+                          range === "6M"
+                            ? "border-primary bg-emerald-50 text-primary"
+                            : "border-line"
+                        }`}
+                      >
+                        {range}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <ProductChart series={product} locale={locale} priceLabel={t("price")} dateLabel={t("date")} />
+              </section>
+
+              <section>
+                <h2 className="mb-5 text-2xl font-extrabold text-navy">Kde koupit nejlevněji</h2>
+                <SellerOfferTable series={product} locale={locale} />
+              </section>
+
+              <PriceStatsCards product={product} locale={locale} />
+
+              <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr_0.8fr]">
+                <article className="rounded-lg border border-line bg-white p-6 shadow-sm">
+                  <h2 className="text-2xl font-extrabold text-navy">O hře</h2>
+                  <p className="mt-4 whitespace-pre-line text-sm leading-7 text-muted">
+                    {product.shortDescription ?? "Popis hry zatím není v datech dostupný."}
+                  </p>
+                  <div className="mt-5 flex flex-wrap gap-2">
+                    {product.categoryTags.slice(0, 6).map((category) => (
+                      <span
+                        key={category}
+                        className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold text-primary"
+                      >
+                        {category}
+                      </span>
+                    ))}
+                  </div>
+                </article>
+                <article className="rounded-lg border border-line bg-white p-6 shadow-sm">
+                  <h2 className="mb-4 text-xl font-extrabold text-navy">Základní informace</h2>
+                  <SupplementaryParametersPanel parameters={product.supplementaryParameters} t={t} />
+                </article>
+                <article className="rounded-lg border border-line bg-white p-6 shadow-sm">
+                  <h2 className="text-xl font-extrabold text-navy">Obsah z dat</h2>
+                  <ul className="mt-4 space-y-3 text-sm font-semibold text-muted">
+                    <li>{product.galleryImages?.length ?? 0} obrázků v galerii</li>
+                    <li>{product.sellers.length} prodejců</li>
+                    <li>{product.categoryTags.length} kategorií</li>
+                  </ul>
+                </article>
+              </section>
+
+              {relatedSeries.length > 0 ? (
+                <section>
+                  <div className="mb-5 flex items-center justify-between">
+                    <h2 className="text-2xl font-extrabold text-navy">Podobné deskové hry</h2>
+                    <button
+                      type="button"
+                      onClick={() => onNavigatePath("/deskove-hry")}
+                      className="text-sm font-extrabold text-primary"
+                    >
+                      Zobrazit další hry →
+                    </button>
+                  </div>
+                  <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                    {relatedSeries.map((series) => (
+                      <ProductTile
+                        key={series.slug}
+                        series={series}
+                        locale={locale}
+                        onNavigate={onNavigateToProduct}
+                      />
+                    ))}
+                  </div>
+                </section>
+              ) : null}
+
+              <CtaBanner
+                title="Hlídáte cenu této hry?"
+                subtitle="Jakmile cena klesne, bude tu připravený prostor pro upozornění."
+                actionLabel="Zapnout hlídání"
+                href={canonicalPath}
+              />
             </>
-          ) : (
-            <EmptyState
-              message={t("detailNotFoundDescription", { code: productSlug })}
-            />
-          )}
+          ) : null}
         </div>
       </main>
+      <AppFooter />
     </div>
   );
 };

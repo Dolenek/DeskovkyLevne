@@ -8,7 +8,6 @@ import { buildProductDetailPath, parseRoute } from "./routing/routes";
 
 const App = () => {
   const { path, navigate } = usePathNavigation();
-
   const route = useMemo(() => parseRoute(path), [path]);
 
   if (route.kind === "landing-levne") {
@@ -17,6 +16,8 @@ const App = () => {
         variant="levne"
         onNavigateToProduct={(slug) => navigate(buildProductDetailPath(slug))}
         onNavigateHome={() => navigate("/")}
+        onNavigatePath={navigate}
+        activePath={path}
       />
     );
   }
@@ -27,6 +28,8 @@ const App = () => {
         variant="deskove"
         onNavigateToProduct={(slug) => navigate(buildProductDetailPath(slug))}
         onNavigateHome={() => navigate("/")}
+        onNavigatePath={navigate}
+        activePath={path}
       />
     );
   }
@@ -37,6 +40,8 @@ const App = () => {
         productSlug={route.slug}
         onNavigateToProduct={(slug) => navigate(buildProductDetailPath(slug))}
         onNavigateHome={() => navigate("/")}
+        onNavigatePath={navigate}
+        activePath={path}
       />
     );
   }
@@ -53,6 +58,8 @@ const App = () => {
   return (
     <SearchPage
       onProductNavigate={(slug) => navigate(buildProductDetailPath(slug))}
+      onNavigatePath={navigate}
+      activePath={path}
     />
   );
 };

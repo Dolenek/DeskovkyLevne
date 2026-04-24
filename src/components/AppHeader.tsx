@@ -1,67 +1,126 @@
+import type { MouseEvent } from "react";
 import { LocaleSwitcher } from "./LocaleSwitcher";
 import type { TranslationHook } from "../hooks/useTranslation";
+import { BrandLogo } from "./ui/BrandLogo";
+import { Icon } from "./ui/Icon";
 
 interface AppHeaderProps {
   searchValue: string;
   onSearchChange: (value: string) => void;
   onSearchFocus?: () => void;
   onLogoClick?: () => void;
+  onNavigatePath?: (path: string) => void;
+  activePath?: string;
   t: TranslationHook["t"];
 }
+
+const navItems = [
+  { href: "/levne-deskovky", label: "Jak to funguje" },
+  { href: "/deskove-hry", label: "Hry" },
+  { href: "/deskove-hry", label: "E-shopy" },
+  { href: "/deskove-hry", label: "O projektu" },
+  { href: "/deskove-hry", label: "Kontakt" },
+];
+
+const shouldNavigateClientSide = (event: MouseEvent<HTMLAnchorElement>) =>
+  !event.defaultPrevented &&
+  event.button === 0 &&
+  !event.metaKey &&
+  !event.ctrlKey &&
+  !event.altKey &&
+  !event.shiftKey;
 
 export const AppHeader = ({
   searchValue,
   onSearchChange,
   onSearchFocus,
   onLogoClick,
+  onNavigatePath,
+  activePath = "",
   t,
-}: AppHeaderProps) => (
-  <header className="sticky top-0 z-50 w-full border-b border-slate-900 bg-black/95 shadow-lg shadow-black/60">
-    <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-3 text-white sm:flex-row sm:items-center sm:gap-8 sm:py-4">
-      <div className="flex items-center justify-between gap-3 sm:justify-start">
-        {onLogoClick ? (
+}: AppHeaderProps) => {
+  const handleNavigate =
+    (path: string) => (event: MouseEvent<HTMLAnchorElement>) => {
+      if (!onNavigatePath || !shouldNavigateClientSide(event)) {
+        return;
+      }
+      event.preventDefault();
+      onNavigatePath(path);
+    };
+
+  return (
+    <header className="sticky top-0 z-50 w-full border-b border-line bg-white/95 shadow-sm backdrop-blur">
+      <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:px-6 lg:flex-row lg:items-center lg:px-10">
+        <div className="flex items-center justify-between gap-3">
           <button
             type="button"
             onClick={onLogoClick}
-            className="text-lg font-bold uppercase tracking-[0.25em] transition hover:text-primary focus:text-primary focus:outline-none sm:text-xl sm:tracking-[0.3em]"
+            className="rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
-            Deskovky Levně
+            <BrandLogo compact />
           </button>
-        ) : (
-          <div className="text-lg font-bold uppercase tracking-[0.25em] sm:text-xl sm:tracking-[0.3em]">
-            Deskovky Levně
+          <div className="lg:hidden">
+            <LocaleSwitcher size="compact" showLabel={false} />
           </div>
-        )}
-        <div className="sm:hidden">
-          <LocaleSwitcher size="compact" showLabel={false} />
         </div>
-      </div>
-      <div className="flex-1">
-        <div className="mx-auto flex w-full max-w-xl justify-center">
-          <div className="flex w-full items-center gap-2 rounded-full border border-slate-700 bg-black/40 px-2 transition focus-within:border-primary focus-within:shadow-[0_0_0_2px_rgba(76,144,255,0.4)]">
+
+        <nav className="hidden flex-1 items-center justify-center gap-8 text-sm font-bold text-navy lg:flex">
+          {navItems.map((item) => {
+            const active =
+              item.href === "/deskove-hry"
+                ? activePath === "/" || activePath.startsWith("/deskove-hry")
+                : activePath === item.href;
+            return (
+              <a
+                key={`${item.href}-${item.label}`}
+                href={item.href}
+                onClick={handleNavigate(item.href)}
+                className={`border-b-2 py-2 transition ${
+                  active
+                    ? "border-primary text-primary"
+                    : "border-transparent hover:border-primary/40 hover:text-primary"
+                }`}
+              >
+                {item.label}
+              </a>
+            );
+          })}
+        </nav>
+
+        <div className="flex items-center gap-3 lg:w-[390px]">
+          <div className="flex min-w-0 flex-1 items-center rounded-lg border border-line bg-white shadow-sm transition focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15">
+            <Icon name="search" className="ml-3 h-5 w-5 flex-shrink-0 text-muted" />
             <input
               value={searchValue}
               onChange={(event) => onSearchChange(event.target.value)}
               onFocus={onSearchFocus}
               placeholder={t("searchPlaceholder")}
-              className="flex-1 bg-transparent px-3 py-2.5 text-left text-sm font-semibold text-white outline-none placeholder:text-slate-500 sm:py-3 sm:text-center sm:text-base"
+              className="min-w-0 flex-1 bg-transparent px-3 py-2.5 text-sm font-semibold text-navy outline-none placeholder:text-muted"
             />
             {searchValue ? (
               <button
                 type="button"
                 onClick={() => onSearchChange("")}
                 aria-label={t("clearSearch")}
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-700/70 bg-slate-900/70 text-slate-300 transition hover:border-primary/60 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className="mr-2 flex h-7 w-7 items-center justify-center rounded-md text-muted transition hover:bg-slate-100 hover:text-navy"
               >
-                <span className="text-lg leading-none">×</span>
+                x
               </button>
             ) : null}
           </div>
+          <button
+            type="button"
+            onClick={onSearchFocus}
+            className="flex h-11 w-12 items-center justify-center rounded-lg bg-primary text-white shadow-sm transition hover:bg-emerald-700"
+            aria-label={t("searchLabel")}
+          >
+            <Icon name="search" className="h-5 w-5" />
+          </button>
+          <div className="hidden xl:block">
+            <LocaleSwitcher showLabel={false} />
+          </div>
         </div>
       </div>
-      <div className="hidden justify-end sm:flex">
-        <LocaleSwitcher />
-      </div>
-    </div>
-  </header>
-);
+    </header>
+  );
+};

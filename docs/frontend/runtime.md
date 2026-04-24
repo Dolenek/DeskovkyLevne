@@ -10,6 +10,8 @@ All product navigation is slug-based.
 
 ## Data Access
 - Frontend runtime reads data through backend API (`VITE_API_BASE_URL`).
+- Local Vite development uses same-origin `/api/*` requests and proxies them
+  with `VITE_API_PROXY_TARGET`, avoiding browser CORS failures.
 - Runtime does not use browser-side direct PostgREST/Supabase reads for catalog/search/detail.
 - Runtime API calls are organized through shared client/config modules (`src/services/api/*`).
 - API requests retry for transient failures (HTTP 429/5xx and network errors).
@@ -32,10 +34,22 @@ All product navigation is slug-based.
 - `VITE_SEARCH_MAX_SERIES`
 
 ## Key UI Behaviors
+- Frontend uses a light DeskovkyLevně brand system: navy text, white surfaces,
+  green primary CTAs, orange promotional CTAs, subtle borders, and shared
+  header/footer/CTA components.
+- Shared UI iconography uses `lucide-react` through the local `Icon`
+  component so feature components do not import icon packages directly.
 - Search overlay activates on debounced input and shows suggestions.
+- Home catalog renders a hero, search/filter toolbar, category chips, desktop
+  filter sidebar, mobile filter drawer, benefit strip, product card grid,
+  pagination controls, and CTA banner.
+- Landing pages render a search hero, live catalog metrics, price-history
+  preview, featured product cards, seller-offer table, benefits, and CTA banner.
 - Filtered catalog supports availability, price range, and categories.
 - Category options and price bounds are fetched from metadata endpoints, not a full in-browser catalog preload.
-- Product detail renders hero/gallery, availability, outbound CTA, multi-seller history chart, and supplementary parameters panel.
+- Product detail renders gallery, hero summary, quick summary, seller-offer
+  table, price stats, multi-seller history chart, supplementary parameters,
+  related games, and CTA banner.
 
 ## Seller Content Rule in UI
 - Prefer `tlamagames`/`tlamagase` content fields where available.

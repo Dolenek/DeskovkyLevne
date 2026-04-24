@@ -4,11 +4,14 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: "#02030a",
-        surface: "#0a0f1f",
-        primary: "#1c64f2",
-        secondary: "#4f9dff",
-        accent: "#2dd4ff",
+        background: "#f8fbff",
+        surface: "#ffffff",
+        primary: "#079455",
+        secondary: "#0b6b5b",
+        accent: "#f97316",
+        navy: "#052653",
+        muted: "#60708c",
+        line: "#dfe7f1",
       },
       fontFamily: {
         sans: ["'Inter'", "ui-sans-serif", "system-ui", "sans-serif"],

@@ -19,19 +19,15 @@ export const LocaleSwitcher = ({
   const { locale, setLocale, t } = useTranslation();
   const isCompact = size === "compact";
   const labelClasses = isCompact ? "text-xs" : "text-sm";
-  const buttonClasses = isCompact
-    ? "px-3 py-1 text-xs"
-    : "px-4 py-1 text-sm";
+  const buttonClasses = isCompact ? "px-3 py-1 text-xs" : "px-4 py-1 text-sm";
   const containerClasses = isCompact ? "gap-2" : "gap-3";
 
   return (
     <div className={`flex items-center ${containerClasses} ${className}`}>
       {showLabel ? (
-        <span className={`${labelClasses} text-slate-300`}>
-          {t("localeLabel")}:
-        </span>
+        <span className={`${labelClasses} text-muted`}>{t("localeLabel")}:</span>
       ) : null}
-      <div className="flex rounded-full bg-slate-800/70 p-1">
+      <div className="flex rounded-lg border border-line bg-slate-50 p-1">
         {OPTIONS.map((option) => {
           const isActive = option.value === locale;
           return (
@@ -39,10 +35,8 @@ export const LocaleSwitcher = ({
               key={option.value}
               type="button"
               onClick={() => setLocale(option.value)}
-              className={`rounded-full ${buttonClasses} font-medium transition ${
-                isActive
-                  ? "bg-primary text-white shadow-[0_0_12px_rgba(76,144,255,0.7)]"
-                  : "text-slate-300 hover:text-white"
+              className={`rounded-md ${buttonClasses} font-bold transition ${
+                isActive ? "bg-primary text-white shadow-sm" : "text-muted hover:text-navy"
               }`}
             >
               {option.label}

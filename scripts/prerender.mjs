@@ -119,14 +119,14 @@ const prerender = async () => {
 
   for (const routePath of routes) {
     const url = `http://localhost:${PORT}${routePath}`;
-    await page.goto(url, { waitUntil: "networkidle" });
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 });
     await page.waitForFunction(() => {
       const robots = document.querySelector('meta[name="robots"]');
       if (!robots) {
         return false;
       }
       return robots.getAttribute("content") === "index,follow";
-    });
+    }, { timeout: 60000 });
     const html = await page.content();
     await writeHtmlForRoute(routePath, html);
     console.log(`Prerendered ${routePath}`);

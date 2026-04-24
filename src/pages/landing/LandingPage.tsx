@@ -1,14 +1,19 @@
 import { useMemo } from "react";
 import { AppHeader } from "../../components/AppHeader";
+import { ProductChart } from "../../components/ProductChart";
 import { ProductSearchOverlay } from "../../components/ProductSearchOverlay";
+import { ProductTile } from "../../components/ProductTile";
+import { SellerOfferTable } from "../../components/SellerOfferTable";
 import { Seo } from "../../components/Seo";
+import { AppFooter } from "../../components/ui/AppFooter";
+import { CtaBanner } from "../../components/ui/CtaBanner";
+import { Icon } from "../../components/ui/Icon";
 import { useFilteredCatalogIndex } from "../../hooks/useFilteredCatalogIndex";
-import { useRecentDiscounts } from "../../hooks/useRecentDiscounts";
 import { useSearchOverlayState } from "../../hooks/useSearchOverlayState";
 import { useTranslation } from "../../hooks/useTranslation";
 import type { ProductSeries } from "../../types/product";
 import { formatPrice } from "../../utils/numberFormat";
-import { handleInAppNavigation } from "../../utils/navigation";
+import { getPriceStats } from "../../utils/priceStats";
 import { buildAbsoluteUrl } from "../../utils/urls";
 import { LANDING_SEO_COPY } from "../../utils/seoContent";
 
@@ -16,152 +21,129 @@ interface LandingPageProps {
   variant: "levne" | "deskove";
   onNavigateToProduct: (slug: string) => void;
   onNavigateHome: () => void;
+  onNavigatePath: (path: string) => void;
+  activePath: string;
 }
 
 const OVERLAY_LIMIT = 6;
 const FEATURED_PAGE_SIZE = 12;
 
-const buildLandingCopy = (variant: "levne" | "deskove", locale: "cs" | "en") => {
-  if (variant === "levne") {
-    return locale === "en"
-      ? {
-          heading: "Affordable board games",
-          subheading:
-            "Track current prices and availability from Czech retailers. Compare by slug and follow discounts over time.",
-          featuredTitle: "Popular affordable picks",
-          discountTitle: "Recent price drops",
-        }
-      : {
-          heading: "Levné deskovky",
-          subheading:
-            "Sledujte aktuální ceny a dostupnost u českých prodejců. Porovnávejte podle slugu a sledujte slevy v čase.",
-          featuredTitle: "Oblíbené levné tituly",
-          discountTitle: "Nedávné slevy",
-        };
-  }
-  return locale === "en"
+const buildLandingCopy = (variant: "levne" | "deskove") =>
+  variant === "levne"
     ? {
-        heading: "Board games",
+        heading: "Sledujte historii cen deskových her a nakupujte levněji",
         subheading:
-          "Browse Czech board games by slug, availability, and price history across retailers.",
-        featuredTitle: "Featured board games",
-        discountTitle: "Recent price drops",
+          "Porovnáváme ceny z různých e-shopů, ukazujeme vývoj ceny v čase a pomáháme najít nejlepší nabídku.",
+        featuredTitle: "Populární deskové hry",
+        cta: "Najděte nejlepší cenu své příští deskovky",
       }
     : {
-        heading: "Deskové hry",
+        heading: "Katalog deskových her s přehledem cen",
         subheading:
-          "Procházejte deskové hry podle slugu, dostupnosti a historie cen napříč českými obchody.",
+          "Procházejte hry podle slugu, dostupnosti a historie cen napříč českými e-shopy.",
         featuredTitle: "Vybrané deskové hry",
-        discountTitle: "Nedávné slevy",
+        cta: "Najděte svou další oblíbenou deskovku",
       };
-};
 
-const LandingHero = ({
-  heading,
-  subheading,
+const StatPill = ({
+  icon,
+  value,
+  label,
 }: {
-  heading: string;
-  subheading: string;
+  icon: Parameters<typeof Icon>[0]["name"];
+  value: string;
+  label: string;
 }) => (
-  <section className="rounded-3xl border border-slate-800 bg-surface/70 p-8 shadow-2xl shadow-black/40 backdrop-blur">
-    <h1 className="text-3xl font-semibold text-white sm:text-4xl">
-      {heading}
-    </h1>
-    <p className="mt-3 max-w-2xl text-base text-slate-300 sm:text-lg">
-      {subheading}
-    </p>
-  </section>
+  <div className="flex items-center gap-3">
+    <Icon name={icon} className="h-6 w-6 text-primary" />
+    <div>
+      <p className="text-lg font-extrabold text-navy">{value}</p>
+      <p className="text-sm text-muted">{label}</p>
+    </div>
+  </div>
 );
 
-const ProductCard = ({
-  series,
-  onNavigate,
-  locale,
-}: {
-  series: ProductSeries;
-  onNavigate: (slug: string) => void;
-  locale: "cs" | "en";
-}) => {
-  const href = `/deskove-hry/${encodeURIComponent(series.slug)}`;
-  const price = formatPrice(series.latestPrice, series.currency ?? undefined, locale);
+const HowItWorks = () => {
+  const items = [
+    {
+      icon: "store" as const,
+      title: "1. Sbíráme ceny",
+      body: "Každý den procházíme desítky e-shopů a sbíráme aktuální ceny.",
+    },
+    {
+      icon: "barChart" as const,
+      title: "2. Sledujeme vývoj",
+      body: "U každé hry ukládáme historii cen, aby bylo vidět, kdy zlevňuje.",
+    },
+    {
+      icon: "tag" as const,
+      title: "3. Porovnáváme nabídky",
+      body: "Ukážeme dostupné prodejce a nejvýhodnější cenu právě teď.",
+    },
+  ];
+
   return (
-    <a
-      href={href}
-      onClick={(event) => {
-        handleInAppNavigation(event, () => onNavigate(series.slug));
-      }}
-      className="flex flex-col gap-3 rounded-3xl border border-slate-800 bg-black/20 p-5 transition hover:border-primary/60"
-    >
-      <div className="flex items-center gap-4">
-        <div className="h-14 w-14 overflow-hidden rounded-2xl bg-slate-900/70">
-          {series.heroImage ? (
-            <img
-              src={series.heroImage}
-              alt={series.label}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center text-lg font-semibold text-slate-500">
-              {series.label.charAt(0)}
+    <section>
+      <h2 className="text-center text-2xl font-extrabold text-navy">Jak to funguje</h2>
+      <div className="mt-5 grid gap-5 md:grid-cols-3">
+        {items.map((item) => (
+          <article key={item.title} className="rounded-lg border border-line bg-white p-6 shadow-sm">
+            <div className="flex items-center gap-4">
+              <span className="flex h-12 w-12 items-center justify-center rounded-lg bg-emerald-50 text-primary">
+                <Icon name={item.icon} className="h-7 w-7" />
+              </span>
+              <h3 className="font-extrabold text-navy">{item.title}</h3>
             </div>
-          )}
-        </div>
-        <div className="flex flex-col">
-          <span className="text-lg font-semibold text-white">{series.label}</span>
-          <span className="text-xs text-slate-400">{series.slug}</span>
-        </div>
+            <p className="mt-4 text-sm leading-6 text-muted">{item.body}</p>
+          </article>
+        ))}
       </div>
-      <div className="flex items-baseline justify-between text-sm text-slate-300">
-        <span>{series.availabilityLabel ?? "—"}</span>
-        <span className="text-lg font-semibold text-white">{price}</span>
-      </div>
-    </a>
+    </section>
   );
 };
 
-const DiscountCard = ({
-  discount,
-  onNavigate,
+const HeroPreview = ({
+  series,
   locale,
 }: {
-  discount: {
-    productSlug: string;
-    productName: string;
-    currentPrice: number;
-    previousPrice: number;
-    currency?: string | null;
-  };
-  onNavigate: (slug: string) => void;
+  series: ProductSeries | null;
   locale: "cs" | "en";
 }) => {
-  const href = `/deskove-hry/${encodeURIComponent(discount.productSlug)}`;
-  const current = formatPrice(discount.currentPrice, discount.currency ?? undefined, locale);
-  const previous = formatPrice(discount.previousPrice, discount.currency ?? undefined, locale);
-  const delta = formatPrice(
-    discount.currentPrice - discount.previousPrice,
-    discount.currency ?? undefined,
-    locale
-  );
-  return (
-    <a
-      href={href}
-      onClick={(event) => {
-        handleInAppNavigation(event, () => onNavigate(discount.productSlug));
-      }}
-      className="flex flex-col gap-2 rounded-3xl border border-slate-800 bg-black/20 p-5 transition hover:border-primary/60"
-    >
-      <span className="text-sm uppercase tracking-wide text-slate-400">
-        {discount.productSlug}
-      </span>
-      <span className="text-lg font-semibold text-white">
-        {discount.productName}
-      </span>
-      <div className="text-sm text-slate-300">
-        <span className="line-through text-slate-500">{previous}</span>
-        <span className="ml-2 text-emerald-300">{current}</span>
-        <span className="ml-2 text-emerald-400">({delta})</span>
+  if (!series) {
+    return (
+      <div className="rounded-lg border border-line bg-white p-8 shadow-xl">
+        <div className="aspect-[4/3] rounded-lg bg-slate-100" />
       </div>
-    </a>
+    );
+  }
+
+  const stats = getPriceStats(series);
+
+  return (
+    <div className="relative rounded-lg border border-line bg-white p-5 shadow-2xl shadow-slate-200">
+      <div className="flex items-start gap-4">
+        {series.heroImage ? (
+          <img src={series.heroImage} alt={series.label} className="h-28 w-28 rounded-lg object-cover" />
+        ) : null}
+        <div>
+          <h3 className="text-lg font-extrabold text-navy">{series.label}</h3>
+          <p className="mt-1 text-sm text-muted">{series.categoryTags[0] ?? "Desková hra"}</p>
+          <div className="mt-3 flex flex-wrap gap-3 text-xs font-bold text-muted">
+            <span>{series.sellers.length} e-shopů</span>
+            <span>{series.sellers.reduce((sum, seller) => sum + seller.points.length, 0)} cen</span>
+          </div>
+        </div>
+      </div>
+      <div className="mt-5">
+        <ProductChart series={series} locale={locale} priceLabel="Cena" dateLabel="Datum" />
+      </div>
+      <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-right">
+        <p className="text-sm font-bold text-primary">Nejnižší zaznamenaná cena</p>
+        <p className="text-2xl font-extrabold text-primary">
+          {formatPrice(stats.minimum, series.currency ?? undefined, locale)}
+        </p>
+      </div>
+    </div>
   );
 };
 
@@ -169,12 +151,13 @@ export const LandingPage = ({
   variant,
   onNavigateToProduct,
   onNavigateHome,
+  onNavigatePath,
+  activePath,
 }: LandingPageProps) => {
   const { t, locale } = useTranslation();
   const seoCopy = LANDING_SEO_COPY[locale][variant];
-  const heroCopy = buildLandingCopy(variant, locale);
+  const copy = buildLandingCopy(variant);
   const landingPath = variant === "levne" ? "/levne-deskovky" : "/deskove-hry";
-
   const {
     searchValue,
     setSearchValue,
@@ -187,7 +170,7 @@ export const LandingPage = ({
     debouncedQuery,
   } = useSearchOverlayState(OVERLAY_LIMIT);
 
-  const { series: featuredSeries } = useFilteredCatalogIndex({
+  const { series: featuredSeries, total } = useFilteredCatalogIndex({
     availabilityFilter: variant === "levne" ? "available" : "all",
     priceRange: { min: null, max: null },
     categoryFilters: [],
@@ -195,15 +178,19 @@ export const LandingPage = ({
     pageSize: FEATURED_PAGE_SIZE,
   });
 
-  const { items: recentDiscounts } = useRecentDiscounts();
-  const discountList = useMemo(() => recentDiscounts.slice(0, 6), [recentDiscounts]);
+  const showcase = useMemo(
+    () => featuredSeries.find((series) => series.points.length > 1) ?? featuredSeries[0] ?? null,
+    [featuredSeries]
+  );
 
   const structuredData = useMemo(() => {
     const items = featuredSeries.map((series, index) => ({
       "@type": "ListItem",
       position: index + 1,
       name: series.label,
-      url: buildAbsoluteUrl(`/deskove-hry/${encodeURIComponent(series.slug)}`) ?? `/deskove-hry/${series.slug}`,
+      url:
+        buildAbsoluteUrl(`/deskove-hry/${encodeURIComponent(series.slug)}`) ??
+        `/deskove-hry/${series.slug}`,
     }));
     return [
       {
@@ -214,16 +201,12 @@ export const LandingPage = ({
         url: buildAbsoluteUrl(landingPath) ?? landingPath,
         inLanguage: locale === "en" ? "en" : "cs",
       },
-      {
-        "@context": "https://schema.org",
-        "@type": "ItemList",
-        itemListElement: items,
-      },
+      { "@context": "https://schema.org", "@type": "ItemList", itemListElement: items },
     ];
   }, [featuredSeries, landingPath, locale, seoCopy.description, seoCopy.title]);
 
   return (
-    <div className="min-h-screen bg-background text-white">
+    <div className="min-h-screen bg-background text-navy">
       <Seo
         title={seoCopy.title}
         description={seoCopy.description}
@@ -239,10 +222,9 @@ export const LandingPage = ({
           setSearchActive(Boolean(value.trim()));
         }}
         onSearchFocus={() => setSearchActive(true)}
-        onLogoClick={() => {
-          setSearchActive(false);
-          onNavigateHome();
-        }}
+        onLogoClick={onNavigateHome}
+        onNavigatePath={onNavigatePath}
+        activePath={activePath}
         t={t}
       />
       <ProductSearchOverlay
@@ -260,52 +242,115 @@ export const LandingPage = ({
         }}
         onClose={() => setSearchActive(false)}
       />
-      <main className="px-4 pb-12 pt-6 sm:px-6 lg:px-10 lg:pt-8">
-        <div className="mx-auto flex max-w-6xl flex-col gap-10">
-          <LandingHero heading={heroCopy.heading} subheading={heroCopy.subheading} />
-          <section>
-            <div className="flex items-baseline justify-between">
-              <h2 className="text-2xl font-semibold text-white">
-                {heroCopy.featuredTitle}
-              </h2>
-              <span className="text-sm text-slate-400">
-                {variant === "levne"
-                  ? locale === "en"
-                    ? "In stock"
-                    : "Skladem"
-                  : locale === "en"
-                    ? "All availability"
-                    : "Všechny dostupnosti"}
-              </span>
+      <main className="px-4 pb-12 pt-8 sm:px-6 lg:px-10">
+        <div className="mx-auto flex max-w-7xl flex-col gap-12">
+          <section className="grid items-center gap-10 lg:grid-cols-[1fr_0.95fr]">
+            <div>
+              <h1 className="max-w-3xl text-4xl font-black leading-tight text-navy sm:text-5xl">
+                {copy.heading}
+              </h1>
+              <p className="mt-6 max-w-2xl text-lg leading-8 text-muted">
+                {copy.subheading}
+              </p>
+              <div className="mt-8 flex max-w-2xl rounded-lg border border-line bg-white p-2 shadow-lg">
+                <Icon name="search" className="ml-3 mt-3 h-5 w-5 text-muted" />
+                <input
+                  value={searchValue}
+                  onChange={(event) => {
+                    setSearchValue(event.target.value);
+                    setSearchActive(true);
+                  }}
+                  onFocus={() => setSearchActive(true)}
+                  placeholder="Zadejte název deskové hry..."
+                  className="min-w-0 flex-1 px-3 py-3 text-sm font-semibold outline-none placeholder:text-muted"
+                />
+                <button className="rounded-lg bg-primary px-5 py-3 text-sm font-extrabold text-white">
+                  Vyhledat
+                </button>
+              </div>
+              <div className="mt-8 grid gap-5 sm:grid-cols-3">
+                <StatPill icon="spark" value={total ? total.toLocaleString("cs-CZ") : "--"} label="sledovaných her" />
+                <StatPill icon="store" value="více" label="e-shopů v katalogu" />
+                <StatPill icon="refresh" value="denně" label="aktualizované ceny" />
+              </div>
             </div>
-            <div className="mt-5 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {featuredSeries.map((series) => (
-                <ProductCard
+            <HeroPreview series={showcase} locale={locale} />
+          </section>
+
+          <HowItWorks />
+
+          <section>
+            <div className="flex items-center justify-between gap-4">
+              <h2 className="text-2xl font-extrabold text-navy">{copy.featuredTitle}</h2>
+              <button
+                type="button"
+                onClick={() => onNavigatePath("/deskove-hry")}
+                className="text-sm font-extrabold text-primary hover:text-emerald-700"
+              >
+                Zobrazit všechny hry →
+              </button>
+            </div>
+            <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {featuredSeries.slice(0, 4).map((series) => (
+                <ProductTile
                   key={series.slug}
                   series={series}
-                  onNavigate={onNavigateToProduct}
                   locale={locale}
+                  onNavigate={onNavigateToProduct}
                 />
               ))}
             </div>
           </section>
-          <section>
-            <h2 className="text-2xl font-semibold text-white">
-              {heroCopy.discountTitle}
-            </h2>
-            <div className="mt-5 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {discountList.map((discount) => (
-                <DiscountCard
-                  key={discount.productSlug}
-                  discount={discount}
-                  onNavigate={onNavigateToProduct}
-                  locale={locale}
-                />
-              ))}
-            </div>
+
+          {showcase ? (
+            <section className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr]">
+              <div>
+                <h2 className="text-2xl font-extrabold text-navy">Ukázka historie ceny</h2>
+                <div className="mt-5 rounded-lg border border-line bg-white p-5 shadow-sm">
+                  <h3 className="font-extrabold text-navy">{showcase.label}</h3>
+                  <p className="mt-1 text-sm text-muted">{showcase.categoryTags[0] ?? "Desková hra"}</p>
+                  <p className="mt-6 text-sm font-bold text-muted">Nejnižší cena v historii:</p>
+                  <p className="text-4xl font-black text-primary">
+                    {formatPrice(getPriceStats(showcase).minimum, showcase.currency ?? undefined, locale)}
+                  </p>
+                </div>
+              </div>
+              <div className="rounded-lg border border-line bg-white p-5 shadow-sm">
+                <ProductChart series={showcase} locale={locale} priceLabel={t("price")} dateLabel={t("date")} />
+              </div>
+            </section>
+          ) : null}
+
+          {showcase ? (
+            <section>
+              <h2 className="mb-5 text-2xl font-extrabold text-navy">Kde koupit nejlevněji</h2>
+              <SellerOfferTable series={showcase} locale={locale} />
+            </section>
+          ) : null}
+
+          <section className="grid gap-4 md:grid-cols-4">
+            {[
+              ["barChart", "Přehledná historie cen", "U každé hry vidíte vývoj ceny v čase."],
+              ["search", "Rychlé porovnání", "Během pár vteřin zjistíte nabídky e-shopů."],
+              ["bell", "Upozornění na pokles", "Vizuální příprava pro budoucí hlídání ceny."],
+              ["shield", "Úspora času", "Sledujte ceny na jednom místě."],
+            ].map(([icon, title, body]) => (
+              <article key={title} className="rounded-lg border border-line bg-white p-5 shadow-sm">
+                <Icon name={icon as Parameters<typeof Icon>[0]["name"]} className="h-8 w-8 text-primary" />
+                <h3 className="mt-4 font-extrabold text-navy">{title}</h3>
+                <p className="mt-2 text-sm leading-6 text-muted">{body}</p>
+              </article>
+            ))}
           </section>
+
+          <CtaBanner
+            title={copy.cta}
+            subtitle="Tisíce her, desítky e-shopů, jedna chytrá volba."
+            actionLabel="Procházet hry"
+          />
         </div>
       </main>
+      <AppFooter />
     </div>
   );
 };
