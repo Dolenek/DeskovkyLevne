@@ -28,6 +28,19 @@ func TestParseListDeduplicatesValues(t *testing.T) {
 	}
 }
 
+func TestParseListKeepsRequestedFilterTokens(t *testing.T) {
+	got := parseList("strategicka,fantasy,30-60,available,decreased")
+	want := []string{"strategicka", "fantasy", "30-60", "available", "decreased"}
+	if len(got) != len(want) {
+		t.Fatalf("expected %d values, got %#v", len(want), got)
+	}
+	for index, value := range want {
+		if got[index] != value {
+			t.Fatalf("expected %q at index %d, got %#v", value, index, got)
+		}
+	}
+}
+
 func TestParseAgesDeduplicatesValidNumbers(t *testing.T) {
 	got := parseAges("6,8,6,nope")
 	if len(got) != 2 || got[0] != 6 || got[1] != 8 {

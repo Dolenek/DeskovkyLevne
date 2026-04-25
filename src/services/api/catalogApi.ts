@@ -17,6 +17,22 @@ import type {
   SearchResponse,
 } from "./types";
 
+const serializeCatalogFilters = (filters: CatalogFilterOptions) => {
+  const categories = (filters.categories ?? []).filter(Boolean).join(",");
+  const playerRanges = (filters.playerRanges ?? []).filter(Boolean).join(",");
+  const playtimeRanges = (filters.playtimeRanges ?? []).filter(Boolean).join(",");
+  const ageRatings = (filters.ageRatings ?? []).filter(Boolean).join(",");
+
+  return {
+    availability: filters.availability === "all" ? null : filters.availability,
+    categories: categories || null,
+    players: playerRanges || null,
+    playtime: playtimeRanges || null,
+    age: ageRatings || null,
+    price_movement: filters.priceMovement ?? null,
+  };
+};
+
 export const searchCatalogIndexByName = async (
   term: string,
   limit = SEARCH_LIMIT,
@@ -56,22 +72,13 @@ export const fetchFilteredCatalogIndex = async (
     return { rows: [], total: 0 };
   }
 
-  const categories = (filters.categories ?? []).filter(Boolean).join(",");
-  const playerRanges = (filters.playerRanges ?? []).filter(Boolean).join(",");
-  const playtimeRanges = (filters.playtimeRanges ?? []).filter(Boolean).join(",");
-  const ageRatings = (filters.ageRatings ?? []).filter(Boolean).join(",");
   const payload = await fetchApi<CatalogResponse>(
     buildApiUrl("/catalog", {
       offset: Math.max(0, from),
       limit: size,
-      availability: filters.availability === "all" ? null : filters.availability,
+      ...serializeCatalogFilters(filters),
       min_price: filters.minPrice ?? null,
       max_price: filters.maxPrice ?? null,
-      categories: categories || null,
-      players: playerRanges || null,
-      playtime: playtimeRanges || null,
-      age: ageRatings || null,
-      price_movement: filters.priceMovement ?? null,
     }),
     { signal }
   );
@@ -104,18 +111,9 @@ export const fetchCatalogPriceRange = async (
   filters: CatalogFilterOptions,
   signal?: AbortSignal
 ): Promise<PriceRangeResponse> => {
-  const categories = (filters.categories ?? []).filter(Boolean).join(",");
-  const playerRanges = (filters.playerRanges ?? []).filter(Boolean).join(",");
-  const playtimeRanges = (filters.playtimeRanges ?? []).filter(Boolean).join(",");
-  const ageRatings = (filters.ageRatings ?? []).filter(Boolean).join(",");
   return fetchApi<PriceRangeResponse>(
     buildApiUrl("/meta/price-range", {
-      availability: filters.availability === "all" ? null : filters.availability,
-      categories: categories || null,
-      players: playerRanges || null,
-      playtime: playtimeRanges || null,
-      age: ageRatings || null,
-      price_movement: filters.priceMovement ?? null,
+      ...serializeCatalogFilters(filters),
     }),
     { signal }
   );

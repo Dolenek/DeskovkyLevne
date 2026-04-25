@@ -5,39 +5,65 @@ import (
 	"strings"
 )
 
+type tagFieldMatch struct {
+	field string
+	tags  []string
+}
+
+type categoryTagRule struct {
+	matches []tagFieldMatch
+}
+
+var categoryTagRules = map[string]categoryTagRule{
+	"strategicka": {
+		matches: []tagFieldMatch{{field: "game_type_tags", tags: []string{"Strategick\u00e1"}}},
+	},
+	"rodinna": {
+		matches: []tagFieldMatch{{field: "game_type_tags", tags: []string{"Rodinn\u00e1"}}},
+	},
+	"fantasy": {
+		matches: []tagFieldMatch{
+			{field: "genre_tags", tags: []string{"Fantasy"}},
+			{field: "category_tags", tags: []string{"Fantasy"}},
+			{field: "game_type_tags", tags: []string{"Fantasy"}},
+		},
+	},
+	"kooperativni": {
+		matches: []tagFieldMatch{
+			{field: "game_type_tags", tags: []string{"Kooperativn\u00ed"}},
+			{field: "mechanic_tags", tags: []string{"Cooperative Game"}},
+		},
+	},
+	"ekonomicka": {
+		matches: []tagFieldMatch{{field: "genre_tags", tags: []string{"Ekonomick\u00e9"}}},
+	},
+}
+
 func buildCategoryClause(args *[]any, categories []string) string {
 	clauses := make([]string, 0, len(categories))
 	for _, category := range categories {
-		switch strings.ToLower(strings.TrimSpace(category)) {
-		case "strategicka":
-			*args = append(*args, []string{"Strategická"})
-			clauses = append(clauses, fmt.Sprintf("game_type_tags && $%d::text[]", len(*args)))
-		case "rodinna":
-			*args = append(*args, []string{"Rodinná"})
-			clauses = append(clauses, fmt.Sprintf("game_type_tags && $%d::text[]", len(*args)))
-		case "fantasy":
-			*args = append(*args, []string{"Fantasy"})
-			clauses = append(clauses, fmt.Sprintf("genre_tags && $%d::text[]", len(*args)))
-		case "kooperativni":
-			*args = append(*args, []string{"Kooperativní"})
-			gameTypePosition := len(*args)
-			*args = append(*args, []string{"Cooperative Game"})
-			mechanicPosition := len(*args)
-			clauses = append(clauses, fmt.Sprintf(
-				"(game_type_tags && $%d::text[] or mechanic_tags && $%d::text[])",
-				gameTypePosition,
-				mechanicPosition,
-			))
-		case "ekonomicka":
-			*args = append(*args, []string{"Ekonomické"})
-			clauses = append(clauses, fmt.Sprintf("genre_tags && $%d::text[]", len(*args)))
-		default:
-			clean := strings.TrimSpace(category)
-			if clean != "" {
-				*args = append(*args, []string{clean})
-				clauses = append(clauses, fmt.Sprintf("category_tags && $%d::text[]", len(*args)))
-			}
+		clean := strings.TrimSpace(category)
+		if clean == "" {
+			continue
 		}
+		if rule, ok := categoryTagRules[strings.ToLower(clean)]; ok {
+			clauses = append(clauses, buildTagFieldsClause(args, rule.matches))
+			continue
+		}
+		matches := []tagFieldMatch{{field: "category_tags", tags: []string{clean}}}
+		clauses = append(clauses, buildTagFieldsClause(args, matches))
+	}
+	return joinOrClauses(clauses)
+}
+
+func buildTagFieldsClause(args *[]any, matches []tagFieldMatch) string {
+	clauses := make([]string, 0, len(matches))
+	for _, match := range matches {
+		*args = append(*args, match.tags)
+		clauses = append(
+			clauses,
+			fmt.Sprintf("coalesce(%s, '{}'::text[]) && $%d::text[]", match.field, len(*args)),
+		)
 	}
 	return joinOrClauses(clauses)
 }

@@ -4,7 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "node scripts/dev.mjs",
+    "dev:frontend": "vite",
     "api:dev": "cd apps/api-go && go run ./cmd/server",
     "build": "tsc -b && node scripts/generate-sitemap.mjs && vite build && node scripts/prerender.mjs",
     "generate:sitemap": "node scripts/generate-sitemap.mjs",

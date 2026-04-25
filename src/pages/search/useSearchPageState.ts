@@ -224,6 +224,11 @@ export const useSearchPageState = (
     setPricePage(1);
   }, []);
 
+  const handleAvailabilityFilterChange = useCallback((value: AvailabilityFilter) => {
+    setAvailabilityFilter(value);
+    setPricePage(1);
+  }, []);
+
   const activeFilterCount = useMemo(
     () =>
       categoryFilters.length +
@@ -276,7 +281,7 @@ export const useSearchPageState = (
     filteredError,
     reloadFiltered,
     setFiltersOpen,
-    setAvailabilityFilter,
+    setAvailabilityFilter: handleAvailabilityFilterChange,
     setSelectedSeries,
     setPricePage,
     setSearchActive,

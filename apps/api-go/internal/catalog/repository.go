@@ -268,7 +268,10 @@ func buildWhere(filters Filters) (string, []any) {
 		}
 	}
 	if strings.EqualFold(strings.TrimSpace(filters.PriceMovement), "decreased") {
-		clauses = append(clauses, "price_movement = 'decreased'")
+		clauses = append(
+			clauses,
+			"(price_movement = 'decreased' or latest_price < list_price_with_vat)",
+		)
 	}
 	if strings.TrimSpace(filters.Query) != "" {
 		pattern := "%" + normalizeSearchQuery(filters.Query) + "%"

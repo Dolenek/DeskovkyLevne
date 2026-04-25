@@ -7,7 +7,7 @@
   - Default: empty string, meaning same-origin `/api/v1`.
   - Purpose: backend API base URL used by browser runtime.
 - `VITE_API_PROXY_TARGET`
-  - Default: `VITE_API_BASE_URL`, then `https://www.deskovkylevne.com`.
+  - Default: `VITE_API_BASE_URL`, then `http://localhost:8080`.
   - Purpose: Vite dev-server proxy target for same-origin local `/api/*`
     requests.
 

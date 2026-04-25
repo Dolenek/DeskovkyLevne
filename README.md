@@ -3,13 +3,18 @@
 Slug-first board-game price tracking app (React frontend + Go read API).
 
 ## Quick Start
-Frontend:
+Frontend and local API:
 ```bash
 npm install
 npm run dev
 ```
 
-Backend API:
+Frontend only:
+```bash
+npm run dev:frontend
+```
+
+Backend API only:
 ```bash
 npm run api:dev
 ```

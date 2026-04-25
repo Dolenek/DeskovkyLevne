@@ -157,10 +157,15 @@ export const FiltersPanel = ({
 
     <div className="mt-6 space-y-3">
       <p className="text-sm font-extrabold text-navy">{t("filtersAvailability")}</p>
-      <label className="flex cursor-pointer items-center gap-3 text-sm font-bold text-muted">
-        <input type="checkbox" checked={availabilityFilter === "available"} onChange={() => onAvailabilityChange(availabilityFilter === "available" ? "all" : "available")} className="h-4 w-4 rounded border-line text-primary focus:ring-primary" />
-        Skladem
-      </label>
+      {filterOptions.availability.map((option) => {
+        const value = option.value as AvailabilityFilter;
+        return (
+          <label key={option.value} className="flex cursor-pointer items-center gap-3 text-sm font-bold text-muted">
+            <input type="checkbox" checked={availabilityFilter === value} onChange={() => onAvailabilityChange(availabilityFilter === value ? "all" : value)} className="h-4 w-4 rounded border-line text-primary focus:ring-primary" />
+            {option.label}
+          </label>
+        );
+      })}
       <label className="flex cursor-pointer items-center gap-3 text-sm font-bold text-muted">
         <input type="checkbox" checked={priceMovementFilter === "decreased"} onChange={onSaleToggle} className="h-4 w-4 rounded border-line text-primary focus:ring-primary" />
         Ve slevě

@@ -19,10 +19,10 @@
 ## Search and Filtering Semantics
 - Catalog and suggestion search are slug-centered but can match name and code.
 - Suggestion responses may use a reduced field projection, but slug/name/code/price/image/category-tag semantics stay unchanged.
-- Category filtering uses extracted category tags from supplementary parameters.
+- Category filtering uses normalized tag arrays from supplementary parameters: `category_tags`, `genre_tags`, `game_type_tags`, and `mechanic_tags`.
 - Filter metadata and price bounds are served through API metadata endpoints, not from full client-side catalog scans.
 - Supported catalog filter dimensions are price, availability, sale state, category tags, player count, playtime, and minimum age.
-- `price_movement = decreased` is the discounted-product signal.
+- Discount filtering includes products where `price_movement = decreased` or `latest_price < list_price_with_vat`.
 - Availability filters:
   - `available` maps to in-stock signal
   - `preorder` maps to pre-order signal

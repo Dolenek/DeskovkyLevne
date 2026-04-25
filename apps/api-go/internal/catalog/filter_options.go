@@ -3,11 +3,11 @@ package catalog
 func StaticFilterOptions() FilterOptions {
 	return FilterOptions{
 		Categories: []FilterOption{
-			{Value: "strategicka", Label: "Strategická"},
-			{Value: "rodinna", Label: "Rodinná"},
+			{Value: "strategicka", Label: "Strategick\u00e1"},
+			{Value: "rodinna", Label: "Rodinn\u00e1"},
 			{Value: "fantasy", Label: "Fantasy"},
-			{Value: "kooperativni", Label: "Kooperativní"},
-			{Value: "ekonomicka", Label: "Ekonomická"},
+			{Value: "kooperativni", Label: "Kooperativn\u00ed"},
+			{Value: "ekonomicka", Label: "Ekonomick\u00e1"},
 		},
 		PlayerRanges: []FilterOption{
 			{Value: "1-2", Label: "1-2"},
@@ -27,9 +27,10 @@ func StaticFilterOptions() FilterOptions {
 		},
 		Availability: []FilterOption{
 			{Value: "available", Label: "Skladem"},
+			{Value: "preorder", Label: "P\u0159edobjedn\u00e1vka"},
 		},
 		PriceMovement: []FilterOption{
-			{Value: "decreased", Label: "Ve slevě"},
+			{Value: "decreased", Label: "Ve slev\u011b"},
 		},
 	}
 }

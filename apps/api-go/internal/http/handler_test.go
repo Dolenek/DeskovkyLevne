@@ -15,11 +15,18 @@ import (
 )
 
 type fakeService struct {
+	catalog          func(ctx context.Context, filters catalog.Filters) ([]catalog.Row, int64, error)
 	productSnapshots func(ctx context.Context, slug string, historyPoints int) ([]snapshots.Row, error)
 	priceRange       func(ctx context.Context, filters catalog.PriceRangeFilters) (catalog.PriceRange, error)
 }
 
-func (f *fakeService) Catalog(_ context.Context, _ catalog.Filters) ([]catalog.Row, int64, error) {
+func (f *fakeService) Catalog(
+	ctx context.Context,
+	filters catalog.Filters,
+) ([]catalog.Row, int64, error) {
+	if f.catalog != nil {
+		return f.catalog(ctx, filters)
+	}
 	return nil, 0, nil
 }
 
@@ -108,6 +115,50 @@ func TestHandlerPriceRangeParsesFilters(t *testing.T) {
 	}
 	if payload["min_price"] != 99 || payload["max_price"] != 799 {
 		t.Fatalf("unexpected payload: %#v", payload)
+	}
+}
+
+func TestHandlerCatalogParsesRequestedFilterParams(t *testing.T) {
+	var captured catalog.Filters
+	handler := NewHandler(&fakeService{
+		catalog: func(_ context.Context, filters catalog.Filters) ([]catalog.Row, int64, error) {
+			captured = filters
+			return []catalog.Row{}, 0, nil
+		},
+	}, 200)
+
+	req := httptest.NewRequest(
+		http.MethodGet,
+		"/api/v1/catalog?availability=available&categories=strategicka,fantasy&players=2-4&playtime=30-60&age=10&price_movement=decreased&limit=24&offset=48",
+		nil,
+	)
+	rec := httptest.NewRecorder()
+
+	handler.Catalog(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rec.Code)
+	}
+	if captured.Availability != "available" {
+		t.Fatalf("expected availability=available, got %q", captured.Availability)
+	}
+	if len(captured.Categories) != 2 || captured.Categories[0] != "strategicka" || captured.Categories[1] != "fantasy" {
+		t.Fatalf("unexpected categories: %#v", captured.Categories)
+	}
+	if len(captured.PlayerRanges) != 1 || captured.PlayerRanges[0] != "2-4" {
+		t.Fatalf("unexpected players: %#v", captured.PlayerRanges)
+	}
+	if len(captured.PlaytimeRanges) != 1 || captured.PlaytimeRanges[0] != "30-60" {
+		t.Fatalf("unexpected playtime: %#v", captured.PlaytimeRanges)
+	}
+	if len(captured.AgeRatings) != 1 || captured.AgeRatings[0] != 10 {
+		t.Fatalf("unexpected ages: %#v", captured.AgeRatings)
+	}
+	if captured.PriceMovement != "decreased" {
+		t.Fatalf("unexpected price movement: %q", captured.PriceMovement)
+	}
+	if captured.Limit != 24 || captured.Offset != 48 {
+		t.Fatalf("unexpected paging: limit=%d offset=%d", captured.Limit, captured.Offset)
 	}
 }
 

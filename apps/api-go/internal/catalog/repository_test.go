@@ -56,12 +56,12 @@ func TestBuildWhereIncludesNewCatalogFilters(t *testing.T) {
 		"is_available = true",
 		"latest_price >= $1",
 		"latest_price <= $2",
-		"game_type_tags && $3::text[]",
-		"mechanic_tags && $5::text[]",
+		"coalesce(game_type_tags, '{}'::text[]) && $3::text[]",
+		"coalesce(mechanic_tags, '{}'::text[]) && $5::text[]",
 		"min_players <= 4",
 		"min_playtime_minutes <= 60",
 		"min_age <= $6",
-		"price_movement = 'decreased'",
+		"price_movement = 'decreased' or latest_price < list_price_with_vat",
 	}
 	for _, fragment := range expectedFragments {
 		if !strings.Contains(whereSQL, fragment) {
@@ -70,5 +70,51 @@ func TestBuildWhereIncludesNewCatalogFilters(t *testing.T) {
 	}
 	if len(args) != 6 {
 		t.Fatalf("expected 6 args, got %#v", args)
+	}
+}
+
+func TestBuildWhereMapsCategorySlugsAcrossTagFields(t *testing.T) {
+	whereSQL, args := buildWhere(Filters{
+		Categories: []string{"fantasy", "ekonomicka", "custom"},
+	})
+
+	expectedFragments := []string{
+		"coalesce(genre_tags, '{}'::text[]) && $1::text[]",
+		"coalesce(category_tags, '{}'::text[]) && $2::text[]",
+		"coalesce(game_type_tags, '{}'::text[]) && $3::text[]",
+		"coalesce(genre_tags, '{}'::text[]) && $4::text[]",
+		"coalesce(category_tags, '{}'::text[]) && $5::text[]",
+	}
+	for _, fragment := range expectedFragments {
+		if !strings.Contains(whereSQL, fragment) {
+			t.Fatalf("expected %q in %s", fragment, whereSQL)
+		}
+	}
+	if len(args) != 5 {
+		t.Fatalf("expected 5 args, got %#v", args)
+	}
+}
+
+func TestBuildWhereIncludesRangeFilterSemantics(t *testing.T) {
+	whereSQL, _ := buildWhere(Filters{
+		PlayerRanges:   []string{"1-2", "2-4", "4-plus"},
+		PlaytimeRanges: []string{"under-30", "30-60", "60-plus"},
+		AgeRatings:     []int{6, 10},
+	})
+
+	expectedFragments := []string{
+		"min_players <= 2 and coalesce(max_players, min_players) >= 1",
+		"min_players <= 4 and coalesce(max_players, min_players) >= 2",
+		"coalesce(max_players, min_players) >= 4",
+		"coalesce(max_playtime_minutes, min_playtime_minutes) <= 30",
+		"min_playtime_minutes <= 60 and coalesce(max_playtime_minutes, min_playtime_minutes) >= 30",
+		"coalesce(max_playtime_minutes, min_playtime_minutes) >= 60",
+		"min_age <= $1",
+		"min_age <= $2",
+	}
+	for _, fragment := range expectedFragments {
+		if !strings.Contains(whereSQL, fragment) {
+			t.Fatalf("expected %q in %s", fragment, whereSQL)
+		}
 	}
 }

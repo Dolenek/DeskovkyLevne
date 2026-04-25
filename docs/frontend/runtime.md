@@ -10,8 +10,9 @@ All product navigation is slug-based.
 
 ## Data Access
 - Frontend runtime reads data through backend API (`VITE_API_BASE_URL`).
-- Local Vite development uses same-origin `/api/*` requests and proxies them
-  with `VITE_API_PROXY_TARGET`, avoiding browser CORS failures.
+- `npm run dev` starts the local Go API and Vite frontend together. Local Vite
+  development uses same-origin `/api/*` requests and proxies them with
+  `VITE_API_PROXY_TARGET`, defaulting to `http://localhost:8080`.
 - Runtime does not use browser-side direct PostgREST/Supabase reads for catalog/search/detail.
 - Runtime API calls are organized through shared client/config modules (`src/services/api/*`).
 - API requests retry for transient failures (HTTP 429/5xx and network errors).
@@ -51,7 +52,7 @@ All product navigation is slug-based.
 - Landing pages render a search hero, live catalog metrics, product-driven
   price-history preview, featured product cards, seller-offer table, benefits,
   and CTA banner.
-- Filtered catalog supports price range, in-stock availability, discounted state, player-count buckets, playtime buckets, age buckets, and canonical category slugs.
+- Filtered catalog sends price range, availability, discounted state, player-count buckets, playtime buckets, age buckets, and canonical category slugs to the API for server-side filtering.
 - Filter options and price bounds are fetched from metadata endpoints, not a full in-browser catalog preload.
 - Product detail renders gallery, hero price summary, quick summary,
   seller-offer table, price stats, multi-seller history chart, supplementary

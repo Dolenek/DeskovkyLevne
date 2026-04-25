@@ -21,17 +21,17 @@ Query params:
 - `availability` (optional, string): supports `available` or `preorder`; other values behave as no availability filter.
 - `min_price` (optional, float).
 - `max_price` (optional, float).
-- `categories` (optional, comma-separated string): OR-match via overlap against `category_tags`.
+- `categories` (optional, comma-separated string): OR-match against the tag fields mapped below.
 - `players` (optional, comma-separated string): supported values are `1-2`, `2-4`, `4-plus`.
 - `playtime` (optional, comma-separated string): supported values are `under-30`, `30-60`, `60-plus`.
 - `age` (optional, comma-separated int): supported UI values are `6`, `8`, `10`, `12`; matches products with `min_age <= value`.
-- `price_movement` (optional, string): `decreased` returns products currently marked as discounted.
+- `price_movement` (optional, string): `decreased` returns products with `price_movement = decreased` or `latest_price < list_price_with_vat`.
 - `q` (optional, string): substring search against normalized product name and `product_code`.
 
 Category slugs map to catalog tags:
 - `strategicka` -> `game_type_tags` contains `Strategická`
 - `rodinna` -> `game_type_tags` contains `Rodinná`
-- `fantasy` -> `genre_tags` contains `Fantasy`
+- `fantasy` -> `genre_tags`, `category_tags`, or `game_type_tags` contains `Fantasy`
 - `kooperativni` -> `game_type_tags` contains `Kooperativní` or `mechanic_tags` contains `Cooperative Game`
 - `ekonomicka` -> `genre_tags` contains `Ekonomické`
 
@@ -130,7 +130,10 @@ Response shape:
   "player_ranges": [{ "value": "2-4", "label": "2-4" }],
   "playtime_ranges": [{ "value": "30-60", "label": "30-60 min" }],
   "age_ratings": [{ "value": "8", "label": "8+" }],
-  "availability": [{ "value": "available", "label": "Skladem" }],
+  "availability": [
+    { "value": "available", "label": "Skladem" },
+    { "value": "preorder", "label": "Předobjednávka" }
+  ],
   "price_movement": [{ "value": "decreased", "label": "Ve slevě" }]
 }
 ```
