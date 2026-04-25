@@ -1,4 +1,4 @@
-import type { AvailabilityFilter } from "../../types/filters";
+import type { AvailabilityFilter, CategoryFilter } from "../../types/filters";
 import { Icon } from "../../components/ui/Icon";
 
 interface CatalogToolbarProps {
@@ -6,21 +6,19 @@ interface CatalogToolbarProps {
   onSearchValueChange: (value: string) => void;
   onSearchActiveChange: (active: boolean) => void;
   onOpenFilters: () => void;
-  categoryFilters: string[];
+  categoryFilters: CategoryFilter[];
   availabilityFilter: AvailabilityFilter;
-  onCategoryToggle: (category: string) => void;
+  activeFilterCount: number;
+  onCategoryToggle: (category: CategoryFilter) => void;
 }
 
 const categoryChips = [
-  "Strategická",
-  "Rodinná",
-  "Kooperativní",
-  "Fantasy",
-  "Budovatelská",
-  "Pro 2 hráče",
-  "Party",
-  "Karetní",
-];
+  { value: "strategicka", label: "Strategická" },
+  { value: "rodinna", label: "Rodinná" },
+  { value: "fantasy", label: "Fantasy" },
+  { value: "kooperativni", label: "Kooperativní" },
+  { value: "ekonomicka", label: "Ekonomická" },
+] satisfies Array<{ value: CategoryFilter; label: string }>;
 
 export const CatalogToolbar = ({
   searchValue,
@@ -29,6 +27,7 @@ export const CatalogToolbar = ({
   onOpenFilters,
   categoryFilters,
   availabilityFilter,
+  activeFilterCount,
   onCategoryToggle,
 }: CatalogToolbarProps) => (
   <section className="rounded-lg border border-line bg-white p-5 shadow-sm">
@@ -52,11 +51,12 @@ export const CatalogToolbar = ({
         className="inline-flex items-center justify-center gap-2 rounded-lg border border-line px-5 py-3 text-sm font-extrabold text-navy"
       >
         <Icon name="filter" className="h-5 w-5" />
-        Filtry ({categoryFilters.length + (availabilityFilter !== "all" ? 1 : 0)})
+        Filtry ({activeFilterCount})
       </button>
       <select className="rounded-lg border border-line px-5 py-3 text-sm font-bold text-navy outline-none">
         <option>Nejpopulárnější</option>
         <option>Nejlevnější</option>
+        <option>{availabilityFilter === "available" ? "Skladem" : "Vše"}</option>
       </select>
       <div className="flex gap-2">
         <button
@@ -75,17 +75,17 @@ export const CatalogToolbar = ({
     </div>
     <div className="mt-5 flex flex-wrap gap-3">
       {categoryChips.map((chip) => {
-        const active = categoryFilters.includes(chip);
+        const active = categoryFilters.includes(chip.value);
         return (
           <button
-            key={chip}
+            key={chip.value}
             type="button"
-            onClick={() => onCategoryToggle(chip)}
+            onClick={() => onCategoryToggle(chip.value)}
             className={`rounded-lg border px-5 py-2 text-sm font-bold ${
               active ? "border-primary bg-primary text-white" : "border-line bg-white text-navy"
             }`}
           >
-            {chip}
+            {chip.label}
           </button>
         );
       })}

@@ -13,7 +13,7 @@ Response:
 
 ## Catalog
 ### `GET /api/v1/catalog`
-Returns paginated catalog rows from `catalog_slug_summary`.
+Returns paginated catalog rows from `catalog_slug_state`.
 
 Query params:
 - `limit` (optional, int): default `20`, capped by backend `API_MAX_PAGE_SIZE`.
@@ -22,7 +22,18 @@ Query params:
 - `min_price` (optional, float).
 - `max_price` (optional, float).
 - `categories` (optional, comma-separated string): OR-match via overlap against `category_tags`.
+- `players` (optional, comma-separated string): supported values are `1-2`, `2-4`, `4-plus`.
+- `playtime` (optional, comma-separated string): supported values are `under-30`, `30-60`, `60-plus`.
+- `age` (optional, comma-separated int): supported UI values are `6`, `8`, `10`, `12`; matches products with `min_age <= value`.
+- `price_movement` (optional, string): `decreased` returns products currently marked as discounted.
 - `q` (optional, string): substring search against normalized product name and `product_code`.
+
+Category slugs map to catalog tags:
+- `strategicka` -> `game_type_tags` contains `Strategická`
+- `rodinna` -> `game_type_tags` contains `Rodinná`
+- `fantasy` -> `genre_tags` contains `Fantasy`
+- `kooperativni` -> `game_type_tags` contains `Kooperativní` or `mechanic_tags` contains `Cooperative Game`
+- `ekonomicka` -> `genre_tags` contains `Ekonomické`
 
 Response shape:
 ```json
@@ -108,13 +119,29 @@ Response shape:
 }
 ```
 
+## Filter Options Metadata
+### `GET /api/v1/meta/filter-options`
+Returns stable option values and labels for catalog filter UI.
+
+Response shape:
+```json
+{
+  "categories": [{ "value": "strategicka", "label": "Strategická" }],
+  "player_ranges": [{ "value": "2-4", "label": "2-4" }],
+  "playtime_ranges": [{ "value": "30-60", "label": "30-60 min" }],
+  "age_ratings": [{ "value": "8", "label": "8+" }],
+  "availability": [{ "value": "available", "label": "Skladem" }],
+  "price_movement": [{ "value": "decreased", "label": "Ve slevě" }]
+}
+```
+
 ## Price Range Metadata
 ### `GET /api/v1/meta/price-range`
 Returns latest-price bounds used by filters.
 
 Query params:
 - `availability` (optional): supports `available` or `preorder`; other values behave as no availability filter.
-- `categories` (optional, comma-separated string): OR-match via overlap against `category_tags`.
+- `categories`, `players`, `playtime`, `age`, `price_movement`: same semantics as catalog; price params are ignored for bounds.
 
 Response shape:
 ```json

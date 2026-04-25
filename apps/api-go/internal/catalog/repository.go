@@ -18,7 +18,7 @@ type RepositoryOptions struct {
 	SummaryRelation string
 }
 
-const defaultSummaryRelation = "public.catalog_slug_summary"
+const defaultSummaryRelation = "public.catalog_slug_state"
 
 var relationNamePattern = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*)?$`)
 
@@ -89,7 +89,14 @@ func (r *Repository) FetchCategoryCounts(
 	ctx context.Context,
 	filters CategoryFilters,
 ) ([]CategoryCount, error) {
-	whereSQL, args := buildWhere(Filters{Availability: filters.Availability})
+	whereSQL, args := buildWhere(Filters{
+		Availability:   filters.Availability,
+		Categories:     filters.Categories,
+		PlayerRanges:   filters.PlayerRanges,
+		PlaytimeRanges: filters.PlaytimeRanges,
+		AgeRatings:     filters.AgeRatings,
+		PriceMovement:  filters.PriceMovement,
+	})
 	query := `
 select tag as category, count(*)::bigint as count
 from (
@@ -121,8 +128,12 @@ func (r *Repository) FetchPriceRange(
 	filters PriceRangeFilters,
 ) (PriceRange, error) {
 	whereSQL, args := buildWhere(Filters{
-		Availability: filters.Availability,
-		Categories:   filters.Categories,
+		Availability:   filters.Availability,
+		Categories:     filters.Categories,
+		PlayerRanges:   filters.PlayerRanges,
+		PlaytimeRanges: filters.PlaytimeRanges,
+		AgeRatings:     filters.AgeRatings,
+		PriceMovement:  filters.PriceMovement,
 	})
 	query := `
 select
@@ -237,8 +248,27 @@ func buildWhere(filters Filters) (string, []any) {
 		clauses = append(clauses, fmt.Sprintf("latest_price <= $%d", len(args)))
 	}
 	if len(filters.Categories) > 0 {
-		args = append(args, filters.Categories)
-		clauses = append(clauses, fmt.Sprintf("category_tags && $%d::text[]", len(args)))
+		if categoryClause := buildCategoryClause(&args, filters.Categories); categoryClause != "" {
+			clauses = append(clauses, categoryClause)
+		}
+	}
+	if len(filters.PlayerRanges) > 0 {
+		if playerClause := buildPlayerClause(filters.PlayerRanges); playerClause != "" {
+			clauses = append(clauses, playerClause)
+		}
+	}
+	if len(filters.PlaytimeRanges) > 0 {
+		if playtimeClause := buildPlaytimeClause(filters.PlaytimeRanges); playtimeClause != "" {
+			clauses = append(clauses, playtimeClause)
+		}
+	}
+	if len(filters.AgeRatings) > 0 {
+		if ageClause := buildAgeClause(&args, filters.AgeRatings); ageClause != "" {
+			clauses = append(clauses, ageClause)
+		}
+	}
+	if strings.EqualFold(strings.TrimSpace(filters.PriceMovement), "decreased") {
+		clauses = append(clauses, "price_movement = 'decreased'")
 	}
 	if strings.TrimSpace(filters.Query) != "" {
 		pattern := "%" + normalizeSearchQuery(filters.Query) + "%"

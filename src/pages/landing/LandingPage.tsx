@@ -174,6 +174,10 @@ export const LandingPage = ({
     availabilityFilter: variant === "levne" ? "available" : "all",
     priceRange: { min: null, max: null },
     categoryFilters: [],
+    playerRangeFilters: [],
+    playtimeRangeFilters: [],
+    ageRatingFilters: [],
+    priceMovementFilter: variant === "levne" ? "decreased" : null,
     page: 1,
     pageSize: FEATURED_PAGE_SIZE,
   });

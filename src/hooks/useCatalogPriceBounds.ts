@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { AvailabilityFilter } from "../types/filters";
+import type {
+  AgeRatingFilter,
+  AvailabilityFilter,
+  CategoryFilter,
+  PlayerRangeFilter,
+  PlaytimeRangeFilter,
+  PriceMovementFilter,
+} from "../types/filters";
 import { fetchCatalogPriceRange } from "../services/api/catalogApi";
 
 const FALLBACK_BOUNDS = { min: 0, max: 1000 };
@@ -13,12 +20,19 @@ interface UseCatalogPriceBoundsResult {
 
 export const useCatalogPriceBounds = (
   availabilityFilter: AvailabilityFilter,
-  categoryFilters: string[]
+  categoryFilters: CategoryFilter[],
+  playerRangeFilters: PlayerRangeFilter[],
+  playtimeRangeFilters: PlaytimeRangeFilter[],
+  ageRatingFilters: AgeRatingFilter[],
+  priceMovementFilter: PriceMovementFilter | null
 ): UseCatalogPriceBoundsResult => {
   const normalizedCategories = useMemo(
     () => [...categoryFilters].sort(),
     [categoryFilters]
   );
+  const normalizedPlayers = useMemo(() => [...playerRangeFilters].sort(), [playerRangeFilters]);
+  const normalizedPlaytimes = useMemo(() => [...playtimeRangeFilters].sort(), [playtimeRangeFilters]);
+  const normalizedAges = useMemo(() => [...ageRatingFilters].sort(), [ageRatingFilters]);
   const [rawBounds, setRawBounds] = useState<{ min: number | null; max: number | null }>({
     min: null,
     max: null,
@@ -33,8 +47,14 @@ export const useCatalogPriceBounds = (
     const load = async () => {
       try {
         const row = await fetchCatalogPriceRange(
-          availabilityFilter,
-          normalizedCategories,
+          {
+            availability: availabilityFilter,
+            categories: normalizedCategories,
+            playerRanges: normalizedPlayers,
+            playtimeRanges: normalizedPlaytimes,
+            ageRatings: normalizedAges,
+            priceMovement: priceMovementFilter,
+          },
           controller.signal
         );
         setRawBounds({ min: row.min_price, max: row.max_price });
@@ -52,7 +72,15 @@ export const useCatalogPriceBounds = (
     };
     void load();
     return () => controller.abort();
-  }, [availabilityFilter, normalizedCategories, reloadToken]);
+  }, [
+    availabilityFilter,
+    normalizedCategories,
+    normalizedPlayers,
+    normalizedPlaytimes,
+    normalizedAges,
+    priceMovementFilter,
+    reloadToken,
+  ]);
 
   const bounds = useMemo(() => {
     if (rawBounds.min === null || rawBounds.max === null) {

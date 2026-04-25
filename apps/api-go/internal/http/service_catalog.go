@@ -109,3 +109,7 @@ func (s *Service) PriceRange(
 	}
 	return payload.Row, nil
 }
+
+func (s *Service) FilterOptions(_ context.Context) (catalog.FilterOptions, error) {
+	return catalog.StaticFilterOptions(), nil
+}

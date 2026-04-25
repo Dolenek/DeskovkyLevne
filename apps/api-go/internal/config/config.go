@@ -9,17 +9,17 @@ import (
 )
 
 type Config struct {
-	ServerAddress  string
-	DatabaseURL    string
-	FrontendOrigin string
+	ServerAddress          string
+	DatabaseURL            string
+	FrontendOrigin         string
 	CatalogSummaryRelation string
-	ReadTimeout    time.Duration
-	WriteTimeout   time.Duration
-	IdleTimeout    time.Duration
-	MaxPageSize    int
-	RedisAddr      string
-	RedisPassword  string
-	RedisDB        int
+	ReadTimeout            time.Duration
+	WriteTimeout           time.Duration
+	IdleTimeout            time.Duration
+	MaxPageSize            int
+	RedisAddr              string
+	RedisPassword          string
+	RedisDB                int
 
 	DBMaxConns        int32
 	DBMinConns        int32
@@ -35,11 +35,11 @@ type Config struct {
 	CategoriesTimeout time.Duration
 	PriceRangeTimeout time.Duration
 
-	CacheNamespace    string
-	CacheTTLCatalog   time.Duration
-	CacheTTLSearch    time.Duration
-	CacheTTLProduct   time.Duration
-	CacheTTLRecent    time.Duration
+	CacheNamespace     string
+	CacheTTLCatalog    time.Duration
+	CacheTTLSearch     time.Duration
+	CacheTTLProduct    time.Duration
+	CacheTTLRecent     time.Duration
 	CacheTTLCategories time.Duration
 	CacheTTLPriceRange time.Duration
 }
@@ -51,15 +51,15 @@ func Load() (Config, error) {
 		FrontendOrigin: getenv("FRONTEND_ORIGIN", "*"),
 		CatalogSummaryRelation: getenv(
 			"API_CATALOG_SUMMARY_RELATION",
-			"public.catalog_slug_summary",
+			"public.catalog_slug_state",
 		),
-		ReadTimeout:    readDuration("API_READ_TIMEOUT", 10*time.Second),
-		WriteTimeout:   readDuration("API_WRITE_TIMEOUT", 15*time.Second),
-		IdleTimeout:    readDuration("API_IDLE_TIMEOUT", 60*time.Second),
-		MaxPageSize:    readInt("API_MAX_PAGE_SIZE", 200),
-		RedisAddr:      strings.TrimSpace(os.Getenv("REDIS_ADDR")),
-		RedisPassword:  os.Getenv("REDIS_PASSWORD"),
-		RedisDB:        readInt("REDIS_DB", 0),
+		ReadTimeout:   readDuration("API_READ_TIMEOUT", 10*time.Second),
+		WriteTimeout:  readDuration("API_WRITE_TIMEOUT", 15*time.Second),
+		IdleTimeout:   readDuration("API_IDLE_TIMEOUT", 60*time.Second),
+		MaxPageSize:   readInt("API_MAX_PAGE_SIZE", 200),
+		RedisAddr:     strings.TrimSpace(os.Getenv("REDIS_ADDR")),
+		RedisPassword: os.Getenv("REDIS_PASSWORD"),
+		RedisDB:       readInt("REDIS_DB", 0),
 
 		DBMaxConns:        readInt32("API_DB_MAX_CONNS", 30),
 		DBMinConns:        readInt32("API_DB_MIN_CONNS", 5),
@@ -102,7 +102,7 @@ func Load() (Config, error) {
 		cfg.CacheNamespace = "api-v1"
 	}
 	if cfg.CatalogSummaryRelation == "" {
-		cfg.CatalogSummaryRelation = "public.catalog_slug_summary"
+		cfg.CatalogSummaryRelation = "public.catalog_slug_state"
 	}
 	return cfg, nil
 }

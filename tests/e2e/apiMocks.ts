@@ -18,9 +18,9 @@ const baseCatalogRow = {
   gallery_image_urls: [],
   short_description: null,
   supplementary_parameters: [],
-  metadata: {},
-  price_points: [],
-  category_tags: ["Strategy"],
+            metadata: {},
+            price_points: [],
+            category_tags: ["Strategická"],
 };
 
 const fulfillJson = async (route: Route, body: unknown) =>
@@ -43,12 +43,17 @@ export const mockSearchPageApi = async (page: Page) => {
       });
       return;
     }
-    if (url.pathname === "/api/v1/meta/categories") {
+    if (url.pathname === "/api/v1/meta/filter-options") {
       await fulfillJson(route, {
-        rows: [
-          { category: "Family", count: 7 },
-          { category: "Strategy", count: 12 },
+        categories: [
+          { value: "strategicka", label: "Strategická" },
+          { value: "rodinna", label: "Rodinná" },
         ],
+        player_ranges: [{ value: "2-4", label: "2-4" }],
+        playtime_ranges: [{ value: "30-60", label: "30-60 min" }],
+        age_ratings: [{ value: "8", label: "8+" }],
+        availability: [{ value: "available", label: "Skladem" }],
+        price_movement: [{ value: "decreased", label: "Ve slevě" }],
       });
       return;
     }

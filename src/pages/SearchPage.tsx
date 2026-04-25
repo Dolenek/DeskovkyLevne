@@ -75,17 +75,22 @@ const SearchPage = ({
         onClose={() => state.setFiltersOpen(false)}
         availabilityFilter={state.availabilityFilter}
         onAvailabilityChange={state.setAvailabilityFilter}
+        priceMovementFilter={state.priceMovementFilter}
+        onSaleToggle={state.handleSaleToggle}
         priceFilter={state.priceFilter}
         priceRangeValues={state.priceRange}
         priceBounds={state.priceBounds}
         onPriceFilterChange={state.handlePriceFilterChange}
         onSliderChange={state.handleSliderChange}
-        categoryOptions={state.filteredCategoryOptions}
+        filterOptions={state.filterOptions}
         selectedCategories={state.categoryFilters}
+        selectedPlayerRanges={state.playerRangeFilters}
+        selectedPlaytimeRanges={state.playtimeRangeFilters}
+        selectedAgeRatings={state.ageRatingFilters}
         onCategoryToggle={state.handleCategoryToggle}
-        hasCategoryOptions={state.categoryOptions.length > 0}
-        categorySearchValue={state.categorySearch}
-        onCategorySearchChange={state.setCategorySearch}
+        onPlayerRangeToggle={state.handlePlayerRangeToggle}
+        onPlaytimeRangeToggle={state.handlePlaytimeRangeToggle}
+        onAgeRatingToggle={state.handleAgeRatingToggle}
         t={t}
       />
       <main className="px-4 pb-12 pt-6 sm:px-6 lg:px-10">
@@ -98,6 +103,7 @@ const SearchPage = ({
             onOpenFilters={() => state.setFiltersOpen(true)}
             categoryFilters={state.categoryFilters}
             availabilityFilter={state.availabilityFilter}
+            activeFilterCount={state.activeFilterCount}
             onCategoryToggle={state.handleCategoryToggle}
           />
 
@@ -107,17 +113,22 @@ const SearchPage = ({
                 className="lg:flex lg:flex-col lg:overflow-y-auto"
                 availabilityFilter={state.availabilityFilter}
                 onAvailabilityChange={state.setAvailabilityFilter}
+                priceMovementFilter={state.priceMovementFilter}
+                onSaleToggle={state.handleSaleToggle}
                 priceFilter={state.priceFilter}
                 priceRangeValues={state.priceRange}
                 priceBounds={state.priceBounds}
                 onPriceFilterChange={state.handlePriceFilterChange}
                 onSliderChange={state.handleSliderChange}
-                categoryOptions={state.filteredCategoryOptions}
+                filterOptions={state.filterOptions}
                 selectedCategories={state.categoryFilters}
+                selectedPlayerRanges={state.playerRangeFilters}
+                selectedPlaytimeRanges={state.playtimeRangeFilters}
+                selectedAgeRatings={state.ageRatingFilters}
                 onCategoryToggle={state.handleCategoryToggle}
-                hasCategoryOptions={state.categoryOptions.length > 0}
-                categorySearchValue={state.categorySearch}
-                onCategorySearchChange={state.setCategorySearch}
+                onPlayerRangeToggle={state.handlePlayerRangeToggle}
+                onPlaytimeRangeToggle={state.handlePlaytimeRangeToggle}
+                onAgeRatingToggle={state.handleAgeRatingToggle}
                 t={t}
               />
             </div>

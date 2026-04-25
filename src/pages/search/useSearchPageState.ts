@@ -1,10 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import { useCatalogSearch } from "../../hooks/useCatalogSearch";
-import { useCategoryOptions } from "../../hooks/useCategoryOptions";
 import { useCatalogPriceBounds } from "../../hooks/useCatalogPriceBounds";
+import { useFilterOptions } from "../../hooks/useFilterOptions";
 import { useFilteredCatalogIndex } from "../../hooks/useFilteredCatalogIndex";
-import type { AvailabilityFilter } from "../../types/filters";
+import type {
+  AgeRatingFilter,
+  AvailabilityFilter,
+  CategoryFilter,
+  PlayerRangeFilter,
+  PlaytimeRangeFilter,
+  PriceMovementFilter,
+} from "../../types/filters";
 import type { ProductSearchResult, ProductSeries } from "../../types/product";
 import { uniqueSeriesBySlug } from "../../utils/series";
 import { FILTERED_PAGE_SIZE } from "./FilteredProductsSection";
@@ -24,26 +32,22 @@ const buildPriceRange = (minValue: string, maxValue: string) => ({
 
 const filterSearchResultsByCategory = (
   rows: ProductSearchResult[],
-  selectedCategories: string[]
+  selectedCategories: CategoryFilter[]
 ) => {
   if (selectedCategories.length === 0) {
     return rows;
   }
+  const categoryLabels: Record<CategoryFilter, string[]> = {
+    strategicka: ["Strategická"],
+    rodinna: ["Rodinná"],
+    fantasy: ["Fantasy"],
+    kooperativni: ["Kooperativní", "Cooperative Game"],
+    ekonomicka: ["Ekonomické"],
+  };
   return rows.filter((series) =>
-    selectedCategories.some((category) => series.categoryTags.includes(category))
-  );
-};
-
-const filterCategoryOptionsByQuery = (
-  categoryOptions: string[],
-  categoryQuery: string
-) => {
-  const normalizedQuery = categoryQuery.trim().toLowerCase();
-  if (!normalizedQuery) {
-    return categoryOptions;
-  }
-  return categoryOptions.filter((category) =>
-    category.toLowerCase().includes(normalizedQuery)
+    selectedCategories.some((category) =>
+      categoryLabels[category].some((label) => series.categoryTags.includes(label))
+    )
   );
 };
 
@@ -56,11 +60,14 @@ interface SearchPageState {
   priceFilter: { min: string; max: string };
   priceRange: { min: number | null; max: number | null };
   pricePage: number;
-  categoryFilters: string[];
-  categorySearch: string;
-  filteredCategoryOptions: string[];
-  categoryOptions: string[];
+  categoryFilters: CategoryFilter[];
+  playerRangeFilters: PlayerRangeFilter[];
+  playtimeRangeFilters: PlaytimeRangeFilter[];
+  ageRatingFilters: AgeRatingFilter[];
+  priceMovementFilter: PriceMovementFilter | null;
+  filterOptions: ReturnType<typeof useFilterOptions>["options"];
   priceBounds: { min: number; max: number };
+  activeFilterCount: number;
   visibleSeries: ProductSearchResult[];
   overlayVisible: boolean;
   debouncedQuery: string;
@@ -76,12 +83,15 @@ interface SearchPageState {
   setAvailabilityFilter: (value: AvailabilityFilter) => void;
   setSelectedSeries: (series: ProductSeries | null) => void;
   setPricePage: (page: number) => void;
-  setCategorySearch: (value: string) => void;
   setSearchActive: (active: boolean) => void;
   handleSearchChange: (value: string) => void;
   handlePriceFilterChange: (key: "min" | "max", value: string) => void;
   handleSliderChange: (key: "min" | "max", numericValue: number) => void;
-  handleCategoryToggle: (category: string) => void;
+  handleCategoryToggle: (category: CategoryFilter) => void;
+  handlePlayerRangeToggle: (range: PlayerRangeFilter) => void;
+  handlePlaytimeRangeToggle: (range: PlaytimeRangeFilter) => void;
+  handleAgeRatingToggle: (age: AgeRatingFilter) => void;
+  handleSaleToggle: () => void;
 }
 
 export const useSearchPageState = (
@@ -93,10 +103,13 @@ export const useSearchPageState = (
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [availabilityFilter, setAvailabilityFilter] = useState<AvailabilityFilter>("all");
   const [selectedSeries, setSelectedSeries] = useState<ProductSeries | null>(null);
-  const [priceFilter, setPriceFilter] = useState({ min: "", max: "" });
+  const [priceFilter, setPriceFilter] = useState({ min: "200", max: "1500" });
   const [pricePage, setPricePage] = useState(1);
-  const [categoryFilters, setCategoryFilters] = useState<string[]>([]);
-  const [categorySearch, setCategorySearch] = useState("");
+  const [categoryFilters, setCategoryFilters] = useState<CategoryFilter[]>([]);
+  const [playerRangeFilters, setPlayerRangeFilters] = useState<PlayerRangeFilter[]>([]);
+  const [playtimeRangeFilters, setPlaytimeRangeFilters] = useState<PlaytimeRangeFilter[]>([]);
+  const [ageRatingFilters, setAgeRatingFilters] = useState<AgeRatingFilter[]>([]);
+  const [priceMovementFilter, setPriceMovementFilter] = useState<PriceMovementFilter | null>(null);
 
   const debouncedQuery = useDebouncedValue(searchValue, 400).trim();
   const priceRange = useMemo(
@@ -125,28 +138,34 @@ export const useSearchPageState = (
     priceRange,
     availabilityFilter,
     categoryFilters,
+    playerRangeFilters,
+    playtimeRangeFilters,
+    ageRatingFilters,
+    priceMovementFilter,
     page: pricePage,
     pageSize: FILTERED_PAGE_SIZE,
   });
 
-  const { categories: categoryOptions } = useCategoryOptions(availabilityFilter);
+  const { options: filterOptions } = useFilterOptions();
   const { bounds: priceBounds } = useCatalogPriceBounds(
     availabilityFilter,
-    categoryFilters
+    categoryFilters,
+    playerRangeFilters,
+    playtimeRangeFilters,
+    ageRatingFilters,
+    priceMovementFilter
   );
 
   useEffect(() => {
     setPricePage(1);
-  }, [availabilityFilter, categoryFilters]);
-
-  useEffect(() => {
-    setCategoryFilters((current) => {
-      const filtered = current.filter((category) =>
-        categoryOptions.includes(category)
-      );
-      return filtered.length === current.length ? current : filtered;
-    });
-  }, [categoryOptions]);
+  }, [
+    availabilityFilter,
+    categoryFilters,
+    playerRangeFilters,
+    playtimeRangeFilters,
+    ageRatingFilters,
+    priceMovementFilter,
+  ]);
 
   const filteredSearchSeries = useMemo(
     () => filterSearchResultsByCategory(searchResults, categoryFilters),
@@ -157,11 +176,6 @@ export const useSearchPageState = (
     const uniqueSeries = uniqueSeriesBySlug(filteredSearchSeries);
     return uniqueSeries.slice(0, maxSearchSeries);
   }, [filteredSearchSeries, maxSearchSeries]);
-
-  const filteredCategoryOptions = useMemo(
-    () => filterCategoryOptionsByQuery(categoryOptions, categorySearch),
-    [categoryOptions, categorySearch]
-  );
 
   const handlePriceFilterChange = useCallback((key: "min" | "max", value: string) => {
     setPriceFilter((current) => ({ ...current, [key]: value }));
@@ -177,15 +191,56 @@ export const useSearchPageState = (
     setPricePage(1);
   }, []);
 
-  const handleCategoryToggle = useCallback((category: string) => {
-    setCategoryFilters((current) => {
-      if (current.includes(category)) {
-        return current.filter((entry) => entry !== category);
-      }
-      return [...current, category];
-    });
+  const toggleValue = useCallback(<T extends string>(
+    setValues: Dispatch<SetStateAction<T[]>>,
+    value: T
+  ) => {
+    setValues((current) =>
+      current.includes(value)
+        ? current.filter((entry) => entry !== value)
+        : [...current, value]
+    );
     setPricePage(1);
   }, []);
+
+  const handleCategoryToggle = useCallback((category: CategoryFilter) => {
+    toggleValue(setCategoryFilters, category);
+  }, [toggleValue]);
+
+  const handlePlayerRangeToggle = useCallback((range: PlayerRangeFilter) => {
+    toggleValue(setPlayerRangeFilters, range);
+  }, [toggleValue]);
+
+  const handlePlaytimeRangeToggle = useCallback((range: PlaytimeRangeFilter) => {
+    toggleValue(setPlaytimeRangeFilters, range);
+  }, [toggleValue]);
+
+  const handleAgeRatingToggle = useCallback((age: AgeRatingFilter) => {
+    toggleValue(setAgeRatingFilters, age);
+  }, [toggleValue]);
+
+  const handleSaleToggle = useCallback(() => {
+    setPriceMovementFilter((current) => (current === "decreased" ? null : "decreased"));
+    setPricePage(1);
+  }, []);
+
+  const activeFilterCount = useMemo(
+    () =>
+      categoryFilters.length +
+      playerRangeFilters.length +
+      playtimeRangeFilters.length +
+      ageRatingFilters.length +
+      (availabilityFilter !== "all" ? 1 : 0) +
+      (priceMovementFilter ? 1 : 0),
+    [
+      ageRatingFilters.length,
+      availabilityFilter,
+      categoryFilters.length,
+      playerRangeFilters.length,
+      playtimeRangeFilters.length,
+      priceMovementFilter,
+    ]
+  );
 
   const handleSearchChange = useCallback((value: string) => {
     setSearchValue(value);
@@ -202,10 +257,13 @@ export const useSearchPageState = (
     priceRange,
     pricePage,
     categoryFilters,
-    categorySearch,
-    filteredCategoryOptions,
-    categoryOptions,
+    playerRangeFilters,
+    playtimeRangeFilters,
+    ageRatingFilters,
+    priceMovementFilter,
+    filterOptions,
     priceBounds,
+    activeFilterCount,
     visibleSeries,
     overlayVisible: searchActive && debouncedQuery.length >= 2,
     debouncedQuery,
@@ -221,11 +279,14 @@ export const useSearchPageState = (
     setAvailabilityFilter,
     setSelectedSeries,
     setPricePage,
-    setCategorySearch,
     setSearchActive,
     handleSearchChange,
     handlePriceFilterChange,
     handleSliderChange,
     handleCategoryToggle,
+    handlePlayerRangeToggle,
+    handlePlaytimeRangeToggle,
+    handleAgeRatingToggle,
+    handleSaleToggle,
   };
 };

@@ -48,6 +48,10 @@ func parseFloatPtr(raw string) *float64 {
 }
 
 func parseCategories(raw string) []string {
+	return parseList(raw)
+}
+
+func parseList(raw string) []string {
 	if strings.TrimSpace(raw) == "" {
 		return nil
 	}
@@ -65,6 +69,27 @@ func parseCategories(raw string) []string {
 		}
 		seen[clean] = struct{}{}
 		result = append(result, clean)
+	}
+	return result
+}
+
+func parseAges(raw string) []int {
+	values := parseList(raw)
+	if len(values) == 0 {
+		return nil
+	}
+	result := make([]int, 0, len(values))
+	seen := make(map[int]struct{}, len(values))
+	for _, value := range values {
+		age := parseInt(value, 0)
+		if age <= 0 {
+			continue
+		}
+		if _, exists := seen[age]; exists {
+			continue
+		}
+		seen[age] = struct{}{}
+		result = append(result, age)
 	}
 	return result
 }

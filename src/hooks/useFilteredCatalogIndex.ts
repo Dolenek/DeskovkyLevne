@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { AvailabilityFilter } from "../types/filters";
+import type {
+  AgeRatingFilter,
+  AvailabilityFilter,
+  CategoryFilter,
+  PlayerRangeFilter,
+  PlaytimeRangeFilter,
+  PriceMovementFilter,
+} from "../types/filters";
 import type { ProductSeries } from "../types/product";
 import { fetchFilteredCatalogIndex } from "../services/api/catalogApi";
 import { buildSeriesFromCatalogIndexRow } from "../utils/catalogTransforms";
@@ -7,7 +14,11 @@ import { buildSeriesFromCatalogIndexRow } from "../utils/catalogTransforms";
 interface UseFilteredCatalogIndexOptions {
   priceRange: { min: number | null; max: number | null };
   availabilityFilter: AvailabilityFilter;
-  categoryFilters: string[];
+  categoryFilters: CategoryFilter[];
+  playerRangeFilters: PlayerRangeFilter[];
+  playtimeRangeFilters: PlaytimeRangeFilter[];
+  ageRatingFilters: AgeRatingFilter[];
+  priceMovementFilter: PriceMovementFilter | null;
   page: number;
   pageSize: number;
 }
@@ -23,7 +34,17 @@ interface UseFilteredCatalogIndexResult {
 export const useFilteredCatalogIndex = (
   options: UseFilteredCatalogIndexOptions
 ): UseFilteredCatalogIndexResult => {
-  const { availabilityFilter, priceRange, page, pageSize, categoryFilters } = options;
+  const {
+    availabilityFilter,
+    priceRange,
+    page,
+    pageSize,
+    categoryFilters,
+    playerRangeFilters,
+    playtimeRangeFilters,
+    ageRatingFilters,
+    priceMovementFilter,
+  } = options;
   const [series, setSeries] = useState<ProductSeries[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -32,8 +53,20 @@ export const useFilteredCatalogIndex = (
   const requestRef = useRef(0);
 
   const normalizedCategories = useMemo(
-    () => categoryFilters.map((category) => category.trim()).filter(Boolean).sort(),
+    () => [...categoryFilters].sort(),
     [categoryFilters]
+  );
+  const normalizedPlayers = useMemo(
+    () => [...playerRangeFilters].sort(),
+    [playerRangeFilters]
+  );
+  const normalizedPlaytimes = useMemo(
+    () => [...playtimeRangeFilters].sort(),
+    [playtimeRangeFilters]
+  );
+  const normalizedAges = useMemo(
+    () => [...ageRatingFilters].sort(),
+    [ageRatingFilters]
   );
 
   useEffect(() => {
@@ -50,6 +83,10 @@ export const useFilteredCatalogIndex = (
           minPrice: priceRange.min,
           maxPrice: priceRange.max,
           categories: normalizedCategories,
+          playerRanges: normalizedPlayers,
+          playtimeRanges: normalizedPlaytimes,
+          ageRatings: normalizedAges,
+          priceMovement: priceMovementFilter,
         }, controller.signal);
         if (controller.signal.aborted || requestRef.current !== requestId) {
           return;
@@ -79,8 +116,12 @@ export const useFilteredCatalogIndex = (
   }, [
     availabilityFilter,
     normalizedCategories,
+    normalizedPlayers,
+    normalizedPlaytimes,
+    normalizedAges,
     page,
     pageSize,
+    priceMovementFilter,
     priceRange.max,
     priceRange.min,
     reloadToken,

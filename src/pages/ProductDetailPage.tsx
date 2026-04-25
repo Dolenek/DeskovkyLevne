@@ -110,7 +110,11 @@ export const ProductDetailPage = ({
   const relatedCatalog = useFilteredCatalogIndex({
     priceRange: { min: null, max: null },
     availabilityFilter: "all",
-    categoryFilters: product?.categoryTags.slice(0, 1) ?? [],
+    categoryFilters: [],
+    playerRangeFilters: [],
+    playtimeRangeFilters: [],
+    ageRatingFilters: [],
+    priceMovementFilter: null,
     page: 1,
     pageSize: 8,
   });

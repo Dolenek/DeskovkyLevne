@@ -44,6 +44,7 @@ func NewRouter(handler *Handler, allowedOrigin string, timeouts RouteTimeouts) h
 		withRouteTimeout(r, timeouts.Recent, "/snapshots/recent", handler.RecentSnapshots)
 		withRouteTimeout(r, timeouts.Categories, "/meta/categories", handler.Categories)
 		withRouteTimeout(r, timeouts.PriceRange, "/meta/price-range", handler.PriceRange)
+		withRouteTimeout(r, timeouts.Categories, "/meta/filter-options", handler.FilterOptions)
 	})
 	return router
 }

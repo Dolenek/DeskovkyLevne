@@ -12,6 +12,7 @@ import type {
   CatalogFilterOptions,
   CatalogResponse,
   CategoriesResponse,
+  FilterOptionsResponse,
   FilteredCatalogResult,
   SearchResponse,
 } from "./types";
@@ -56,6 +57,9 @@ export const fetchFilteredCatalogIndex = async (
   }
 
   const categories = (filters.categories ?? []).filter(Boolean).join(",");
+  const playerRanges = (filters.playerRanges ?? []).filter(Boolean).join(",");
+  const playtimeRanges = (filters.playtimeRanges ?? []).filter(Boolean).join(",");
+  const ageRatings = (filters.ageRatings ?? []).filter(Boolean).join(",");
   const payload = await fetchApi<CatalogResponse>(
     buildApiUrl("/catalog", {
       offset: Math.max(0, from),
@@ -64,6 +68,10 @@ export const fetchFilteredCatalogIndex = async (
       min_price: filters.minPrice ?? null,
       max_price: filters.maxPrice ?? null,
       categories: categories || null,
+      players: playerRanges || null,
+      playtime: playtimeRanges || null,
+      age: ageRatings || null,
+      price_movement: filters.priceMovement ?? null,
     }),
     { signal }
   );
@@ -87,16 +95,27 @@ export const fetchCategoryCounts = async (
   return payload.rows;
 };
 
+export const fetchFilterOptions = async (
+  signal?: AbortSignal
+): Promise<FilterOptionsResponse> =>
+  fetchApi<FilterOptionsResponse>(buildApiUrl("/meta/filter-options"), { signal });
+
 export const fetchCatalogPriceRange = async (
-  availabilityFilter: AvailabilityFilter,
-  categoryFilters: string[],
+  filters: CatalogFilterOptions,
   signal?: AbortSignal
 ): Promise<PriceRangeResponse> => {
-  const categories = categoryFilters.filter(Boolean).join(",");
+  const categories = (filters.categories ?? []).filter(Boolean).join(",");
+  const playerRanges = (filters.playerRanges ?? []).filter(Boolean).join(",");
+  const playtimeRanges = (filters.playtimeRanges ?? []).filter(Boolean).join(",");
+  const ageRatings = (filters.ageRatings ?? []).filter(Boolean).join(",");
   return fetchApi<PriceRangeResponse>(
     buildApiUrl("/meta/price-range", {
-      availability: availabilityFilter === "all" ? null : availabilityFilter,
+      availability: filters.availability === "all" ? null : filters.availability,
       categories: categories || null,
+      players: playerRanges || null,
+      playtime: playtimeRanges || null,
+      age: ageRatings || null,
+      price_movement: filters.priceMovement ?? null,
     }),
     { signal }
   );

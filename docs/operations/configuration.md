@@ -47,9 +47,9 @@ Build-time DB access still requires `VITE_SUPABASE_ANON_KEY`; if missing, script
 - `FRONTEND_ORIGIN` (default `*`)
 
 ### Read Model Source
-- `API_CATALOG_SUMMARY_RELATION` (default `public.catalog_slug_summary`)
+- `API_CATALOG_SUMMARY_RELATION` (default `public.catalog_slug_state`)
   - Optional relation override for catalog/search/meta queries.
-  - Use `public.catalog_slug_state` after incremental-state cutover.
+  - Use legacy `public.catalog_slug_summary` only as an operational fallback and only if it has the columns required by current filters.
 
 ### Server
 - `API_ADDRESS` (default `:8080`)

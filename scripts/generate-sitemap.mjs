@@ -25,7 +25,7 @@ const client = HAS_SUPABASE_CREDENTIALS
   : null;
 
 const PAGE_SIZE = 1000;
-const TABLE_NAME = "catalog_slug_summary";
+const TABLE_NAME = "catalog_slug_state";
 
 const formatLastmod = (value) => {
   if (!value) {

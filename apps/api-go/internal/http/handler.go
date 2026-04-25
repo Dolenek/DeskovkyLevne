@@ -18,6 +18,7 @@ type serviceContract interface {
 	RecentSnapshots(ctx context.Context, limit int) ([]snapshots.Row, error)
 	CategoryCounts(ctx context.Context, availability string) ([]catalog.CategoryCount, error)
 	PriceRange(ctx context.Context, filters catalog.PriceRangeFilters) (catalog.PriceRange, error)
+	FilterOptions(ctx context.Context) (catalog.FilterOptions, error)
 }
 
 type Handler struct {
@@ -38,13 +39,17 @@ func (h *Handler) Catalog(w http.ResponseWriter, r *http.Request) {
 	limit := parseLimit(values, 20, h.maxPageSize)
 	offset := parseOffset(values)
 	filters := catalog.Filters{
-		Availability: strings.TrimSpace(values.Get("availability")),
-		MinPrice:     parseFloatPtr(values.Get("min_price")),
-		MaxPrice:     parseFloatPtr(values.Get("max_price")),
-		Categories:   parseCategories(values.Get("categories")),
-		Query:        strings.TrimSpace(values.Get("q")),
-		Limit:        limit,
-		Offset:       offset,
+		Availability:   strings.TrimSpace(values.Get("availability")),
+		MinPrice:       parseFloatPtr(values.Get("min_price")),
+		MaxPrice:       parseFloatPtr(values.Get("max_price")),
+		Categories:     parseCategories(values.Get("categories")),
+		PlayerRanges:   parseList(values.Get("players")),
+		PlaytimeRanges: parseList(values.Get("playtime")),
+		AgeRatings:     parseAges(values.Get("age")),
+		PriceMovement:  strings.TrimSpace(values.Get("price_movement")),
+		Query:          strings.TrimSpace(values.Get("q")),
+		Limit:          limit,
+		Offset:         offset,
 	}
 	rows, total, err := h.service.Catalog(r.Context(), filters)
 	if err != nil {
@@ -115,7 +120,8 @@ func (h *Handler) RecentSnapshots(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Categories(w http.ResponseWriter, r *http.Request) {
-	availability := strings.TrimSpace(r.URL.Query().Get("availability"))
+	values := r.URL.Query()
+	availability := strings.TrimSpace(values.Get("availability"))
 	rows, err := h.service.CategoryCounts(r.Context(), availability)
 	if err != nil {
 		writeServiceError(w, r, err)
@@ -127,8 +133,12 @@ func (h *Handler) Categories(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) PriceRange(w http.ResponseWriter, r *http.Request) {
 	values := r.URL.Query()
 	filters := catalog.PriceRangeFilters{
-		Availability: strings.TrimSpace(values.Get("availability")),
-		Categories:   parseCategories(values.Get("categories")),
+		Availability:   strings.TrimSpace(values.Get("availability")),
+		Categories:     parseCategories(values.Get("categories")),
+		PlayerRanges:   parseList(values.Get("players")),
+		PlaytimeRanges: parseList(values.Get("playtime")),
+		AgeRatings:     parseAges(values.Get("age")),
+		PriceMovement:  strings.TrimSpace(values.Get("price_movement")),
 	}
 	row, err := h.service.PriceRange(r.Context(), filters)
 	if err != nil {
@@ -136,6 +146,15 @@ func (h *Handler) PriceRange(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, row)
+}
+
+func (h *Handler) FilterOptions(w http.ResponseWriter, r *http.Request) {
+	options, err := h.service.FilterOptions(r.Context())
+	if err != nil {
+		writeServiceError(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, options)
 }
 
 func writeServiceError(w http.ResponseWriter, r *http.Request, err error) {

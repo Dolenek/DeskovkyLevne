@@ -16,7 +16,7 @@ import (
 
 type fakeService struct {
 	productSnapshots func(ctx context.Context, slug string, historyPoints int) ([]snapshots.Row, error)
-	priceRange func(ctx context.Context, filters catalog.PriceRangeFilters) (catalog.PriceRange, error)
+	priceRange       func(ctx context.Context, filters catalog.PriceRangeFilters) (catalog.PriceRange, error)
 }
 
 func (f *fakeService) Catalog(_ context.Context, _ catalog.Filters) ([]catalog.Row, int64, error) {
@@ -56,6 +56,10 @@ func (f *fakeService) PriceRange(
 	return catalog.PriceRange{}, nil
 }
 
+func (f *fakeService) FilterOptions(_ context.Context) (catalog.FilterOptions, error) {
+	return catalog.StaticFilterOptions(), nil
+}
+
 func TestHandlerPriceRangeParsesFilters(t *testing.T) {
 	var captured catalog.PriceRangeFilters
 	handler := NewHandler(&fakeService{
@@ -70,7 +74,7 @@ func TestHandlerPriceRangeParsesFilters(t *testing.T) {
 
 	req := httptest.NewRequest(
 		http.MethodGet,
-		"/api/v1/meta/price-range?availability=available&categories=Strategy,Family",
+		"/api/v1/meta/price-range?availability=available&categories=strategicka,fantasy&players=2-4&playtime=30-60&age=8&price_movement=decreased",
 		nil,
 	)
 	rec := httptest.NewRecorder()
@@ -83,8 +87,20 @@ func TestHandlerPriceRangeParsesFilters(t *testing.T) {
 	if captured.Availability != "available" {
 		t.Fatalf("expected availability=available, got %q", captured.Availability)
 	}
-	if len(captured.Categories) != 2 || captured.Categories[0] != "Strategy" || captured.Categories[1] != "Family" {
+	if len(captured.Categories) != 2 || captured.Categories[0] != "strategicka" || captured.Categories[1] != "fantasy" {
 		t.Fatalf("unexpected categories: %#v", captured.Categories)
+	}
+	if len(captured.PlayerRanges) != 1 || captured.PlayerRanges[0] != "2-4" {
+		t.Fatalf("unexpected players: %#v", captured.PlayerRanges)
+	}
+	if len(captured.PlaytimeRanges) != 1 || captured.PlaytimeRanges[0] != "30-60" {
+		t.Fatalf("unexpected playtime: %#v", captured.PlaytimeRanges)
+	}
+	if len(captured.AgeRatings) != 1 || captured.AgeRatings[0] != 8 {
+		t.Fatalf("unexpected ages: %#v", captured.AgeRatings)
+	}
+	if captured.PriceMovement != "decreased" {
+		t.Fatalf("unexpected price movement: %q", captured.PriceMovement)
 	}
 	var payload map[string]float64
 	if err := json.Unmarshal(rec.Body.Bytes(), &payload); err != nil {

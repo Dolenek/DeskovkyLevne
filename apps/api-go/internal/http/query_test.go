@@ -20,3 +20,17 @@ func TestParseProductHistoryPointsCap(t *testing.T) {
 		t.Fatalf("expected cap %d, got %d", maxHistoryPoints, got)
 	}
 }
+
+func TestParseListDeduplicatesValues(t *testing.T) {
+	got := parseList("2-4, 4-plus,2-4,,")
+	if len(got) != 2 || got[0] != "2-4" || got[1] != "4-plus" {
+		t.Fatalf("unexpected values: %#v", got)
+	}
+}
+
+func TestParseAgesDeduplicatesValidNumbers(t *testing.T) {
+	got := parseAges("6,8,6,nope")
+	if len(got) != 2 || got[0] != 6 || got[1] != 8 {
+		t.Fatalf("unexpected ages: %#v", got)
+	}
+}

@@ -40,6 +40,18 @@ export interface ProductCatalogIndexRow {
   metadata?: Record<string, unknown> | null;
   price_points?: Array<Record<string, unknown>> | null;
   category_tags?: string[] | null;
+  genre_tags?: string[] | null;
+  game_type_tags?: string[] | null;
+  mechanic_tags?: string[] | null;
+  availability_status?: string | null;
+  min_age?: number | null;
+  min_players?: number | null;
+  max_players?: number | null;
+  min_playtime_minutes?: number | null;
+  max_playtime_minutes?: number | null;
+  manufacturer?: string | null;
+  price_movement?: string | null;
+  boardgamegeek_rating?: number | null;
   is_available?: boolean | null;
   is_preorder?: boolean | null;
   primary_seller?: string | null;

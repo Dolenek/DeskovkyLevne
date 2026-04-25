@@ -53,10 +53,6 @@ const resolveCatalogSlug = (row: CatalogSearchRow): string => {
       return slug;
     }
   }
-  const fallbackCode = row.product_code?.trim().toLowerCase();
-  if (fallbackCode) {
-    return fallbackCode;
-  }
   return "unknown";
 };
 

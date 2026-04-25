@@ -26,13 +26,17 @@ type Row struct {
 }
 
 type Filters struct {
-	Availability string
-	MinPrice     *float64
-	MaxPrice     *float64
-	Categories   []string
-	Query        string
-	Limit        int
-	Offset       int
+	Availability   string
+	MinPrice       *float64
+	MaxPrice       *float64
+	Categories     []string
+	PlayerRanges   []string
+	PlaytimeRanges []string
+	AgeRatings     []int
+	PriceMovement  string
+	Query          string
+	Limit          int
+	Offset         int
 }
 
 type CategoryCount struct {
@@ -41,12 +45,21 @@ type CategoryCount struct {
 }
 
 type CategoryFilters struct {
-	Availability string
+	Availability   string
+	Categories     []string
+	PlayerRanges   []string
+	PlaytimeRanges []string
+	AgeRatings     []int
+	PriceMovement  string
 }
 
 type PriceRangeFilters struct {
-	Availability string
-	Categories   []string
+	Availability   string
+	Categories     []string
+	PlayerRanges   []string
+	PlaytimeRanges []string
+	AgeRatings     []int
+	PriceMovement  string
 }
 
 type PriceRange struct {
@@ -65,4 +78,18 @@ type SuggestionRow struct {
 	HeroImageURL          *string  `json:"hero_image_url"`
 	GalleryImageURLs      []string `json:"gallery_image_urls"`
 	CategoryTags          []string `json:"category_tags"`
+}
+
+type FilterOption struct {
+	Value string `json:"value"`
+	Label string `json:"label"`
+}
+
+type FilterOptions struct {
+	Categories     []FilterOption `json:"categories"`
+	PlayerRanges   []FilterOption `json:"player_ranges"`
+	PlaytimeRanges []FilterOption `json:"playtime_ranges"`
+	AgeRatings     []FilterOption `json:"age_ratings"`
+	Availability   []FilterOption `json:"availability"`
+	PriceMovement  []FilterOption `json:"price_movement"`
 }

@@ -1,0 +1,35 @@
+package catalog
+
+func StaticFilterOptions() FilterOptions {
+	return FilterOptions{
+		Categories: []FilterOption{
+			{Value: "strategicka", Label: "Strategická"},
+			{Value: "rodinna", Label: "Rodinná"},
+			{Value: "fantasy", Label: "Fantasy"},
+			{Value: "kooperativni", Label: "Kooperativní"},
+			{Value: "ekonomicka", Label: "Ekonomická"},
+		},
+		PlayerRanges: []FilterOption{
+			{Value: "1-2", Label: "1-2"},
+			{Value: "2-4", Label: "2-4"},
+			{Value: "4-plus", Label: "4+"},
+		},
+		PlaytimeRanges: []FilterOption{
+			{Value: "under-30", Label: "do 30 min"},
+			{Value: "30-60", Label: "30-60 min"},
+			{Value: "60-plus", Label: "60+ min"},
+		},
+		AgeRatings: []FilterOption{
+			{Value: "6", Label: "6+"},
+			{Value: "8", Label: "8+"},
+			{Value: "10", Label: "10+"},
+			{Value: "12", Label: "12+"},
+		},
+		Availability: []FilterOption{
+			{Value: "available", Label: "Skladem"},
+		},
+		PriceMovement: []FilterOption{
+			{Value: "decreased", Label: "Ve slevě"},
+		},
+	}
+}

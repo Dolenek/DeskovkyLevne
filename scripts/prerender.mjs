@@ -14,7 +14,7 @@ const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY;
 const SITE_URL = (process.env.VITE_SITE_URL || "https://www.deskovkylevne.com")
   .replace(/\/$/, "");
 const PRERENDER_LIMIT = Number(process.env.VITE_PRERENDER_LIMIT ?? "200");
-const TABLE_NAME = "catalog_slug_summary";
+const TABLE_NAME = "catalog_slug_state";
 const PORT = Number(process.env.VITE_PRERENDER_PORT ?? "4173");
 const HAS_SUPABASE_CREDENTIALS = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 

@@ -1,5 +1,13 @@
 import type { TranslationHook } from "../../hooks/useTranslation";
-import type { AvailabilityFilter } from "../../types/filters";
+import type {
+  AgeRatingFilter,
+  AvailabilityFilter,
+  CategoryFilter,
+  PlayerRangeFilter,
+  PlaytimeRangeFilter,
+  PriceMovementFilter,
+} from "../../types/filters";
+import type { FilterOptionRow, FilterOptionsResponse } from "../../services/api/types";
 import { Icon } from "../../components/ui/Icon";
 
 interface PriceRangeSliderProps {
@@ -46,22 +54,63 @@ const PriceRangeSlider = ({ bounds, values, onSliderChange }: PriceRangeSliderPr
   );
 };
 
+interface OptionGroupProps<T extends string> {
+  title: string;
+  options: FilterOptionRow[];
+  selected: T[];
+  onToggle: (value: T) => void;
+}
+
+const OptionGroup = <T extends string>({
+  title,
+  options,
+  selected,
+  onToggle,
+}: OptionGroupProps<T>) => (
+  <div className="mt-6 space-y-3">
+    <p className="text-sm font-extrabold text-navy">{title}</p>
+    <div className="flex flex-wrap gap-2">
+      {options.map((option) => {
+        const value = option.value as T;
+        const active = selected.includes(value);
+        return (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() => onToggle(value)}
+            className={`rounded-lg border px-3 py-2 text-sm font-bold ${
+              active ? "border-primary bg-primary text-white" : "border-line bg-white text-muted"
+            }`}
+          >
+            {option.label}
+          </button>
+        );
+      })}
+    </div>
+  </div>
+);
+
 export interface FiltersPanelProps {
   className?: string;
   showTitle?: boolean;
   availabilityFilter: AvailabilityFilter;
   onAvailabilityChange: (filter: AvailabilityFilter) => void;
+  priceMovementFilter: PriceMovementFilter | null;
+  onSaleToggle: () => void;
   priceFilter: { min: string; max: string };
   priceRangeValues: { min: number | null; max: number | null };
   priceBounds: { min: number; max: number };
   onPriceFilterChange: (key: "min" | "max", value: string) => void;
   onSliderChange: (key: "min" | "max", value: number) => void;
-  categoryOptions: string[];
-  selectedCategories: string[];
-  onCategoryToggle: (category: string) => void;
-  hasCategoryOptions: boolean;
-  categorySearchValue: string;
-  onCategorySearchChange: (value: string) => void;
+  filterOptions: FilterOptionsResponse;
+  selectedCategories: CategoryFilter[];
+  selectedPlayerRanges: PlayerRangeFilter[];
+  selectedPlaytimeRanges: PlaytimeRangeFilter[];
+  selectedAgeRatings: AgeRatingFilter[];
+  onCategoryToggle: (category: CategoryFilter) => void;
+  onPlayerRangeToggle: (range: PlayerRangeFilter) => void;
+  onPlaytimeRangeToggle: (range: PlaytimeRangeFilter) => void;
+  onAgeRatingToggle: (age: AgeRatingFilter) => void;
   t: TranslationHook["t"];
 }
 
@@ -70,17 +119,22 @@ export const FiltersPanel = ({
   showTitle = true,
   availabilityFilter,
   onAvailabilityChange,
+  priceMovementFilter,
+  onSaleToggle,
   priceFilter,
   priceRangeValues,
   priceBounds,
   onPriceFilterChange,
   onSliderChange,
-  categoryOptions,
+  filterOptions,
   selectedCategories,
+  selectedPlayerRanges,
+  selectedPlaytimeRanges,
+  selectedAgeRatings,
   onCategoryToggle,
-  hasCategoryOptions,
-  categorySearchValue,
-  onCategorySearchChange,
+  onPlayerRangeToggle,
+  onPlaytimeRangeToggle,
+  onAgeRatingToggle,
   t,
 }: FiltersPanelProps) => (
   <aside className={`rounded-lg border border-line bg-white p-6 shadow-sm ${className}`}>
@@ -115,56 +169,51 @@ export const FiltersPanel = ({
       </div>
     </div>
 
+    <OptionGroup
+      title="Počet hráčů"
+      options={filterOptions.player_ranges}
+      selected={selectedPlayerRanges}
+      onToggle={onPlayerRangeToggle}
+    />
+    <OptionGroup
+      title="Herní doba"
+      options={filterOptions.playtime_ranges}
+      selected={selectedPlaytimeRanges}
+      onToggle={onPlaytimeRangeToggle}
+    />
+    <OptionGroup
+      title="Doporučený věk"
+      options={filterOptions.age_ratings}
+      selected={selectedAgeRatings}
+      onToggle={onAgeRatingToggle}
+    />
+    <OptionGroup
+      title={t("filtersCategoryTitle")}
+      options={filterOptions.categories}
+      selected={selectedCategories}
+      onToggle={onCategoryToggle}
+    />
+
     <div className="mt-6 space-y-3">
       <p className="text-sm font-extrabold text-navy">{t("filtersAvailability")}</p>
-      {[
-        { value: "available" as AvailabilityFilter, label: "Skladem" },
-        { value: "preorder" as AvailabilityFilter, label: "Předprodej" },
-        { value: "all" as AvailabilityFilter, label: "Vše" },
-      ].map((option) => (
-        <label key={option.value} className="flex cursor-pointer items-center gap-3 text-sm font-bold text-muted">
-          <input
-            type="checkbox"
-            checked={availabilityFilter === option.value}
-            onChange={() => onAvailabilityChange(option.value)}
-            className="h-4 w-4 rounded border-line text-primary focus:ring-primary"
-          />
-          {option.label}
-        </label>
-      ))}
-    </div>
-
-    {hasCategoryOptions ? (
-      <div className="mt-6 space-y-3">
-        <p className="text-sm font-extrabold text-navy">{t("filtersCategoryTitle")}</p>
+      <label className="flex cursor-pointer items-center gap-3 text-sm font-bold text-muted">
         <input
-          type="text"
-          value={categorySearchValue}
-          onChange={(event) => onCategorySearchChange(event.target.value)}
-          placeholder={t("filtersCategorySearchPlaceholder")}
-          className="w-full rounded-lg border border-line px-3 py-2 text-sm font-semibold outline-none focus:border-primary"
+          type="checkbox"
+          checked={availabilityFilter === "available"}
+          onChange={() => onAvailabilityChange(availabilityFilter === "available" ? "all" : "available")}
+          className="h-4 w-4 rounded border-line text-primary focus:ring-primary"
         />
-        <div className="custom-scrollbar flex max-h-72 flex-col gap-2 overflow-y-auto pr-1">
-          {categoryOptions.length > 0 ? (
-            categoryOptions.slice(0, 24).map((category) => {
-              const checked = selectedCategories.includes(category);
-              return (
-                <label key={category} className="flex cursor-pointer items-center gap-3 text-sm font-bold text-muted">
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={() => onCategoryToggle(category)}
-                    className="h-4 w-4 rounded border-line text-primary focus:ring-primary"
-                  />
-                  {category}
-                </label>
-              );
-            })
-          ) : (
-            <p className="text-sm text-muted">{t("filtersCategoryEmpty")}</p>
-          )}
-        </div>
-      </div>
-    ) : null}
+        Skladem
+      </label>
+      <label className="flex cursor-pointer items-center gap-3 text-sm font-bold text-muted">
+        <input
+          type="checkbox"
+          checked={priceMovementFilter === "decreased"}
+          onChange={onSaleToggle}
+          className="h-4 w-4 rounded border-line text-primary focus:ring-primary"
+        />
+        Ve slevě
+      </label>
+    </div>
   </aside>
 );

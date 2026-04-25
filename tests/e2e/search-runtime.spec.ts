@@ -2,19 +2,28 @@ import { expect, test } from "playwright/test";
 import { mockSearchPageApi } from "./apiMocks";
 
 test("filter metadata comes from API and updates with filters", async ({ page }) => {
-  const categoryUrls: string[] = [];
+  const filterOptionUrls: string[] = [];
   const priceRangeUrls: string[] = [];
 
-  await page.route("**/api/v1/meta/categories**", async (route) => {
-    categoryUrls.push(route.request().url());
+  await page.route("**/api/v1/meta/filter-options**", async (route) => {
+    filterOptionUrls.push(route.request().url());
     await route.fulfill({
       status: 200,
       contentType: "application/json",
       body: JSON.stringify({
-        rows: [
-          { category: "Family", count: 7 },
-          { category: "Strategy", count: 12 },
+        categories: [
+          { value: "strategicka", label: "Strategická" },
+          { value: "rodinna", label: "Rodinná" },
         ],
+        player_ranges: [
+          { value: "1-2", label: "1-2" },
+          { value: "2-4", label: "2-4" },
+          { value: "4-plus", label: "4+" },
+        ],
+        playtime_ranges: [{ value: "30-60", label: "30-60 min" }],
+        age_ratings: [{ value: "8", label: "8+" }],
+        availability: [{ value: "available", label: "Skladem" }],
+        price_movement: [{ value: "decreased", label: "Ve slevě" }],
       }),
     });
   });
@@ -54,7 +63,7 @@ test("filter metadata comes from API and updates with filters", async ({ page })
             supplementary_parameters: [],
             metadata: {},
             price_points: [],
-            category_tags: ["Strategy"],
+            category_tags: ["Strategická"],
           },
         ],
         total: 1,
@@ -75,20 +84,24 @@ test("filter metadata comes from API and updates with filters", async ({ page })
 
   await page.goto("/");
 
-  await expect(page.getByText("Family")).toBeVisible();
-  await expect(page.getByText("Strategy")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Rodinná" }).first()).toBeVisible();
+  await expect(page.getByRole("button", { name: "Strategická" }).first()).toBeVisible();
+  await expect.poll(() => filterOptionUrls.length).toBeGreaterThan(0);
   await expect(page.locator('input[type="range"]').first()).toHaveAttribute("max", "1999");
 
-  await page.getByLabel("Strategy").click();
+  await page.getByRole("button", { name: "Strategická" }).first().click();
   await expect
-    .poll(() => priceRangeUrls.some((entry) => entry.includes("categories=Strategy")))
+    .poll(() => priceRangeUrls.some((entry) => entry.includes("categories=strategicka")))
     .toBe(true);
 
-  await page
-    .getByRole("button", { name: /Zobrazit pouze skladem|Show only available/ })
-    .click();
+  await page.getByLabel("Skladem").click();
   await expect
-    .poll(() => categoryUrls.some((entry) => entry.includes("availability=available")))
+    .poll(() => priceRangeUrls.some((entry) => entry.includes("availability=available")))
+    .toBe(true);
+
+  await page.getByLabel("Ve slevě").click();
+  await expect
+    .poll(() => priceRangeUrls.some((entry) => entry.includes("price_movement=decreased")))
     .toBe(true);
 });
 

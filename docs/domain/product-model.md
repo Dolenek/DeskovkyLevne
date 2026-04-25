@@ -20,15 +20,15 @@
 - Catalog and suggestion search are slug-centered but can match name and code.
 - Suggestion responses may use a reduced field projection, but slug/name/code/price/image/category-tag semantics stay unchanged.
 - Category filtering uses extracted category tags from supplementary parameters.
-- Filter metadata (category list and price bounds) is served through API metadata endpoints, not from full client-side catalog scans.
+- Filter metadata and price bounds are served through API metadata endpoints, not from full client-side catalog scans.
+- Supported catalog filter dimensions are price, availability, sale state, category tags, player count, playtime, and minimum age.
+- `price_movement = decreased` is the discounted-product signal.
 - Availability filters:
   - `available` maps to in-stock signal
   - `preorder` maps to pre-order signal
 
 ## Read-Model Expectations
-- `catalog_slug_summary` must remain one row per slug.
-- `catalog_slug_seller_summary` must remain one row per `slug + seller`.
-- Optional incremental-state replacements:
-  - `catalog_slug_state` one row per slug
-  - `catalog_slug_seller_state` one row per `slug + seller`
+- Runtime catalog/search/filter queries read `catalog_slug_state`, one row per slug.
+- `catalog_slug_seller_state` remains one row per `slug + seller` and is available for per-seller read-model expansion.
+- Legacy materialized views `catalog_slug_summary` and `catalog_slug_seller_summary` may exist, but they are not the default runtime catalog source.
 - Any schema or query change must preserve these invariants.

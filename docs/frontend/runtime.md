@@ -22,6 +22,7 @@ All product navigation is slug-based.
   - Product detail snapshots: `/api/v1/products/:slug`
   - Recent snapshots: `/api/v1/snapshots/recent`
   - Categories metadata: `/api/v1/meta/categories`
+  - Filter options metadata: `/api/v1/meta/filter-options`
   - Price-range metadata: `/api/v1/meta/price-range`
 
 ## Runtime Tuning Environment Variables
@@ -45,8 +46,8 @@ All product navigation is slug-based.
   pagination controls, and CTA banner.
 - Landing pages render a search hero, live catalog metrics, price-history
   preview, featured product cards, seller-offer table, benefits, and CTA banner.
-- Filtered catalog supports availability, price range, and categories.
-- Category options and price bounds are fetched from metadata endpoints, not a full in-browser catalog preload.
+- Filtered catalog supports price range, in-stock availability, discounted state, player-count buckets, playtime buckets, age buckets, and canonical category slugs.
+- Filter options and price bounds are fetched from metadata endpoints, not a full in-browser catalog preload.
 - Product detail renders gallery, hero summary, quick summary, seller-offer
   table, price stats, multi-seller history chart, supplementary parameters,
   related games, and CTA banner.
