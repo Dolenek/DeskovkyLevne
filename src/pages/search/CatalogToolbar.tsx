@@ -13,11 +13,11 @@ interface CatalogToolbarProps {
 }
 
 const categoryChips = [
-  { value: "strategicka", label: "Strategická" },
-  { value: "rodinna", label: "Rodinná" },
-  { value: "fantasy", label: "Fantasy" },
+  { value: "strategicka", label: "Strategické" },
+  { value: "rodinna", label: "Rodinné" },
   { value: "kooperativni", label: "Kooperativní" },
-  { value: "ekonomicka", label: "Ekonomická" },
+  { value: "fantasy", label: "Fantasy" },
+  { value: "ekonomicka", label: "Budovatelské" },
 ] satisfies Array<{ value: CategoryFilter; label: string }>;
 
 export const CatalogToolbar = ({
@@ -32,7 +32,7 @@ export const CatalogToolbar = ({
 }: CatalogToolbarProps) => (
   <section className="rounded-lg border border-line bg-white p-5 shadow-sm">
     <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
-      <div className="flex min-w-0 flex-1 items-center rounded-lg border border-line px-4">
+      <div className="flex min-w-0 flex-1 items-center rounded-lg border border-line px-4 transition focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15">
         <Icon name="search" className="h-5 w-5 text-muted" />
         <input
           value={searchValue}
@@ -53,22 +53,19 @@ export const CatalogToolbar = ({
         <Icon name="filter" className="h-5 w-5" />
         Filtry ({activeFilterCount})
       </button>
-      <select className="rounded-lg border border-line px-5 py-3 text-sm font-bold text-navy outline-none">
-        <option>Nejpopulárnější</option>
-        <option>Nejlevnější</option>
-        <option>{availabilityFilter === "available" ? "Skladem" : "Vše"}</option>
-      </select>
+      <label className="flex items-center gap-3 text-sm font-extrabold text-navy">
+        Seřadit:
+        <select className="rounded-lg border border-line px-5 py-3 text-sm font-bold text-navy outline-none">
+          <option>Nejpopulárnější</option>
+          <option>Nejlevnější</option>
+          <option>{availabilityFilter === "available" ? "Skladem" : "Vše"}</option>
+        </select>
+      </label>
       <div className="flex gap-2">
-        <button
-          className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary text-white"
-          type="button"
-        >
+        <button className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary text-white" type="button" aria-label="Mřížka">
           <Icon name="grid" className="h-5 w-5" />
         </button>
-        <button
-          className="flex h-11 w-11 items-center justify-center rounded-lg border border-line text-muted"
-          type="button"
-        >
+        <button className="flex h-11 w-11 items-center justify-center rounded-lg border border-line text-muted" type="button" aria-label="Seznam">
           <Icon name="list" className="h-5 w-5" />
         </button>
       </div>

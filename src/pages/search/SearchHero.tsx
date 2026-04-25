@@ -1,11 +1,13 @@
+import { BoardGameVisual } from "../../components/ui/BoardGameVisual";
 import { Icon } from "../../components/ui/Icon";
 
 interface SearchHeroProps {
   total: number;
+  imageUrls?: string[];
 }
 
-export const SearchHero = ({ total }: SearchHeroProps) => (
-  <section className="grid items-center gap-8 lg:grid-cols-[1fr_0.8fr]">
+export const SearchHero = ({ total, imageUrls = [] }: SearchHeroProps) => (
+  <section className="grid items-center gap-8 lg:grid-cols-[1fr_0.75fr]">
     <div>
       <p className="text-sm font-bold text-muted">Domů / Hry / Katalog</p>
       <h1 className="mt-6 text-4xl font-black leading-tight text-navy sm:text-5xl">
@@ -22,7 +24,7 @@ export const SearchHero = ({ total }: SearchHeroProps) => (
         </div>
         <div className="flex items-center gap-3">
           <Icon name="cart" className="h-7 w-7 text-primary" />
-          <p className="font-extrabold text-navy">e-shopy v katalogu</p>
+          <p className="font-extrabold text-navy">27 e-shopů</p>
         </div>
         <div className="flex items-center gap-3">
           <Icon name="refresh" className="h-7 w-7 text-primary" />
@@ -31,12 +33,7 @@ export const SearchHero = ({ total }: SearchHeroProps) => (
       </div>
     </div>
     <div className="hidden justify-end lg:flex">
-      <div className="relative h-56 w-full max-w-md rounded-lg bg-white shadow-sm">
-        <div className="absolute left-10 top-12 h-20 w-20 rotate-12 rounded-lg bg-primary shadow-xl" />
-        <div className="absolute left-28 top-20 h-16 w-16 -rotate-12 rounded-lg bg-accent shadow-xl" />
-        <div className="absolute right-16 top-8 h-24 w-24 rotate-6 rounded-lg bg-slate-100 shadow-xl" />
-        <div className="absolute bottom-8 right-28 h-16 w-16 rounded-lg bg-white shadow-xl" />
-      </div>
+      <BoardGameVisual imageUrls={imageUrls} />
     </div>
   </section>
 );

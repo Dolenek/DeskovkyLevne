@@ -6,11 +6,14 @@ import {
   Check,
   ChevronDown,
   Clock,
+  Dice5,
   ExternalLink,
   Filter,
   Grid2X2,
   Heart,
+  Info,
   List,
+  Package,
   RefreshCw,
   Search,
   Shield,
@@ -19,6 +22,7 @@ import {
   Star,
   Store,
   Tag,
+  ThumbsUp,
   Trash2,
   Trophy,
   Users,
@@ -34,11 +38,14 @@ export type IconName =
   | "check"
   | "chevronDown"
   | "clock"
+  | "dice"
   | "external"
   | "filter"
   | "grid"
   | "heart"
+  | "info"
   | "list"
+  | "package"
   | "refresh"
   | "search"
   | "shield"
@@ -46,6 +53,7 @@ export type IconName =
   | "star"
   | "store"
   | "tag"
+  | "thumbsUp"
   | "trash"
   | "trophy"
   | "users";
@@ -63,11 +71,14 @@ const iconMap = {
   check: Check,
   chevronDown: ChevronDown,
   clock: Clock,
+  dice: Dice5,
   external: ExternalLink,
   filter: Filter,
   grid: Grid2X2,
   heart: Heart,
+  info: Info,
   list: List,
+  package: Package,
   refresh: RefreshCw,
   search: Search,
   shield: Shield,
@@ -75,6 +86,7 @@ const iconMap = {
   star: Star,
   store: Store,
   tag: Tag,
+  thumbsUp: ThumbsUp,
   trash: Trash2,
   trophy: Trophy,
   users: Users,

@@ -40,17 +40,22 @@ All product navigation is slug-based.
   header/footer/CTA components.
 - Shared UI iconography uses `lucide-react` through the local `Icon`
   component so feature components do not import icon packages directly.
+- Shared presentation components provide board-game visual compositions and
+  CTA artwork from available product images, with icon-based fallbacks when
+  live catalog images are not available.
 - Search overlay activates on debounced input and shows suggestions.
-- Home catalog renders a hero, search/filter toolbar, category chips, desktop
-  filter sidebar, mobile filter drawer, benefit strip, product card grid,
-  pagination controls, and CTA banner.
-- Landing pages render a search hero, live catalog metrics, price-history
-  preview, featured product cards, seller-offer table, benefits, and CTA banner.
+- Home catalog renders a breadcrumb hero with catalog metrics and product
+  artwork, search/filter toolbar, category chips, desktop filter sidebar,
+  mobile filter drawer, benefit strip, product card grid, pagination controls,
+  and CTA banner.
+- Landing pages render a search hero, live catalog metrics, product-driven
+  price-history preview, featured product cards, seller-offer table, benefits,
+  and CTA banner.
 - Filtered catalog supports price range, in-stock availability, discounted state, player-count buckets, playtime buckets, age buckets, and canonical category slugs.
 - Filter options and price bounds are fetched from metadata endpoints, not a full in-browser catalog preload.
-- Product detail renders gallery, hero summary, quick summary, seller-offer
-  table, price stats, multi-seller history chart, supplementary parameters,
-  related games, and CTA banner.
+- Product detail renders gallery, hero price summary, quick summary,
+  seller-offer table, price stats, multi-seller history chart, supplementary
+  parameters, related games, and CTA banner.
 
 ## Seller Content Rule in UI
 - Prefer `tlamagames`/`tlamagase` content fields where available.

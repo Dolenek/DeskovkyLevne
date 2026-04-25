@@ -143,7 +143,7 @@ export const ProductChart = ({
   }
 
   return (
-    <div className="h-64 w-full">
+    <div className="h-64 min-w-0 w-full">
       <ResponsiveContainer>
         <LineChart data={data} margin={{ top: 8, right: 18, bottom: 4, left: 0 }}>
           <defs>

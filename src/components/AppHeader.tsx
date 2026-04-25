@@ -17,9 +17,9 @@ interface AppHeaderProps {
 const navItems = [
   { href: "/levne-deskovky", label: "Jak to funguje" },
   { href: "/deskove-hry", label: "Hry" },
-  { href: "/deskove-hry", label: "E-shopy" },
-  { href: "/deskove-hry", label: "O projektu" },
-  { href: "/deskove-hry", label: "Kontakt" },
+  { href: "/#eshopy", label: "E-shopy" },
+  { href: "/#projekt", label: "O projektu" },
+  { href: "/#kontakt", label: "Kontakt" },
 ];
 
 const shouldNavigateClientSide = (event: MouseEvent<HTMLAnchorElement>) =>
@@ -69,6 +69,8 @@ export const AppHeader = ({
             const active =
               item.href === "/deskove-hry"
                 ? activePath === "/" || activePath.startsWith("/deskove-hry")
+                : item.href.includes("#")
+                  ? false
                 : activePath === item.href;
             return (
               <a
@@ -87,7 +89,7 @@ export const AppHeader = ({
           })}
         </nav>
 
-        <div className="flex items-center gap-3 lg:w-[390px]">
+        <div className="flex items-center gap-3 lg:w-[460px]">
           <div className="flex min-w-0 flex-1 items-center rounded-lg border border-line bg-white shadow-sm transition focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15">
             <Icon name="search" className="ml-3 h-5 w-5 flex-shrink-0 text-muted" />
             <input

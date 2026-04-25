@@ -3,9 +3,9 @@ export const BrandLogo = ({ compact = false }: { compact?: boolean }) => (
     <img
       src="/logo.png"
       alt=""
-      className={compact ? "h-8 w-8" : "h-10 w-10"}
+      className={compact ? "h-8 w-8" : "h-11 w-11"}
     />
-    <span className={compact ? "text-xl" : "text-2xl"}>
+    <span className={compact ? "text-xl leading-none" : "text-3xl leading-none"}>
       <span className="text-primary">Deskovky</span>Levně
     </span>
   </span>

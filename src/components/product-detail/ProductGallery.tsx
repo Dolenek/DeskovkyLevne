@@ -43,21 +43,21 @@ export const ProductGallery = ({ series }: { series: ProductSeries }) => {
   }, [scrollToIndex, series.slug]);
 
   return (
-    <div className="rounded-lg bg-white">
+    <div className="min-w-0 overflow-hidden rounded-lg bg-white">
       <div
         ref={sliderRef}
-        className="custom-scrollbar flex snap-x snap-mandatory overflow-x-auto rounded-lg bg-white scroll-smooth"
+        className="custom-scrollbar flex min-w-0 snap-x snap-mandatory overflow-x-auto rounded-lg bg-white scroll-smooth"
       >
         {images.length > 0 ? (
           images.map((url, index) => (
             <div
               key={`${url}-${index}`}
-              className="flex w-full flex-shrink-0 snap-center items-center justify-center"
+              className="flex min-w-0 w-full flex-shrink-0 snap-center items-center justify-center"
             >
               <img
                 src={toLargeImageUrl(url)}
                 alt={`${series.label} ${index + 1}`}
-                className="max-h-[430px] w-full rounded-lg object-contain"
+                className="max-h-[410px] w-full rounded-lg object-contain"
               />
             </div>
           ))
@@ -68,7 +68,7 @@ export const ProductGallery = ({ series }: { series: ProductSeries }) => {
         )}
       </div>
       {images.length > 1 ? (
-        <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
+        <div className="custom-scrollbar mt-4 flex max-w-full gap-3 overflow-x-auto pb-2">
           {images.map((url, index) => (
             <button
               key={`${url}-${index}`}

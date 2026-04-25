@@ -21,8 +21,7 @@ const clamp = (value: number, min: number, max: number) =>
 
 const PriceRangeSlider = ({ bounds, values, onSliderChange }: PriceRangeSliderProps) => {
   const minBound = Number.isFinite(bounds.min) ? bounds.min : 0;
-  const maxBound =
-    Number.isFinite(bounds.max) && bounds.max > minBound ? bounds.max : minBound + 100;
+  const maxBound = Number.isFinite(bounds.max) && bounds.max > minBound ? bounds.max : minBound + 100;
   const activeMin = clamp(values.min ?? minBound, minBound, values.max ?? maxBound);
   const activeMax = clamp(values.max ?? maxBound, activeMin, maxBound);
   const highlightStyle = {
@@ -61,29 +60,23 @@ interface OptionGroupProps<T extends string> {
   onToggle: (value: T) => void;
 }
 
-const OptionGroup = <T extends string>({
-  title,
-  options,
-  selected,
-  onToggle,
-}: OptionGroupProps<T>) => (
+const OptionGroup = <T extends string>({ title, options, selected, onToggle }: OptionGroupProps<T>) => (
   <div className="mt-6 space-y-3">
     <p className="text-sm font-extrabold text-navy">{title}</p>
-    <div className="flex flex-wrap gap-2">
-      {options.map((option) => {
+    <div className="space-y-2">
+      {options.slice(0, 6).map((option) => {
         const value = option.value as T;
         const active = selected.includes(value);
         return (
-          <button
-            key={option.value}
-            type="button"
-            onClick={() => onToggle(value)}
-            className={`rounded-lg border px-3 py-2 text-sm font-bold ${
-              active ? "border-primary bg-primary text-white" : "border-line bg-white text-muted"
-            }`}
-          >
+          <label key={option.value} className="flex cursor-pointer items-center gap-3 text-sm font-semibold text-muted">
+            <input
+              type="checkbox"
+              checked={active}
+              onChange={() => onToggle(value)}
+              className="h-4 w-4 rounded border-line text-primary focus:ring-primary"
+            />
             {option.label}
-          </button>
+          </label>
         );
       })}
     </div>
@@ -137,7 +130,7 @@ export const FiltersPanel = ({
   onAgeRatingToggle,
   t,
 }: FiltersPanelProps) => (
-  <aside className={`rounded-lg border border-line bg-white p-6 shadow-sm ${className}`}>
+  <aside className={`rounded-lg border border-line bg-white p-5 shadow-sm ${className}`}>
     {showTitle ? (
       <h2 className="flex items-center gap-2 text-xl font-extrabold text-navy">
         <Icon name="filter" className="h-5 w-5 text-primary" />
@@ -146,72 +139,30 @@ export const FiltersPanel = ({
     ) : null}
 
     <div className="mt-6 space-y-3">
-      <p className="text-sm font-extrabold text-navy">{t("priceFilterTitle")}</p>
+      <p className="text-sm font-extrabold text-navy">Cena</p>
       <p className="text-sm font-semibold text-muted">
         {priceRangeValues.min ?? priceBounds.min} Kč - {priceRangeValues.max ?? priceBounds.max} Kč
       </p>
       <PriceRangeSlider bounds={priceBounds} values={priceRangeValues} onSliderChange={onSliderChange} />
       <div className="grid grid-cols-2 gap-2">
-        <input
-          type="number"
-          value={priceFilter.min}
-          onChange={(event) => onPriceFilterChange("min", event.target.value)}
-          placeholder="Od"
-          className="rounded-lg border border-line px-3 py-2 text-sm font-bold text-navy outline-none focus:border-primary"
-        />
-        <input
-          type="number"
-          value={priceFilter.max}
-          onChange={(event) => onPriceFilterChange("max", event.target.value)}
-          placeholder="Do"
-          className="rounded-lg border border-line px-3 py-2 text-sm font-bold text-navy outline-none focus:border-primary"
-        />
+        <input type="number" value={priceFilter.min} onChange={(event) => onPriceFilterChange("min", event.target.value)} placeholder="Od" className="rounded-lg border border-line px-3 py-2 text-sm font-bold text-navy outline-none focus:border-primary" />
+        <input type="number" value={priceFilter.max} onChange={(event) => onPriceFilterChange("max", event.target.value)} placeholder="Do" className="rounded-lg border border-line px-3 py-2 text-sm font-bold text-navy outline-none focus:border-primary" />
       </div>
     </div>
 
-    <OptionGroup
-      title="Počet hráčů"
-      options={filterOptions.player_ranges}
-      selected={selectedPlayerRanges}
-      onToggle={onPlayerRangeToggle}
-    />
-    <OptionGroup
-      title="Herní doba"
-      options={filterOptions.playtime_ranges}
-      selected={selectedPlaytimeRanges}
-      onToggle={onPlaytimeRangeToggle}
-    />
-    <OptionGroup
-      title="Doporučený věk"
-      options={filterOptions.age_ratings}
-      selected={selectedAgeRatings}
-      onToggle={onAgeRatingToggle}
-    />
-    <OptionGroup
-      title={t("filtersCategoryTitle")}
-      options={filterOptions.categories}
-      selected={selectedCategories}
-      onToggle={onCategoryToggle}
-    />
+    <OptionGroup title="Počet hráčů" options={filterOptions.player_ranges} selected={selectedPlayerRanges} onToggle={onPlayerRangeToggle} />
+    <OptionGroup title="Herní doba" options={filterOptions.playtime_ranges} selected={selectedPlaytimeRanges} onToggle={onPlaytimeRangeToggle} />
+    <OptionGroup title="Doporučený věk" options={filterOptions.age_ratings} selected={selectedAgeRatings} onToggle={onAgeRatingToggle} />
+    <OptionGroup title={t("filtersCategoryTitle")} options={filterOptions.categories} selected={selectedCategories} onToggle={onCategoryToggle} />
 
     <div className="mt-6 space-y-3">
       <p className="text-sm font-extrabold text-navy">{t("filtersAvailability")}</p>
       <label className="flex cursor-pointer items-center gap-3 text-sm font-bold text-muted">
-        <input
-          type="checkbox"
-          checked={availabilityFilter === "available"}
-          onChange={() => onAvailabilityChange(availabilityFilter === "available" ? "all" : "available")}
-          className="h-4 w-4 rounded border-line text-primary focus:ring-primary"
-        />
+        <input type="checkbox" checked={availabilityFilter === "available"} onChange={() => onAvailabilityChange(availabilityFilter === "available" ? "all" : "available")} className="h-4 w-4 rounded border-line text-primary focus:ring-primary" />
         Skladem
       </label>
       <label className="flex cursor-pointer items-center gap-3 text-sm font-bold text-muted">
-        <input
-          type="checkbox"
-          checked={priceMovementFilter === "decreased"}
-          onChange={onSaleToggle}
-          className="h-4 w-4 rounded border-line text-primary focus:ring-primary"
-        />
+        <input type="checkbox" checked={priceMovementFilter === "decreased"} onChange={onSaleToggle} className="h-4 w-4 rounded border-line text-primary focus:ring-primary" />
         Ve slevě
       </label>
     </div>
