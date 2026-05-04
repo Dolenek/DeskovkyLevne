@@ -90,7 +90,7 @@ const fetchPrerenderSlugs = async () => {
 
 const buildRoutes = async () => {
   const slugs = await fetchPrerenderSlugs();
-  const routes = ["/", "/levne-deskovky", "/deskove-hry"];
+  const routes = ["/", "/deskove-hry"];
   slugs.forEach((slug) => {
     routes.push(`/deskove-hry/${encodeURIComponent(slug)}`);
   });

@@ -17,7 +17,7 @@ import {
   ShowcaseSections,
   StatPill,
 } from "./LandingSections";
-import { buildLandingCopy, collectVisualImages } from "./landingUtils";
+import { buildLandingCopy } from "./landingUtils";
 
 interface LandingPageProps {
   variant: "levne" | "deskove";
@@ -40,7 +40,7 @@ export const LandingPage = ({
   const { t, locale } = useTranslation();
   const seoCopy = LANDING_SEO_COPY[locale][variant];
   const copy = buildLandingCopy(variant);
-  const landingPath = variant === "levne" ? "/levne-deskovky" : "/deskove-hry";
+  const landingPath = variant === "levne" ? "/" : "/deskove-hry";
   const searchState = useSearchOverlayState(OVERLAY_LIMIT);
   const { series: featuredSeries, total } = useFilteredCatalogIndex({
     availabilityFilter: variant === "levne" ? "available" : "all",
@@ -63,7 +63,6 @@ export const LandingPage = ({
       null,
     [featuredSeries]
   );
-  const visualImages = useMemo(() => collectVisualImages(featuredSeries), [featuredSeries]);
   const structuredData = useMemo(() => {
     const items = featuredSeries.map((series, index) => ({
       "@type": "ListItem",
@@ -144,11 +143,11 @@ export const LandingPage = ({
                 <StatPill icon="refresh" value="98 %" label="aktualizace cen každý den" />
               </div>
             </div>
-            <HeroPreview series={showcase} locale={locale} visualImages={visualImages} />
+            <HeroPreview />
           </section>
 
           <HowItWorks />
-          <FeaturedProducts title={copy.featuredTitle} series={featuredSeries} locale={locale} onNavigate={onNavigateToProduct} onShowAll={() => onNavigatePath("/")} />
+          <FeaturedProducts title={copy.featuredTitle} series={featuredSeries} locale={locale} onNavigate={onNavigateToProduct} onShowAll={() => onNavigatePath("/deskove-hry")} />
           {showcase ? <ShowcaseSections showcase={showcase} locale={locale} /> : null}
 
           <section className="grid gap-4 md:grid-cols-4">
@@ -170,7 +169,6 @@ export const LandingPage = ({
             title={copy.cta}
             subtitle="Tisíce her, desítky e-shopů, jedna chytrá volba."
             actionLabel="Procházet hry"
-            imageUrls={visualImages}
           />
         </div>
       </main>

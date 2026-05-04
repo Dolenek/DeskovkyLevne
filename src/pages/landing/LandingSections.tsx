@@ -54,59 +54,13 @@ export const HowItWorks = () => {
   );
 };
 
-export const HeroPreview = ({
-  series,
-  locale,
-  visualImages,
-}: {
-  series: ProductSeries | null;
-  locale: LocaleKey;
-  visualImages: string[];
-}) => {
-  if (!series) {
-    return <BoardGameVisual imageUrls={visualImages} />;
-  }
-
-  const stats = getPriceStats(series);
-  const previewPrice = stats.minimum ?? series.latestPrice;
-  const hasChart = series.sellers.some((seller) => seller.points.length > 0);
-
-  return (
-    <div className="relative rounded-lg border border-line bg-white p-5 shadow-2xl shadow-slate-200">
-      <div className="flex items-start gap-4">
-        {series.heroImage ? (
-          <img src={series.heroImage} alt={series.label} className="h-28 w-28 rounded-lg object-cover" />
-        ) : (
-          <div className="h-28 w-28 overflow-hidden rounded-lg">
-            <BoardGameVisual imageUrls={visualImages} variant="compact" />
-          </div>
-        )}
-        <div>
-          <h3 className="text-lg font-extrabold text-navy">{series.label}</h3>
-          <p className="mt-1 text-sm text-muted">{series.categoryTags[0] ?? "Strategická hra"}</p>
-          <div className="mt-3 flex flex-wrap gap-3 text-xs font-bold text-muted">
-            <span>{series.sellers.length} e-shopů</span>
-            <span>60-90 min</span>
-            <span>10+</span>
-          </div>
-        </div>
-      </div>
-      <div className="mt-5">
-        {hasChart ? (
-        <ProductChart series={series} locale={locale} priceLabel="Cena" dateLabel="Datum" />
-        ) : (
-          <BoardGameVisual imageUrls={visualImages} variant="compact" />
-        )}
-      </div>
-      <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-right">
-        <p className="text-sm font-bold text-primary">Nejnižší zaznamenaná cena</p>
-        <p className="text-2xl font-extrabold text-primary">
-          {formatPrice(previewPrice, series.currency ?? undefined, locale) ?? "--"}
-        </p>
-      </div>
+export const HeroPreview = () => (
+  <div className="hidden justify-end lg:flex">
+    <div className="w-full max-w-xl">
+      <BoardGameVisual />
     </div>
-  );
-};
+  </div>
+);
 
 export const FeaturedProducts = ({
   title,

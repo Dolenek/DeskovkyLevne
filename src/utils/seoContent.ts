@@ -97,7 +97,7 @@ export const buildHomeStructuredData = (locale: LocaleKey) => {
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: "Deskovky Levně",
-    url: buildAbsoluteUrl("/") ?? "/",
+    url: buildAbsoluteUrl("/deskove-hry") ?? "/deskove-hry",
     inLanguage: locale === "en" ? "en" : "cs",
     description: content.description,
   };

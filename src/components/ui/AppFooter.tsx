@@ -1,6 +1,6 @@
 import { BrandLogo } from "./BrandLogo";
 
-const links = ["Jak to funguje", "Hry", "E-shopy", "O projektu", "Kontakt"];
+const links = [{ href: "/deskove-hry", label: "Katalog" }];
 
 export const AppFooter = () => (
   <footer className="border-t border-line bg-white">
@@ -9,8 +9,8 @@ export const AppFooter = () => (
         <BrandLogo compact />
         <nav className="flex flex-wrap gap-8 font-semibold text-navy">
           {links.map((link) => (
-            <a key={link} href="/deskove-hry" className="hover:text-primary">
-              {link}
+            <a key={link.href} href={link.href} className="hover:text-primary">
+              {link.label}
             </a>
           ))}
         </nav>

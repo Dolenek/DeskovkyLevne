@@ -117,10 +117,6 @@ export const ProductDetailPage = ({ productSlug, onNavigateToProduct, onNavigate
     return buildProductStructuredData(product, canonicalUrl, locale, seoDescription);
   }, [canonicalPath, locale, product, seoDescription]);
   const relatedSeries = useMemo(() => relatedCatalog.series.filter((series) => series.slug !== productSlug).slice(0, 4), [productSlug, relatedCatalog.series]);
-  const visualImages = useMemo(() => {
-    const sources = product ? [product.heroImage, ...(product.galleryImages ?? [])] : [];
-    return sources.filter((url): url is string => Boolean(url)).slice(0, 4);
-  }, [product]);
   const ogImage = useMemo(() => (product ? pickPrimaryImage(product) : null), [product]);
   const keywords = useMemo(() => (product ? [product.label, ...product.categoryTags].slice(0, 8) : undefined), [product]);
   const pageTitle = product ? `${product.label} | Deskovky Levně` : "Deskovky Levně | Srovnávač cen deskových her";
@@ -233,7 +229,7 @@ export const ProductDetailPage = ({ productSlug, onNavigateToProduct, onNavigate
                 </section>
               ) : null}
 
-              <CtaBanner title="Hlídáte cenu této hry?" subtitle="Jakmile cena klesne, dáme vám vědět e-mailem." actionLabel="Zapnout hlídání" href={canonicalPath} imageUrls={visualImages} />
+              <CtaBanner title="Hlídáte cenu této hry?" subtitle="Jakmile cena klesne, dáme vám vědět e-mailem." actionLabel="Zapnout hlídání" href={canonicalPath} />
             </>
           ) : null}
         </div>

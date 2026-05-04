@@ -1,5 +1,3 @@
-import type { ProductSeries } from "../../types/product";
-
 export const buildLandingCopy = (variant: "levne" | "deskove") =>
   variant === "levne"
     ? {
@@ -16,9 +14,3 @@ export const buildLandingCopy = (variant: "levne" | "deskove") =>
         featuredTitle: "Vybrané deskové hry",
         cta: "Najděte svou další oblíbenou deskovku",
       };
-
-export const collectVisualImages = (series: ProductSeries[]) =>
-  series
-    .flatMap((entry) => [entry.heroImage, ...(entry.galleryImages ?? [])])
-    .filter((url): url is string => Boolean(url))
-    .slice(0, 4);

@@ -1,8 +1,9 @@
 # Frontend Runtime
 
 ## Routing
-- Home search page: `/`
-- SEO landing pages: `/levne-deskovky`, `/deskove-hry`
+- Home landing page: `/`
+- Legacy landing alias: `/levne-deskovky` with canonical SEO pointing to `/`
+- Catalog page: `/deskove-hry`
 - Product detail page: `/deskove-hry/:slug`
 - Unknown paths render an explicit not-found screen.
 
@@ -41,14 +42,13 @@ All product navigation is slug-based.
   header/footer/CTA components.
 - Shared UI iconography uses `lucide-react` through the local `Icon`
   component so feature components do not import icon packages directly.
-- Shared presentation components provide board-game visual compositions and
-  CTA artwork from available product images, with icon-based fallbacks when
-  live catalog images are not available.
+- Shared presentation components use static generated board-game scene assets
+  for decorative hero and CTA artwork. Product cards and product galleries
+  remain API-image driven.
 - Search overlay activates on debounced input and shows suggestions.
-- Home catalog renders a breadcrumb hero with catalog metrics and product
-  artwork, search/filter toolbar, category chips, desktop filter sidebar,
-  mobile filter drawer, benefit strip, product card grid, pagination controls,
-  and CTA banner.
+- Catalog renders a search/filter toolbar, category chips, sticky desktop
+  filter sidebar, mobile filter drawer, active filter chips, product card grid,
+  and pagination controls.
 - Landing pages render a search hero, live catalog metrics, product-driven
   price-history preview, featured product cards, seller-offer table, benefits,
   and CTA banner.

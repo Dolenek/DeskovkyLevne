@@ -86,7 +86,7 @@ const buildSitemapXml = (entries) => {
 const run = async () => {
   const slugRows = await fetchAllSlugs();
   const entries = [];
-  const staticPaths = ["/", "/levne-deskovky", "/deskove-hry"];
+  const staticPaths = ["/", "/deskove-hry"];
   staticPaths.forEach((pathname) => {
     entries.push({ loc: buildUrl(pathname), lastmod: null });
   });

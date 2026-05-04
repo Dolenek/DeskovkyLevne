@@ -7,12 +7,14 @@ import { useFilterOptions } from "../../hooks/useFilterOptions";
 import { useFilteredCatalogIndex } from "../../hooks/useFilteredCatalogIndex";
 import type {
   AgeRatingFilter,
+  ActiveFilterChip,
   AvailabilityFilter,
   CategoryFilter,
   PlayerRangeFilter,
   PlaytimeRangeFilter,
   PriceMovementFilter,
 } from "../../types/filters";
+import type { FilterOptionRow, FilterOptionsResponse } from "../../services/api/types";
 import type { ProductSearchResult, ProductSeries } from "../../types/product";
 import { uniqueSeriesBySlug } from "../../utils/series";
 import { FILTERED_PAGE_SIZE } from "./FilteredProductsSection";
@@ -29,6 +31,57 @@ const buildPriceRange = (minValue: string, maxValue: string) => ({
   min: parsePriceInput(minValue),
   max: parsePriceInput(maxValue),
 });
+
+const findOptionLabel = (options: FilterOptionRow[], value: string) =>
+  options.find((option) => option.value === value)?.label ?? value;
+
+const buildOptionChips = <T extends string>(
+  groupKey: string,
+  values: T[],
+  options: FilterOptionRow[]
+): ActiveFilterChip[] =>
+  values.map((value) => ({
+    key: `${groupKey}-${value}`,
+    label: findOptionLabel(options, value),
+  }));
+
+const buildActiveFilterChips = (
+  priceRange: { min: number | null; max: number | null },
+  filterOptions: FilterOptionsResponse,
+  filters: {
+    availabilityFilter: AvailabilityFilter;
+    categoryFilters: CategoryFilter[];
+    playerRangeFilters: PlayerRangeFilter[];
+    playtimeRangeFilters: PlaytimeRangeFilter[];
+    ageRatingFilters: AgeRatingFilter[];
+    priceMovementFilter: PriceMovementFilter | null;
+  }
+): ActiveFilterChip[] => {
+  const chips: ActiveFilterChip[] = [];
+  if (priceRange.min !== null || priceRange.max !== null) {
+    chips.push({
+      key: "price",
+      label: `${priceRange.min ?? "Libovolně"} - ${priceRange.max ?? "Libovolně"} Kč`,
+    });
+  }
+  if (filters.availabilityFilter !== "all") {
+    chips.push({
+      key: `availability-${filters.availabilityFilter}`,
+      label: findOptionLabel(filterOptions.availability, filters.availabilityFilter),
+    });
+  }
+  chips.push(...buildOptionChips("category", filters.categoryFilters, filterOptions.categories));
+  chips.push(...buildOptionChips("players", filters.playerRangeFilters, filterOptions.player_ranges));
+  chips.push(...buildOptionChips("playtime", filters.playtimeRangeFilters, filterOptions.playtime_ranges));
+  chips.push(...buildOptionChips("age", filters.ageRatingFilters, filterOptions.age_ratings));
+  if (filters.priceMovementFilter) {
+    chips.push({
+      key: `movement-${filters.priceMovementFilter}`,
+      label: findOptionLabel(filterOptions.price_movement, filters.priceMovementFilter),
+    });
+  }
+  return chips;
+};
 
 const filterSearchResultsByCategory = (
   rows: ProductSearchResult[],
@@ -67,6 +120,7 @@ interface SearchPageState {
   priceMovementFilter: PriceMovementFilter | null;
   filterOptions: ReturnType<typeof useFilterOptions>["options"];
   priceBounds: { min: number; max: number };
+  activeFilterChips: ActiveFilterChip[];
   activeFilterCount: number;
   visibleSeries: ProductSearchResult[];
   overlayVisible: boolean;
@@ -92,6 +146,7 @@ interface SearchPageState {
   handlePlaytimeRangeToggle: (range: PlaytimeRangeFilter) => void;
   handleAgeRatingToggle: (age: AgeRatingFilter) => void;
   handleSaleToggle: () => void;
+  resetFilters: () => void;
 }
 
 export const useSearchPageState = (
@@ -229,22 +284,42 @@ export const useSearchPageState = (
     setPricePage(1);
   }, []);
 
-  const activeFilterCount = useMemo(
+  const resetFilters = useCallback(() => {
+    setPriceFilter({ min: "", max: "" });
+    setAvailabilityFilter("all");
+    setCategoryFilters([]);
+    setPlayerRangeFilters([]);
+    setPlaytimeRangeFilters([]);
+    setAgeRatingFilters([]);
+    setPriceMovementFilter(null);
+    setPricePage(1);
+  }, []);
+
+  const activeFilterChips = useMemo(
     () =>
-      categoryFilters.length +
-      playerRangeFilters.length +
-      playtimeRangeFilters.length +
-      ageRatingFilters.length +
-      (availabilityFilter !== "all" ? 1 : 0) +
-      (priceMovementFilter ? 1 : 0),
+      buildActiveFilterChips(priceRange, filterOptions, {
+        availabilityFilter,
+        categoryFilters,
+        playerRangeFilters,
+        playtimeRangeFilters,
+        ageRatingFilters,
+        priceMovementFilter,
+      }),
     [
-      ageRatingFilters.length,
+      ageRatingFilters,
       availabilityFilter,
-      categoryFilters.length,
-      playerRangeFilters.length,
-      playtimeRangeFilters.length,
+      categoryFilters,
+      filterOptions,
+      playerRangeFilters,
+      playtimeRangeFilters,
       priceMovementFilter,
+      priceRange,
     ]
+  );
+
+  const activeFilterCount = useMemo(
+    () => activeFilterChips.length,
+    [activeFilterChips.length]
   );
 
   const handleSearchChange = useCallback((value: string) => {
@@ -268,6 +343,7 @@ export const useSearchPageState = (
     priceMovementFilter,
     filterOptions,
     priceBounds,
+    activeFilterChips,
     activeFilterCount,
     visibleSeries,
     overlayVisible: searchActive && debouncedQuery.length >= 2,
@@ -293,5 +369,6 @@ export const useSearchPageState = (
     handlePlaytimeRangeToggle,
     handleAgeRatingToggle,
     handleSaleToggle,
+    resetFilters,
   };
 };

@@ -3,10 +3,9 @@ import { Icon } from "../../components/ui/Icon";
 
 interface SearchHeroProps {
   total: number;
-  imageUrls?: string[];
 }
 
-export const SearchHero = ({ total, imageUrls = [] }: SearchHeroProps) => (
+export const SearchHero = ({ total }: SearchHeroProps) => (
   <section className="grid items-center gap-8 lg:grid-cols-[1fr_0.75fr]">
     <div>
       <p className="text-sm font-bold text-muted">Domů / Hry / Katalog</p>
@@ -33,7 +32,7 @@ export const SearchHero = ({ total, imageUrls = [] }: SearchHeroProps) => (
       </div>
     </div>
     <div className="hidden justify-end lg:flex">
-      <BoardGameVisual imageUrls={imageUrls} />
+      <BoardGameVisual />
     </div>
   </section>
 );

@@ -8,9 +8,7 @@ import { AppHeader } from "../components/AppHeader";
 import { ProductSearchOverlay } from "../components/ProductSearchOverlay";
 import { HOME_SEO_COPY, buildHomeStructuredData } from "../utils/seoContent";
 import { AppFooter } from "../components/ui/AppFooter";
-import { CtaBanner } from "../components/ui/CtaBanner";
 import { CatalogToolbar } from "./search/CatalogToolbar";
-import { SearchHero } from "./search/SearchHero";
 import { useSearchPageState } from "./search/useSearchPageState";
 
 interface SearchPageProps {
@@ -27,15 +25,26 @@ const SearchPage = ({ onProductNavigate, onNavigatePath, activePath }: SearchPag
   const homeSeo = useMemo(() => HOME_SEO_COPY[locale], [locale]);
   const homeStructuredData = useMemo(() => buildHomeStructuredData(locale), [locale]);
   const state = useSearchPageState(MAX_SEARCH_SERIES, OVERLAY_SEARCH_LIMIT);
-  const visualImages = state.filteredSeries
-    .flatMap((series) => [series.heroImage, ...(series.galleryImages ?? [])])
-    .filter((url): url is string => Boolean(url))
-    .slice(0, 4);
 
   return (
     <div className="min-h-screen bg-background text-navy">
-      <Seo title={homeSeo.title} description={homeSeo.description} path="/" locale={locale} keywords={homeSeo.keywords} structuredData={homeStructuredData} />
-      <AppHeader searchValue={state.searchValue} onSearchChange={state.handleSearchChange} onSearchFocus={() => state.setSearchActive(true)} onLogoClick={() => onNavigatePath("/")} onNavigatePath={onNavigatePath} activePath={activePath} t={t} />
+      <Seo
+        title={homeSeo.title}
+        description={homeSeo.description}
+        path="/deskove-hry"
+        locale={locale}
+        keywords={homeSeo.keywords}
+        structuredData={homeStructuredData}
+      />
+      <AppHeader
+        searchValue={state.searchValue}
+        onSearchChange={state.handleSearchChange}
+        onSearchFocus={() => state.setSearchActive(true)}
+        onLogoClick={() => onNavigatePath("/")}
+        onNavigatePath={onNavigatePath}
+        activePath={activePath}
+        t={t}
+      />
       <ProductSearchOverlay
         visible={state.overlayVisible}
         loading={state.searchLoading}
@@ -77,12 +86,20 @@ const SearchPage = ({ onProductNavigate, onNavigatePath, activePath }: SearchPag
       />
       <main className="px-4 pb-12 pt-6 sm:px-6 lg:px-10">
         <div className="mx-auto flex max-w-7xl flex-col gap-8">
-          <SearchHero total={state.filteredTotal} imageUrls={visualImages} />
-          <CatalogToolbar searchValue={state.searchValue} onSearchValueChange={state.handleSearchChange} onSearchActiveChange={state.setSearchActive} onOpenFilters={() => state.setFiltersOpen(true)} categoryFilters={state.categoryFilters} availabilityFilter={state.availabilityFilter} activeFilterCount={state.activeFilterCount} onCategoryToggle={state.handleCategoryToggle} />
+          <CatalogToolbar
+            searchValue={state.searchValue}
+            onSearchValueChange={state.handleSearchChange}
+            onSearchActiveChange={state.setSearchActive}
+            onOpenFilters={() => state.setFiltersOpen(true)}
+            categoryFilters={state.categoryFilters}
+            availabilityFilter={state.availabilityFilter}
+            activeFilterCount={state.activeFilterCount}
+            onCategoryToggle={state.handleCategoryToggle}
+          />
           <div className="grid gap-8 lg:grid-cols-[260px_minmax(0,1fr)]">
-            <div className="hidden lg:block lg:sticky lg:top-28 lg:self-start">
+            <div className="hidden lg:sticky lg:top-24 lg:block lg:max-h-[calc(100vh-7rem)] lg:self-start lg:overflow-y-auto">
               <FiltersPanel
-                className="lg:flex lg:flex-col lg:overflow-y-auto"
+                className="lg:flex lg:flex-col"
                 availabilityFilter={state.availabilityFilter}
                 onAvailabilityChange={state.setAvailabilityFilter}
                 priceMovementFilter={state.priceMovementFilter}
@@ -112,13 +129,13 @@ const SearchPage = ({ onProductNavigate, onNavigatePath, activePath }: SearchPag
               reload={state.reloadFiltered}
               locale={locale}
               t={t}
-              priceRange={state.priceRange}
+              activeFilterChips={state.activeFilterChips}
               page={state.pricePage}
+              onResetFilters={state.resetFilters}
               onPageChange={state.setPricePage}
               onNavigateToSeries={(series) => onProductNavigate(series.slug)}
             />
           </div>
-          <CtaBanner title="Najděte svou další oblíbenou deskovku" subtitle="Porovnejte ceny, sledujte historii a nakupte ve správný čas." actionLabel="Procházet akce" imageUrls={visualImages} />
         </div>
       </main>
       <AppFooter />

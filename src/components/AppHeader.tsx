@@ -15,11 +15,7 @@ interface AppHeaderProps {
 }
 
 const navItems = [
-  { href: "/levne-deskovky", label: "Jak to funguje" },
-  { href: "/deskove-hry", label: "Hry" },
-  { href: "/#eshopy", label: "E-shopy" },
-  { href: "/#projekt", label: "O projektu" },
-  { href: "/#kontakt", label: "Kontakt" },
+  { href: "/deskove-hry", label: "Katalog" },
 ];
 
 const shouldNavigateClientSide = (event: MouseEvent<HTMLAnchorElement>) =>
@@ -64,14 +60,9 @@ export const AppHeader = ({
           </div>
         </div>
 
-        <nav className="hidden flex-1 items-center justify-center gap-8 text-sm font-bold text-navy lg:flex">
+        <nav className="hidden items-center justify-start gap-8 text-sm font-bold text-navy lg:ml-8 lg:flex">
           {navItems.map((item) => {
-            const active =
-              item.href === "/deskove-hry"
-                ? activePath === "/" || activePath.startsWith("/deskove-hry")
-                : item.href.includes("#")
-                  ? false
-                : activePath === item.href;
+            const active = activePath.startsWith(item.href);
             return (
               <a
                 key={`${item.href}-${item.label}`}
@@ -89,7 +80,7 @@ export const AppHeader = ({
           })}
         </nav>
 
-        <div className="flex items-center gap-3 lg:w-[460px]">
+        <div className="flex items-center gap-3 lg:ml-auto lg:w-[460px]">
           <div className="flex min-w-0 flex-1 items-center rounded-lg border border-line bg-white shadow-sm transition focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15">
             <Icon name="search" className="ml-3 h-5 w-5 flex-shrink-0 text-muted" />
             <input

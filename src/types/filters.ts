@@ -18,3 +18,8 @@ export interface CatalogFilterState {
   ageRatings: AgeRatingFilter[];
   priceMovement: PriceMovementFilter | null;
 }
+
+export interface ActiveFilterChip {
+  key: string;
+  label: string;
+}
