@@ -19,6 +19,7 @@ interface UseFilteredCatalogIndexOptions {
   playtimeRangeFilters: PlaytimeRangeFilter[];
   ageRatingFilters: AgeRatingFilter[];
   priceMovementFilter: PriceMovementFilter | null;
+  randomSeed?: number | null;
   page: number;
   pageSize: number;
 }
@@ -44,6 +45,7 @@ export const useFilteredCatalogIndex = (
     playtimeRangeFilters,
     ageRatingFilters,
     priceMovementFilter,
+    randomSeed = null,
   } = options;
   const [series, setSeries] = useState<ProductSeries[]>([]);
   const [total, setTotal] = useState(0);
@@ -87,6 +89,7 @@ export const useFilteredCatalogIndex = (
           playtimeRanges: normalizedPlaytimes,
           ageRatings: normalizedAges,
           priceMovement: priceMovementFilter,
+          randomSeed,
         }, controller.signal);
         if (controller.signal.aborted || requestRef.current !== requestId) {
           return;
@@ -124,6 +127,7 @@ export const useFilteredCatalogIndex = (
     priceMovementFilter,
     priceRange.max,
     priceRange.min,
+    randomSeed,
     reloadToken,
   ]);
 

@@ -35,6 +35,18 @@ func parseInt(raw string, fallback int) int {
 	return parsed
 }
 
+func parseInt64Ptr(raw string) *int64 {
+	clean := strings.TrimSpace(raw)
+	if clean == "" {
+		return nil
+	}
+	parsed, err := strconv.ParseInt(clean, 10, 64)
+	if err != nil {
+		return nil
+	}
+	return &parsed
+}
+
 func parseFloatPtr(raw string) *float64 {
 	clean := strings.TrimSpace(raw)
 	if clean == "" {

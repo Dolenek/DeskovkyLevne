@@ -50,8 +50,8 @@ All product navigation is slug-based.
   filter sidebar, mobile filter drawer, active filter chips, product card grid,
   and pagination controls.
 - Landing pages render a search hero with one random available product on each
-  visit, live catalog metrics, product-driven price-history preview, random
-  available product cards, and seller-offer table.
+  visit, live catalog metrics, and random available product cards from one
+  seed-ordered catalog request.
 - Filtered catalog sends price range, availability, discounted state, player-count buckets, playtime buckets, age buckets, and canonical category slugs to the API for server-side filtering.
 - Filter options and price bounds are fetched from metadata endpoints, not a full in-browser catalog preload.
 - Product detail renders gallery, hero price summary, quick summary,

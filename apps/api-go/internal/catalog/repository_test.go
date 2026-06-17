@@ -118,3 +118,28 @@ func TestBuildWhereIncludesRangeFilterSemantics(t *testing.T) {
 		}
 	}
 }
+
+func TestBuildRowsQueryUsesSeededRandomOrder(t *testing.T) {
+	seed := int64(123)
+	query, args := buildRowsQuery(
+		"public.catalog_slug_state",
+		" where is_available = true",
+		nil,
+		Filters{Limit: 12, Offset: 0, RandomSeed: &seed},
+	)
+
+	expectedFragments := []string{
+		"order by md5(",
+		"product_name_normalized",
+		"$1::text",
+		"limit $2 offset $3",
+	}
+	for _, fragment := range expectedFragments {
+		if !strings.Contains(query, fragment) {
+			t.Fatalf("expected %q in %s", fragment, query)
+		}
+	}
+	if len(args) != 3 || args[0] != seed || args[1] != 12 || args[2] != 0 {
+		t.Fatalf("unexpected args: %#v", args)
+	}
+}

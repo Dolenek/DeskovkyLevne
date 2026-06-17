@@ -27,6 +27,7 @@ Query params:
 - `age` (optional, comma-separated int): supported UI values are `6`, `8`, `10`, `12`; matches products with `min_age <= value`.
 - `price_movement` (optional, string): `decreased` returns products with `price_movement = decreased` or `latest_price < list_price_with_vat`.
 - `q` (optional, string): substring search against normalized product name and `product_code`.
+- `random_seed` (optional, int): returns a deterministic pseudo-random order for the filtered result set. Use for small random product selections; normal catalog browsing omits it and keeps name sorting.
 
 Category slugs map to catalog tags:
 - `strategicka` -> `game_type_tags` contains `Strategická`

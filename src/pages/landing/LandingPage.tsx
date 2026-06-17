@@ -13,7 +13,6 @@ import {
   FeaturedProducts,
   HeroPreview,
   HowItWorks,
-  ShowcaseSections,
   StatPill,
 } from "./LandingSections";
 import { buildLandingCopy } from "./landingUtils";
@@ -28,18 +27,9 @@ interface LandingPageProps {
 
 const OVERLAY_LIMIT = 6;
 const FEATURED_PAGE_SIZE = 12;
-const HERO_CANDIDATE_PAGE_SIZE = 32;
+const LANDING_RANDOM_PAGE_SIZE = 12;
 
-const getSeededSortValue = (seed: number, index: number) => {
-  const value = Math.sin(seed * 10000 + index * 9973) * 10000;
-  return value - Math.floor(value);
-};
-
-const getRandomizedSeries = <T,>(entries: T[], seed: number) =>
-  entries
-    .map((entry, index) => ({ entry, sortValue: getSeededSortValue(seed, index) }))
-    .sort((left, right) => left.sortValue - right.sortValue)
-    .map(({ entry }) => entry);
+const createLandingRandomSeed = () => Math.floor(Math.random() * 2_147_483_647);
 
 export const LandingPage = ({
   variant,
@@ -53,18 +43,8 @@ export const LandingPage = ({
   const copy = buildLandingCopy(variant);
   const landingPath = variant === "levne" ? "/" : "/deskove-hry";
   const searchState = useSearchOverlayState(OVERLAY_LIMIT);
-  const { series: featuredSeries, total } = useFilteredCatalogIndex({
-    availabilityFilter: variant === "levne" ? "available" : "all",
-    priceRange: { min: null, max: null },
-    categoryFilters: [],
-    playerRangeFilters: [],
-    playtimeRangeFilters: [],
-    ageRatingFilters: [],
-    priceMovementFilter: variant === "levne" ? "decreased" : null,
-    page: 1,
-    pageSize: FEATURED_PAGE_SIZE,
-  });
-  const { series: availableHeroCandidates } = useFilteredCatalogIndex({
+  const landingRandomSeed = useMemo(createLandingRandomSeed, []);
+  const { series: randomCatalogSeries, total } = useFilteredCatalogIndex({
     availabilityFilter: "available",
     priceRange: { min: null, max: null },
     categoryFilters: [],
@@ -72,39 +52,22 @@ export const LandingPage = ({
     playtimeRangeFilters: [],
     ageRatingFilters: [],
     priceMovementFilter: null,
+    randomSeed: landingRandomSeed,
     page: 1,
-    pageSize: HERO_CANDIDATE_PAGE_SIZE,
+    pageSize: LANDING_RANDOM_PAGE_SIZE,
   });
-  const landingRandomSeed = useMemo(() => Math.random(), []);
-  const randomizedAvailableSeries = useMemo(
-    () => getRandomizedSeries(availableHeroCandidates, landingRandomSeed),
-    [availableHeroCandidates, landingRandomSeed]
-  );
   const heroProduct = useMemo(() => {
-    return randomizedAvailableSeries[0] ?? null;
-  }, [randomizedAvailableSeries]);
+    return randomCatalogSeries[0] ?? null;
+  }, [randomCatalogSeries]);
   const randomFeaturedSeries = useMemo(() => {
-    if (!randomizedAvailableSeries.length) {
-      return featuredSeries;
-    }
-    const entriesWithoutHero = randomizedAvailableSeries.filter(
+    const entriesWithoutHero = randomCatalogSeries.filter(
       (series) => series.slug !== heroProduct?.slug
     );
-    return (entriesWithoutHero.length ? entriesWithoutHero : randomizedAvailableSeries).slice(
+    return (entriesWithoutHero.length ? entriesWithoutHero : randomCatalogSeries).slice(
       0,
       FEATURED_PAGE_SIZE
     );
-  }, [featuredSeries, heroProduct?.slug, randomizedAvailableSeries]);
-
-  const showcase = useMemo(
-    () =>
-      featuredSeries.find((series) => series.heroImage && series.points.length > 1) ??
-      featuredSeries.find((series) => series.heroImage) ??
-      featuredSeries.find((series) => series.points.length > 1) ??
-      featuredSeries[0] ??
-      null,
-    [featuredSeries]
-  );
+  }, [heroProduct?.slug, randomCatalogSeries]);
   const structuredData = useMemo(() => {
     const items = randomFeaturedSeries.map((series, index) => ({
       "@type": "ListItem",
@@ -190,7 +153,6 @@ export const LandingPage = ({
 
           <HowItWorks />
           <FeaturedProducts title={copy.featuredTitle} series={randomFeaturedSeries} locale={locale} onNavigate={onNavigateToProduct} onShowAll={() => onNavigatePath("/deskove-hry")} />
-          {showcase ? <ShowcaseSections showcase={showcase} locale={locale} /> : null}
 
         </div>
       </main>

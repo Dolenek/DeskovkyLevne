@@ -47,3 +47,13 @@ func TestParseAgesDeduplicatesValidNumbers(t *testing.T) {
 		t.Fatalf("unexpected ages: %#v", got)
 	}
 }
+
+func TestParseInt64Ptr(t *testing.T) {
+	got := parseInt64Ptr("12345")
+	if got == nil || *got != 12345 {
+		t.Fatalf("expected 12345, got %#v", got)
+	}
+	if parseInt64Ptr("nope") != nil {
+		t.Fatalf("expected invalid seed to parse as nil")
+	}
+}

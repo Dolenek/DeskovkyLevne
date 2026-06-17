@@ -37,6 +37,7 @@ type Filters struct {
 	Query          string
 	Limit          int
 	Offset         int
+	RandomSeed     *int64
 }
 
 type CategoryCount struct {

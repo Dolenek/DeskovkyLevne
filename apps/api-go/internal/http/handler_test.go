@@ -129,7 +129,7 @@ func TestHandlerCatalogParsesRequestedFilterParams(t *testing.T) {
 
 	req := httptest.NewRequest(
 		http.MethodGet,
-		"/api/v1/catalog?availability=available&categories=strategicka,fantasy&players=2-4&playtime=30-60&age=10&price_movement=decreased&limit=24&offset=48",
+		"/api/v1/catalog?availability=available&categories=strategicka,fantasy&players=2-4&playtime=30-60&age=10&price_movement=decreased&limit=24&offset=48&random_seed=987",
 		nil,
 	)
 	rec := httptest.NewRecorder()
@@ -159,6 +159,9 @@ func TestHandlerCatalogParsesRequestedFilterParams(t *testing.T) {
 	}
 	if captured.Limit != 24 || captured.Offset != 48 {
 		t.Fatalf("unexpected paging: limit=%d offset=%d", captured.Limit, captured.Offset)
+	}
+	if captured.RandomSeed == nil || *captured.RandomSeed != 987 {
+		t.Fatalf("unexpected random seed: %#v", captured.RandomSeed)
 	}
 }
 

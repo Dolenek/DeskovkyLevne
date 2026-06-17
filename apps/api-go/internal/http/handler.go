@@ -50,6 +50,7 @@ func (h *Handler) Catalog(w http.ResponseWriter, r *http.Request) {
 		Query:          strings.TrimSpace(values.Get("q")),
 		Limit:          limit,
 		Offset:         offset,
+		RandomSeed:     parseInt64Ptr(values.Get("random_seed")),
 	}
 	rows, total, err := h.service.Catalog(r.Context(), filters)
 	if err != nil {

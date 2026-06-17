@@ -10,6 +10,10 @@ func (s *Service) Catalog(
 	ctx context.Context,
 	filters catalog.Filters,
 ) ([]catalog.Row, int64, error) {
+	if filters.RandomSeed != nil {
+		return s.catalogRepo.Fetch(ctx, filters)
+	}
+
 	cacheKey := catalogCacheKey(filters)
 	payload, err := fetchCached[catalogResponse](
 		ctx,

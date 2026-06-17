@@ -1,12 +1,9 @@
 import type { MouseEvent } from "react";
-import { ProductChart } from "../../components/ProductChart";
 import { ProductTile } from "../../components/ProductTile";
-import { SellerOfferTable } from "../../components/SellerOfferTable";
 import { Icon } from "../../components/ui/Icon";
 import type { LocaleKey } from "../../i18n/translations";
 import type { ProductSeries } from "../../types/product";
 import { formatPrice } from "../../utils/numberFormat";
-import { getPriceStats } from "../../utils/priceStats";
 
 const shouldUseClientNavigation = (event: MouseEvent<HTMLAnchorElement>) =>
   !event.defaultPrevented &&
@@ -162,35 +159,4 @@ export const FeaturedProducts = ({
       ))}
     </div>
   </section>
-);
-
-export const ShowcaseSections = ({
-  showcase,
-  locale,
-}: {
-  showcase: ProductSeries;
-  locale: LocaleKey;
-}) => (
-  <>
-    <section className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr]">
-      <div>
-        <h2 className="text-2xl font-extrabold text-navy">Ukázka historie ceny</h2>
-        <div className="mt-5 rounded-lg border border-line bg-white p-5 shadow-sm">
-          <h3 className="font-extrabold text-navy">{showcase.label}</h3>
-          <p className="mt-1 text-sm text-muted">{showcase.categoryTags[0] ?? "Desková hra"}</p>
-          <p className="mt-6 text-sm font-bold text-muted">Nejnižší cena za 6 měsíců:</p>
-          <p className="text-4xl font-black text-primary">
-            {formatPrice(getPriceStats(showcase).minimum, showcase.currency ?? undefined, locale)}
-          </p>
-        </div>
-      </div>
-      <div className="rounded-lg border border-line bg-white p-5 shadow-sm">
-        <ProductChart series={showcase} locale={locale} priceLabel="Cena" dateLabel="Datum" />
-      </div>
-    </section>
-    <section>
-      <h2 className="mb-5 text-2xl font-extrabold text-navy">Kde koupit nejlevněji</h2>
-      <SellerOfferTable series={showcase} locale={locale} />
-    </section>
-  </>
 );

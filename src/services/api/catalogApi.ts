@@ -79,6 +79,7 @@ export const fetchFilteredCatalogIndex = async (
       ...serializeCatalogFilters(filters),
       min_price: filters.minPrice ?? null,
       max_price: filters.maxPrice ?? null,
+      random_seed: filters.randomSeed ?? null,
     }),
     { signal }
   );

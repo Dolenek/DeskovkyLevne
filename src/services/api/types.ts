@@ -40,6 +40,7 @@ export interface CatalogFilterOptions {
   playtimeRanges?: PlaytimeRangeFilter[];
   ageRatings?: AgeRatingFilter[];
   priceMovement?: PriceMovementFilter | null;
+  randomSeed?: number | null;
 }
 
 export interface FilteredCatalogResult {

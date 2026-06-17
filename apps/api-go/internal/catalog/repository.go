@@ -168,8 +168,21 @@ func buildRowsQuery(
 	args []any,
 	filters Filters,
 ) (string, []any) {
+	rowArgs := append([]any{}, args...)
+	orderSQL := "product_name asc"
+	if filters.RandomSeed != nil {
+		rowArgs = append(rowArgs, *filters.RandomSeed)
+		orderSQL = fmt.Sprintf(
+			"md5(coalesce(product_name_normalized, product_name, product_code, '') || ':' || $%d::text) asc",
+			len(rowArgs),
+		)
+	}
 	limitPlaceholder := fmt.Sprintf("$%d", len(args)+1)
 	offsetPlaceholder := fmt.Sprintf("$%d", len(args)+2)
+	if filters.RandomSeed != nil {
+		limitPlaceholder = fmt.Sprintf("$%d", len(rowArgs)+1)
+		offsetPlaceholder = fmt.Sprintf("$%d", len(rowArgs)+2)
+	}
 	query := `
 select
   product_code,
@@ -193,10 +206,9 @@ select
   coalesce(price_points, '[]'::jsonb),
   coalesce(category_tags, '{}'::text[])
 from ` + relation + whereSQL + `
-order by product_name asc
+order by ` + orderSQL + `
 limit ` + limitPlaceholder + ` offset ` + offsetPlaceholder + `;`
 
-	rowArgs := append([]any{}, args...)
 	rowArgs = append(rowArgs, filters.Limit, filters.Offset)
 	return query, rowArgs
 }
