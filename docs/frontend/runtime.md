@@ -43,15 +43,15 @@ All product navigation is slug-based.
 - Shared UI iconography uses `lucide-react` through the local `Icon`
   component so feature components do not import icon packages directly.
 - Shared presentation components use static generated board-game scene assets
-  for decorative hero and CTA artwork. Product cards and product galleries
-  remain API-image driven.
+  for catalog decorative artwork and product-detail CTA artwork. Landing hero,
+  product cards, and product galleries are API-image driven.
 - Search overlay activates on debounced input and shows suggestions.
 - Catalog renders a search/filter toolbar, category chips, sticky desktop
   filter sidebar, mobile filter drawer, active filter chips, product card grid,
   and pagination controls.
-- Landing pages render a search hero, live catalog metrics, product-driven
-  price-history preview, featured product cards, seller-offer table, benefits,
-  and CTA banner.
+- Landing pages render a search hero with one random available product on each
+  visit, live catalog metrics, product-driven price-history preview, random
+  available product cards, and seller-offer table.
 - Filtered catalog sends price range, availability, discounted state, player-count buckets, playtime buckets, age buckets, and canonical category slugs to the API for server-side filtering.
 - Filter options and price bounds are fetched from metadata endpoints, not a full in-browser catalog preload.
 - Product detail renders gallery, hero price summary, quick summary,

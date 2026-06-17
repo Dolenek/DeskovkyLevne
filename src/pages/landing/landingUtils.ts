@@ -4,7 +4,7 @@ export const buildLandingCopy = (variant: "levne" | "deskove") =>
         heading: "Sledujte historii cen deskových her a nakupujte levněji",
         subheading:
           "Porovnáváme ceny z různých e-shopů, ukazujeme vývoj ceny v čase a pomáháme najít nejlepší nabídku pro vaši oblíbenou deskovku.",
-        featuredTitle: "Populární deskové hry",
+        featuredTitle: "Náhodné deskové hry",
         cta: "Najděte nejlepší cenu své příští deskovky",
       }
     : {

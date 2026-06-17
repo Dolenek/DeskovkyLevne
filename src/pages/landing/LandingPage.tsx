@@ -3,7 +3,6 @@ import { AppHeader } from "../../components/AppHeader";
 import { ProductSearchOverlay } from "../../components/ProductSearchOverlay";
 import { Seo } from "../../components/Seo";
 import { AppFooter } from "../../components/ui/AppFooter";
-import { CtaBanner } from "../../components/ui/CtaBanner";
 import { Icon } from "../../components/ui/Icon";
 import { useFilteredCatalogIndex } from "../../hooks/useFilteredCatalogIndex";
 import { useSearchOverlayState } from "../../hooks/useSearchOverlayState";
@@ -29,6 +28,18 @@ interface LandingPageProps {
 
 const OVERLAY_LIMIT = 6;
 const FEATURED_PAGE_SIZE = 12;
+const HERO_CANDIDATE_PAGE_SIZE = 32;
+
+const getSeededSortValue = (seed: number, index: number) => {
+  const value = Math.sin(seed * 10000 + index * 9973) * 10000;
+  return value - Math.floor(value);
+};
+
+const getRandomizedSeries = <T,>(entries: T[], seed: number) =>
+  entries
+    .map((entry, index) => ({ entry, sortValue: getSeededSortValue(seed, index) }))
+    .sort((left, right) => left.sortValue - right.sortValue)
+    .map(({ entry }) => entry);
 
 export const LandingPage = ({
   variant,
@@ -53,6 +64,37 @@ export const LandingPage = ({
     page: 1,
     pageSize: FEATURED_PAGE_SIZE,
   });
+  const { series: availableHeroCandidates } = useFilteredCatalogIndex({
+    availabilityFilter: "available",
+    priceRange: { min: null, max: null },
+    categoryFilters: [],
+    playerRangeFilters: [],
+    playtimeRangeFilters: [],
+    ageRatingFilters: [],
+    priceMovementFilter: null,
+    page: 1,
+    pageSize: HERO_CANDIDATE_PAGE_SIZE,
+  });
+  const landingRandomSeed = useMemo(() => Math.random(), []);
+  const randomizedAvailableSeries = useMemo(
+    () => getRandomizedSeries(availableHeroCandidates, landingRandomSeed),
+    [availableHeroCandidates, landingRandomSeed]
+  );
+  const heroProduct = useMemo(() => {
+    return randomizedAvailableSeries[0] ?? null;
+  }, [randomizedAvailableSeries]);
+  const randomFeaturedSeries = useMemo(() => {
+    if (!randomizedAvailableSeries.length) {
+      return featuredSeries;
+    }
+    const entriesWithoutHero = randomizedAvailableSeries.filter(
+      (series) => series.slug !== heroProduct?.slug
+    );
+    return (entriesWithoutHero.length ? entriesWithoutHero : randomizedAvailableSeries).slice(
+      0,
+      FEATURED_PAGE_SIZE
+    );
+  }, [featuredSeries, heroProduct?.slug, randomizedAvailableSeries]);
 
   const showcase = useMemo(
     () =>
@@ -64,7 +106,7 @@ export const LandingPage = ({
     [featuredSeries]
   );
   const structuredData = useMemo(() => {
-    const items = featuredSeries.map((series, index) => ({
+    const items = randomFeaturedSeries.map((series, index) => ({
       "@type": "ListItem",
       position: index + 1,
       name: series.label,
@@ -81,7 +123,7 @@ export const LandingPage = ({
       },
       { "@context": "https://schema.org", "@type": "ItemList", itemListElement: items },
     ];
-  }, [featuredSeries, landingPath, locale, seoCopy.description, seoCopy.title]);
+  }, [landingPath, locale, randomFeaturedSeries, seoCopy.description, seoCopy.title]);
 
   return (
     <div className="min-h-screen bg-background text-navy">
@@ -143,33 +185,13 @@ export const LandingPage = ({
                 <StatPill icon="refresh" value="98 %" label="aktualizace cen každý den" />
               </div>
             </div>
-            <HeroPreview />
+            <HeroPreview series={heroProduct} locale={locale} onNavigate={onNavigateToProduct} />
           </section>
 
           <HowItWorks />
-          <FeaturedProducts title={copy.featuredTitle} series={featuredSeries} locale={locale} onNavigate={onNavigateToProduct} onShowAll={() => onNavigatePath("/deskove-hry")} />
+          <FeaturedProducts title={copy.featuredTitle} series={randomFeaturedSeries} locale={locale} onNavigate={onNavigateToProduct} onShowAll={() => onNavigatePath("/deskove-hry")} />
           {showcase ? <ShowcaseSections showcase={showcase} locale={locale} /> : null}
 
-          <section className="grid gap-4 md:grid-cols-4">
-            {[
-              ["barChart", "Přehledná historie cen", "U každé hry vidíte vývoj ceny v čase a snadno poznáte, kdy je nejlepší nakoupit."],
-              ["search", "Rychlé porovnání e-shopů", "Během pár vteřin zjistíte, který e-shop má nejlepší nabídku včetně dopravy a akcí."],
-              ["bell", "Upozornění na pokles ceny", "Nastavte si hlídání ceny a my vás upozorníme, až cena vaší hry klesne."],
-              ["shield", "Úspora času i peněz", "Šetřete čas hledáním a nakupujte chytře za nejlepší možné ceny."],
-            ].map(([icon, title, body]) => (
-              <article key={title} className="rounded-lg border border-line bg-white p-5 shadow-sm">
-                <Icon name={icon as Parameters<typeof Icon>[0]["name"]} className="h-8 w-8 text-primary" />
-                <h3 className="mt-4 font-extrabold text-navy">{title}</h3>
-                <p className="mt-2 text-sm leading-6 text-muted">{body}</p>
-              </article>
-            ))}
-          </section>
-
-          <CtaBanner
-            title={copy.cta}
-            subtitle="Tisíce her, desítky e-shopů, jedna chytrá volba."
-            actionLabel="Procházet hry"
-          />
         </div>
       </main>
       <AppFooter />
