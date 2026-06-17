@@ -58,9 +58,14 @@ Build-time DB access still requires `VITE_SUPABASE_ANON_KEY`; if missing, script
 - `API_IDLE_TIMEOUT` (default `60s`)
 - `API_MAX_PAGE_SIZE` (default `200`, minimum enforced `10`)
 
+### Go Runtime and Container Limits
+- `API_GO_MEMORY_LIMIT` (compose default `768m`)
+- `GOMEMLIMIT` (compose default `384MiB`)
+- `GOGC` (compose default `50`)
+
 ### DB Pool
-- `API_DB_MAX_CONNS` (default `30`)
-- `API_DB_MIN_CONNS` (default `5`)
+- `API_DB_MAX_CONNS` (compose default `10`; application default `30`)
+- `API_DB_MIN_CONNS` (compose default `1`; application default `5`)
 - `API_DB_MAX_CONN_IDLE` (default `5m`)
 - `API_DB_MAX_CONN_LIFETIME` (default `2h`)
 - `API_DB_SIMPLE_PROTOCOL` (default `true`)
@@ -78,6 +83,10 @@ Build-time DB access still requires `VITE_SUPABASE_ANON_KEY`; if missing, script
 - `REDIS_ADDR`
 - `REDIS_PASSWORD`
 - `REDIS_DB` (default `0`)
+
+The production compose stack includes Redis and starts `api-go` only after the
+Redis healthcheck passes. If the API runs without `REDIS_ADDR`, cache-backed
+endpoints continue to work directly against PostgreSQL.
 
 ### API Cache Controls
 - `API_CACHE_NAMESPACE` (default `api-v1`)

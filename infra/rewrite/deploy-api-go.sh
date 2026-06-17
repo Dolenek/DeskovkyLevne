@@ -14,7 +14,11 @@ if [[ -z "${FRONTEND_ORIGIN:-}" ]]; then
 fi
 
 cd "${SCRIPT_DIR}"
-docker compose -f docker-compose.api-go.yml up -d --build
+if docker compose version >/dev/null 2>&1; then
+  docker compose -f docker-compose.api-go.yml up -d --build
+else
+  docker-compose -f docker-compose.api-go.yml up -d --build
+fi
 
 echo "API deploy finished."
 echo "Health check: curl http://localhost:${API_GO_PORT:-18080}/health"

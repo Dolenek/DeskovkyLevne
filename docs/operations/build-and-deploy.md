@@ -41,6 +41,19 @@ paint.
 Required runtime env:
 - `DATABASE_URL`
 
+The deployment helper uses the Docker Compose plugin when available and falls
+back to `docker-compose` v1 on hosts that do not have the plugin installed. The
+compose stack starts Redis with a healthcheck before the API container so Redis
+cache is available at API startup.
+
+## Production Reverse Proxy
+The production nginx site serves `dist/` and proxies `/api/` to the Go API on
+`${API_GO_PORT:-18080}`. The `/api/` location should apply a small request
+limit keyed by `CF-Connecting-IP` when traffic arrives through Cloudflare Tunnel,
+with a fallback to the direct remote address for local or non-Cloudflare
+requests. This keeps stale browser bundles or malfunctioning clients from
+saturating the API process.
+
 ## SQL Operations Used in Deployment/Cutover
 - Recent endpoint index migration: `infra/db/migrations/20260218_recent_snapshots_index.sql`
 - Index cleanup migration: `infra/db/migrations/20260221_phase1_index_cleanup.sql`

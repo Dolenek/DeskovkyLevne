@@ -32,6 +32,14 @@ interface UseFilteredCatalogIndexResult {
   reload: () => void;
 }
 
+const FILTER_KEY_SEPARATOR = "\u001f";
+
+const buildFilterKey = (values: string[]) =>
+  values.filter(Boolean).sort().join(FILTER_KEY_SEPARATOR);
+
+const parseFilterKey = <T extends string>(key: string) =>
+  (key ? key.split(FILTER_KEY_SEPARATOR) : []) as T[];
+
 export const useFilteredCatalogIndex = (
   options: UseFilteredCatalogIndexOptions
 ): UseFilteredCatalogIndexResult => {
@@ -54,21 +62,25 @@ export const useFilteredCatalogIndex = (
   const [reloadToken, setReloadToken] = useState(0);
   const requestRef = useRef(0);
 
+  const categoryFilterKey = buildFilterKey(categoryFilters);
+  const playerRangeFilterKey = buildFilterKey(playerRangeFilters);
+  const playtimeRangeFilterKey = buildFilterKey(playtimeRangeFilters);
+  const ageRatingFilterKey = buildFilterKey(ageRatingFilters);
   const normalizedCategories = useMemo(
-    () => [...categoryFilters].sort(),
-    [categoryFilters]
+    () => parseFilterKey<CategoryFilter>(categoryFilterKey),
+    [categoryFilterKey]
   );
   const normalizedPlayers = useMemo(
-    () => [...playerRangeFilters].sort(),
-    [playerRangeFilters]
+    () => parseFilterKey<PlayerRangeFilter>(playerRangeFilterKey),
+    [playerRangeFilterKey]
   );
   const normalizedPlaytimes = useMemo(
-    () => [...playtimeRangeFilters].sort(),
-    [playtimeRangeFilters]
+    () => parseFilterKey<PlaytimeRangeFilter>(playtimeRangeFilterKey),
+    [playtimeRangeFilterKey]
   );
   const normalizedAges = useMemo(
-    () => [...ageRatingFilters].sort(),
-    [ageRatingFilters]
+    () => parseFilterKey<AgeRatingFilter>(ageRatingFilterKey),
+    [ageRatingFilterKey]
   );
 
   useEffect(() => {
