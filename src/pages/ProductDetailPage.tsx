@@ -6,13 +6,11 @@ import { ProductSearchOverlay } from "../components/ProductSearchOverlay";
 import { ProductGallery } from "../components/product-detail/ProductGallery";
 import { ProductHero } from "../components/product-detail/ProductHero";
 import { SupplementaryParametersPanel } from "../components/product-detail/SupplementaryParametersPanel";
-import { ProductTile } from "../components/ProductTile";
 import { SellerOfferTable } from "../components/SellerOfferTable";
 import { Seo } from "../components/Seo";
 import { AppFooter } from "../components/ui/AppFooter";
 import { CtaBanner } from "../components/ui/CtaBanner";
 import { Icon } from "../components/ui/Icon";
-import { useFilteredCatalogIndex } from "../hooks/useFilteredCatalogIndex";
 import { useSearchOverlayState } from "../hooks/useSearchOverlayState";
 import { useTranslation } from "../hooks/useTranslation";
 import { useProductDetail } from "../hooks/useProductDetail";
@@ -91,17 +89,6 @@ const QuickSummary = ({ product, locale }: { product: ProductSeries; locale: "cs
 export const ProductDetailPage = ({ productSlug, onNavigateToProduct, onNavigateHome, onNavigatePath, activePath }: ProductDetailPageProps) => {
   const { t, locale } = useTranslation();
   const { product, loading, error, reload } = useProductDetail(productSlug);
-  const relatedCatalog = useFilteredCatalogIndex({
-    priceRange: { min: null, max: null },
-    availabilityFilter: "all",
-    categoryFilters: [],
-    playerRangeFilters: [],
-    playtimeRangeFilters: [],
-    ageRatingFilters: [],
-    priceMovementFilter: null,
-    page: 1,
-    pageSize: 8,
-  });
   const searchState = useSearchOverlayState(INLINE_SEARCH_LIMIT);
   const { setSearchActive } = searchState;
 
@@ -116,7 +103,6 @@ export const ProductDetailPage = ({ productSlug, onNavigateToProduct, onNavigate
     const canonicalUrl = buildAbsoluteUrl(canonicalPath) ?? canonicalPath;
     return buildProductStructuredData(product, canonicalUrl, locale, seoDescription);
   }, [canonicalPath, locale, product, seoDescription]);
-  const relatedSeries = useMemo(() => relatedCatalog.series.filter((series) => series.slug !== productSlug).slice(0, 4), [productSlug, relatedCatalog.series]);
   const ogImage = useMemo(() => (product ? pickPrimaryImage(product) : null), [product]);
   const keywords = useMemo(() => (product ? [product.label, ...product.categoryTags].slice(0, 8) : undefined), [product]);
   const pageTitle = product ? `${product.label} | Deskovky Levně` : "Deskovky Levně | Srovnávač cen deskových her";
@@ -212,22 +198,6 @@ export const ProductDetailPage = ({ productSlug, onNavigateToProduct, onNavigate
                   </ul>
                 </article>
               </section>
-
-              {relatedSeries.length > 0 ? (
-                <section>
-                  <div className="mb-5 flex items-center justify-between">
-                    <h2 className="text-2xl font-extrabold text-navy">Podobné deskové hry</h2>
-                    <button type="button" onClick={() => onNavigatePath("/deskove-hry")} className="text-sm font-extrabold text-primary">
-                      Zobrazit další hry →
-                    </button>
-                  </div>
-                  <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                    {relatedSeries.map((series) => (
-                      <ProductTile key={series.slug} series={series} locale={locale} onNavigate={onNavigateToProduct} />
-                    ))}
-                  </div>
-                </section>
-              ) : null}
 
               <CtaBanner title="Hlídáte cenu této hry?" subtitle="Jakmile cena klesne, dáme vám vědět e-mailem." actionLabel="Zapnout hlídání" href={canonicalPath} />
             </>

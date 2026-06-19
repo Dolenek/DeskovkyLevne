@@ -27,10 +27,6 @@ export const ProductHero = ({ series, locale }: ProductHeroProps) => {
           <Icon name="users" className="h-5 w-5 text-primary" />
           {series.sellers.length} e-shopů
         </span>
-        <span className="flex items-center gap-2">
-          <Icon name="barChart" className="h-5 w-5 text-primary" />
-          {series.sellers.reduce((sum, seller) => sum + seller.points.length, 0)} cenových bodů
-        </span>
       </div>
       {series.shortDescription ? (
         <p className="mt-5 line-clamp-4 whitespace-pre-line text-sm leading-7 text-muted">

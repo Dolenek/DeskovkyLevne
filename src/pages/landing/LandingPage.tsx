@@ -144,8 +144,8 @@ export const LandingPage = ({
               </div>
               <div className="mt-8 grid gap-5 sm:grid-cols-3">
                 <StatPill icon="spark" value={total ? total.toLocaleString("cs-CZ") : "5 842"} label="sledovaných her" />
-                <StatPill icon="store" value="27" label="e-shopů" />
-                <StatPill icon="refresh" value="98 %" label="aktualizace cen každý den" />
+                <StatPill icon="store" value="15" label="e-shopů" />
+                <StatPill icon="refresh" value="99 %" label="aktualizace cen každý den" />
               </div>
             </div>
             <HeroPreview series={heroProduct} locale={locale} onNavigate={onNavigateToProduct} />
