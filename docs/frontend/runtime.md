@@ -21,7 +21,7 @@ All product navigation is slug-based.
 - Core API usage:
   - Catalog/filter: `/api/v1/catalog`
   - Search suggestions: `/api/v1/search/suggest`
-  - Product detail snapshots: `/api/v1/products/:slug`
+  - Product detail seller-day history: `/api/v1/products/:slug`
   - Recent snapshots: `/api/v1/snapshots/recent`
   - Categories metadata: `/api/v1/meta/categories`
   - Filter options metadata: `/api/v1/meta/filter-options`
@@ -57,6 +57,8 @@ All product navigation is slug-based.
 - Product detail renders a filtered gallery, hero price summary, quick summary,
   seller-offer table, actual price statistics, multi-seller history chart with
   range controls, supplementary parameters, and a data summary.
+- Product detail chart points prefer API `price_date` and fall back to
+  `scraped_at` for raw snapshot-shaped rows.
 - Product detail offer CTA scrolls to the seller-offer section. Price-watch and
   favorite actions are not rendered until backend support exists.
 - Seller-offer rows show only API-backed values: seller, price, normalized

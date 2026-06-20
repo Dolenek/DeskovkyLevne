@@ -8,6 +8,8 @@
 ## Seller Granularity
 - Snapshot and history data must be preserved per seller.
 - Price history visualization must show all available sellers in parallel.
+- Product detail history points represent seller-day checks from daily history,
+  including days where price did not change.
 - No seller history merging into a single synthetic line.
 - History bounding controls (for example API `history_points`) may reduce returned rows but must not merge sellers.
 - Seller-offer presentation must not invent values that are not in the read
@@ -33,5 +35,7 @@
 ## Read-Model Expectations
 - Runtime catalog/search/filter queries read `catalog_slug_state`, one row per slug.
 - `catalog_slug_seller_state` remains one row per `slug + seller` and is available for per-seller read-model expansion.
+- Product detail history reads `catalog_daily_price_history` for chart points
+  and joins seller metadata from `catalog_slug_seller_state`.
 - Legacy materialized views `catalog_slug_summary` and `catalog_slug_seller_summary` may exist, but they are not the default runtime catalog source.
 - Any schema or query change must preserve these invariants.

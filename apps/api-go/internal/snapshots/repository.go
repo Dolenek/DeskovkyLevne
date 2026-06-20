@@ -42,6 +42,8 @@ select
   p.currency_code,
   p.source_url,
   p.scraped_at::text,
+  null::text as price_date,
+  null::integer as snapshot_count,
   p.availability_label,
   p.stock_status_label,
   p.hero_image_url,
@@ -85,6 +87,8 @@ func scanSnapshotRow(rows pgxRows) (Row, error) {
 		&item.CurrencyCode,
 		&item.SourceURL,
 		&item.ScrapedAt,
+		&item.PriceDate,
+		&item.SnapshotCount,
 		&item.AvailabilityLabel,
 		&item.StockStatusLabel,
 		&item.HeroImageURL,
@@ -100,44 +104,59 @@ func scanSnapshotRow(rows pgxRows) (Row, error) {
 func buildBySlugQuery(slug string, historyPoints int) (string, []any) {
 	selectClause := `
 select
-  p.id,
-  p.product_code,
-  p.product_name_original,
-  p.product_name_normalized,
-  p.price_with_vat::double precision,
-  p.list_price_with_vat::double precision,
-  p.currency_code,
-  p.source_url,
-  p.scraped_at::text,
-  p.availability_label,
-  p.stock_status_label,
-  p.hero_image_url,
-  coalesce(p.gallery_image_urls, '{}'::text[]),
-  p.short_description,
-  coalesce(p.supplementary_parameters, '[]'::jsonb),
-  coalesce(p.metadata, '{}'::jsonb),
-  p.seller`
+  row_number() over (order by h.price_date asc, h.seller asc)::bigint as id,
+  s.product_code,
+  s.product_name,
+  h.canonical_product_id,
+  h.closing_price::double precision,
+  h.list_price_with_vat::double precision,
+  h.currency_code,
+  s.source_url,
+  h.last_scraped_at::text,
+  h.price_date::text,
+  h.snapshot_count,
+  s.availability_label,
+  s.stock_status_label,
+  s.hero_image_url,
+  coalesce(s.gallery_image_urls, '{}'::text[]),
+  s.short_description,
+  coalesce(s.supplementary_parameters, '[]'::jsonb),
+  coalesce(s.metadata, '{}'::jsonb),
+  h.seller`
 
 	if historyPoints <= 0 {
 		query := selectClause + `
-from public.product_price_snapshots p
-where p.product_name_normalized = $1
-order by p.scraped_at asc;`
+from public.catalog_daily_price_history h
+join public.catalog_slug_seller_state s
+  on s.seller = h.seller
+  and public.canonical_product_slug(
+    s.seller,
+    s.product_code,
+    s.product_name_normalized
+  ) = h.canonical_product_id
+where h.canonical_product_id = $1
+order by h.price_date asc, h.seller asc;`
 		return query, []any{slug}
 	}
 
 	query := `
-with recent_ids as (
-select id
-from public.product_price_snapshots
-where product_name_normalized = $1
-order by scraped_at desc, id desc
+with recent_history as (
+select *
+from public.catalog_daily_price_history
+where canonical_product_id = $1
+order by price_date desc, seller desc
 limit $2
 )
 ` + selectClause + `
-from recent_ids r
-join public.product_price_snapshots p on p.id = r.id
-order by p.scraped_at asc, p.id asc;`
+from recent_history h
+join public.catalog_slug_seller_state s
+  on s.seller = h.seller
+  and public.canonical_product_slug(
+    s.seller,
+    s.product_code,
+    s.product_name_normalized
+  ) = h.canonical_product_id
+order by h.price_date asc, h.seller asc;`
 	return query, []any{slug, historyPoints}
 }
 

@@ -70,13 +70,22 @@ Response row fields:
 
 ## Product Snapshots
 ### `GET /api/v1/products/{slug}`
-Returns snapshot rows for a canonical slug.
+Returns seller-day history rows for a canonical slug. Price points come from
+`catalog_daily_price_history`; current seller metadata such as name, image,
+availability label, and source URL comes from `catalog_slug_seller_state`.
 
 Path params:
 - `slug` (required): lowercased by server before query.
 
 Query params:
-- `history_points` (optional, int): limits response to the latest N points for the slug; backend cap is `5000`. `0` or omitted returns full history.
+- `history_points` (optional, int): limits response to the latest N seller-day
+  points for the slug; backend cap is `5000`. `0` or omitted returns full
+  history.
+
+History row fields include the normal product snapshot fields plus:
+- `price_date`: checked calendar date used by charts.
+- `snapshot_count`: successful check count for that seller and date.
+- `scraped_at`: last successful check timestamp for that seller and date.
 
 Error behavior:
 - empty slug returns `400` with code `validation_error`.

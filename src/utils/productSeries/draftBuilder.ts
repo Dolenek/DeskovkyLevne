@@ -24,6 +24,14 @@ const toTimestamp = (value: string | null | undefined): number | null => {
 const normalizeSellerId = (seller?: string | null): string =>
   seller?.trim().toLowerCase() || "unknown";
 
+const resolvePointDate = (row: ProductRow): string | null => {
+  const priceDate = row.price_date?.trim();
+  if (priceDate) {
+    return priceDate;
+  }
+  return row.scraped_at ? toDateKey(row.scraped_at) : null;
+};
+
 const toSeriesLabel = (row: ProductRow): string =>
   row.product_name_original?.trim() ||
   row.product_code?.trim() ||
@@ -74,11 +82,12 @@ const createSellerDraft = (
 
 const appendPoint = (draft: SellerDraft, row: ProductRow) => {
   const numericPrice = toNumericPrice(row.price_with_vat);
-  if (numericPrice === null || !row.scraped_at) {
+  const pointDate = resolvePointDate(row);
+  if (numericPrice === null || !pointDate) {
     return;
   }
   draft.points.push({
-    rawDate: toDateKey(row.scraped_at),
+    rawDate: pointDate,
     price: numericPrice,
   });
 };

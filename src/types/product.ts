@@ -13,6 +13,8 @@ export interface ProductRow {
   gallery_image_urls?: string[] | string | null;
   short_description: string | null;
   scraped_at: string;
+  price_date?: string | null;
+  snapshot_count?: number | null;
   supplementary_parameters?: Record<string, unknown> | unknown[] | string | null;
   metadata?: Record<string, unknown> | null;
   seller?: string | null;
