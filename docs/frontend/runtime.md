@@ -54,10 +54,19 @@ All product navigation is slug-based.
   seed-ordered catalog request.
 - Filtered catalog sends price range, availability, discounted state, player-count buckets, playtime buckets, age buckets, and canonical category slugs to the API for server-side filtering.
 - Filter options and price bounds are fetched from metadata endpoints, not a full in-browser catalog preload.
-- Product detail renders gallery, hero price summary, quick summary,
-  seller-offer table, price stats, multi-seller history chart, supplementary
-  parameters, related games, and CTA banner.
+- Product detail renders a filtered gallery, hero price summary, quick summary,
+  seller-offer table, actual price statistics, multi-seller history chart with
+  range controls, supplementary parameters, and a data summary.
+- Product detail offer CTA scrolls to the seller-offer section. Price-watch and
+  favorite actions are not rendered until backend support exists.
+- Seller-offer rows show only API-backed values: seller, price, normalized
+  availability, and outbound shop link. Shipping prices and seller ratings are
+  not simulated in the frontend.
+- Product galleries deduplicate normalized image URLs and skip placeholder or
+  thumbnail-only images such as `blank.gif` and `150x150` assets.
 
 ## Seller Content Rule in UI
 - Prefer `tlamagames`/`tlamagase` content fields where available.
 - Fallback to other seller data when preferred fields are missing.
+- Availability labels are presentation-normalized in the frontend when source
+  data contains schema.org values or simple encoded entities.

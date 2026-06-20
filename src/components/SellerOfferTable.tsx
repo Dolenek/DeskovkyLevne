@@ -1,5 +1,6 @@
 import type { LocaleKey } from "../i18n/translations";
 import type { ProductSeries } from "../types/product";
+import { formatAvailabilityLabel, getAvailabilityTone } from "../utils/availability";
 import { formatPrice } from "../utils/numberFormat";
 import { getLatestComparablePrice } from "../utils/priceStats";
 import { getSellerDisplayName } from "../utils/sellers";
@@ -11,7 +12,19 @@ interface SellerOfferTableProps {
   compact?: boolean;
 }
 
-const ratingSeed = (index: number) => [1423, 982, 1156, 734, 651, 487, 403, 312][index] ?? 284;
+const toneClassName = (availabilityLabel: string | null | undefined) => {
+  const tone = getAvailabilityTone(availabilityLabel);
+  if (tone === "available") {
+    return "bg-primary";
+  }
+  if (tone === "unavailable") {
+    return "bg-slate-400";
+  }
+  if (tone === "preorder") {
+    return "bg-accent";
+  }
+  return "bg-muted";
+};
 
 export const SellerOfferTable = ({
   series,
@@ -32,43 +45,37 @@ export const SellerOfferTable = ({
 
   return (
     <div className="overflow-hidden rounded-lg border border-line bg-white shadow-sm">
-      <div className="hidden grid-cols-[1.25fr_0.7fr_0.9fr_0.8fr_1fr_0.9fr] gap-3 border-b border-line bg-slate-50 px-4 py-3 text-xs font-extrabold text-navy md:grid">
+      <div className="hidden grid-cols-[1.25fr_0.75fr_1fr_0.85fr] gap-3 border-b border-line bg-slate-50 px-4 py-3 text-xs font-extrabold text-navy md:grid">
         <span>E-shop</span>
         <span>Cena</span>
         <span>Dostupnost</span>
-        <span>Doprava od</span>
-        <span>Hodnocení</span>
         <span className="text-right">Odkaz</span>
       </div>
       <div className="divide-y divide-line">
         {sellers.slice(0, compact ? 4 : 8).map((seller, index) => (
           <div
             key={`${seller.seller}-${seller.productCode}-${index}`}
-            className={`grid gap-3 px-4 py-3 text-sm md:grid-cols-[1.25fr_0.7fr_0.9fr_0.8fr_1fr_0.9fr] md:items-center ${
+            className={`grid gap-3 px-4 py-4 text-sm md:grid-cols-[1.25fr_0.75fr_1fr_0.85fr] md:items-center ${
               index === 0 ? "bg-emerald-50/70" : "bg-white"
             }`}
           >
-            <span className="flex items-center gap-2 font-extrabold text-navy">
-              {index === 0 ? <Icon name="trophy" className="h-4 w-4 text-accent" /> : null}
-              {getSellerDisplayName(seller.seller)}
+            <span className="flex items-center justify-between gap-3 font-extrabold text-navy md:justify-start">
+              <span className="flex items-center gap-2">
+                {index === 0 ? <Icon name="trophy" className="h-4 w-4 text-accent" /> : null}
+                {getSellerDisplayName(seller.seller)}
+              </span>
+              <span className="text-xs font-bold text-muted md:hidden">E-shop</span>
             </span>
-            <span className="text-lg font-extrabold text-primary">
-              {formatPrice(getLatestComparablePrice(seller), seller.currency ?? series.currency ?? undefined, locale)}
+            <span className="flex items-center justify-between gap-3 text-lg font-extrabold text-primary md:block">
+              <span>{formatPrice(getLatestComparablePrice(seller), seller.currency ?? series.currency ?? undefined, locale)}</span>
+              <span className="text-xs font-bold text-muted md:hidden">Cena</span>
             </span>
-            <span className="flex items-center gap-2 text-muted">
-              <span className={`h-2 w-2 rounded-full ${index < 3 ? "bg-primary" : "bg-accent"}`} />
-              {seller.availabilityLabel ?? (index < 3 ? "Skladem" : "Do 2 dnů")}
-            </span>
-            <span className="text-muted">{index === 1 ? "69 Kč" : index === 4 ? "59 Kč" : "79 Kč"}</span>
-            <span className="flex items-center gap-1 text-muted">
-              {Array.from({ length: 5 }, (_, starIndex) => (
-                <Icon
-                  key={starIndex}
-                  name="star"
-                  className="h-3.5 w-3.5 fill-amber-400 text-amber-400"
-                />
-              ))}
-              <span className="ml-1">({ratingSeed(index)})</span>
+            <span className="flex items-center justify-between gap-3 text-muted md:justify-start">
+              <span className="flex items-center gap-2">
+                <span className={`h-2 w-2 rounded-full ${toneClassName(seller.availabilityLabel)}`} />
+                {formatAvailabilityLabel(seller.availabilityLabel)}
+              </span>
+              <span className="text-xs font-bold text-muted md:hidden">Dostupnost</span>
             </span>
             <span className="text-right">
               {seller.url ? (
@@ -76,6 +83,7 @@ export const SellerOfferTable = ({
                   href={seller.url}
                   target="_blank"
                   rel="noreferrer"
+                  aria-label={`Otevřít nabídku ${getSellerDisplayName(seller.seller)}`}
                   className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-xs font-extrabold text-white hover:bg-emerald-700"
                 >
                   Do obchodu

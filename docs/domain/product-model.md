@@ -10,6 +10,9 @@
 - Price history visualization must show all available sellers in parallel.
 - No seller history merging into a single synthetic line.
 - History bounding controls (for example API `history_points`) may reduce returned rows but must not merge sellers.
+- Seller-offer presentation must not invent values that are not in the read
+  model. Shipping prices, shop ratings, and price-watch state require explicit
+  backend data before they can appear as factual UI fields.
 
 ## Presentation Priority Rule
 - For hero image, description, and similar display text:

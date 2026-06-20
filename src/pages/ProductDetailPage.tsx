@@ -1,23 +1,21 @@
 import { useEffect, useMemo } from "react";
 import { EmptyState, ErrorState, LoadingState } from "../components/AsyncStates";
-import { ProductChart } from "../components/ProductChart";
 import { AppHeader } from "../components/AppHeader";
 import { ProductSearchOverlay } from "../components/ProductSearchOverlay";
+import { ProductDataSummary } from "../components/product-detail/ProductDataSummary";
 import { ProductGallery } from "../components/product-detail/ProductGallery";
 import { ProductHero } from "../components/product-detail/ProductHero";
+import { ProductPriceStats } from "../components/product-detail/ProductPriceStats";
+import { ProductQuickSummary } from "../components/product-detail/ProductQuickSummary";
+import { PriceHistorySection } from "../components/product-detail/PriceHistorySection";
 import { SupplementaryParametersPanel } from "../components/product-detail/SupplementaryParametersPanel";
 import { SellerOfferTable } from "../components/SellerOfferTable";
 import { Seo } from "../components/Seo";
 import { AppFooter } from "../components/ui/AppFooter";
-import { CtaBanner } from "../components/ui/CtaBanner";
-import { Icon } from "../components/ui/Icon";
 import { useSearchOverlayState } from "../hooks/useSearchOverlayState";
 import { useTranslation } from "../hooks/useTranslation";
 import { useProductDetail } from "../hooks/useProductDetail";
-import type { ProductSeries } from "../types/product";
 import { buildProductDescription, buildProductStructuredData, pickPrimaryImage } from "../utils/productSeo";
-import { formatPrice } from "../utils/numberFormat";
-import { getPriceStats } from "../utils/priceStats";
 import { buildAbsoluteUrl } from "../utils/urls";
 
 interface ProductDetailPageProps {
@@ -29,64 +27,15 @@ interface ProductDetailPageProps {
 }
 
 const INLINE_SEARCH_LIMIT = 6;
+const OFFERS_SECTION_ID = "nabidky";
 
-const PriceStatsCards = ({ product, locale }: { product: ProductSeries; locale: "cs" | "en" }) => {
-  const stats = getPriceStats(product);
-  const cards = [
-    { icon: "barChart" as const, label: "Nejlepší doba nákupu", value: "Právě teď", note: "Cena je nyní nízko." },
-    { icon: "clock" as const, label: "Poslední změna ceny", value: "před 2 dny", note: "Cena klesla v posledních datech." },
-    { icon: "store" as const, label: "Počet obchodů", value: `${product.sellers.length} nabídek`, note: "Porovnáváme aktivní e-shopy." },
-    { icon: "thumbsUp" as const, label: "Doporučení", value: stats.minimum === product.latestPrice ? "Nakoupit nyní" : "Sledovat cenu", note: "Cena je vyhodnocená z historie." },
-  ];
-
-  return (
-    <section>
-      <h2 className="mb-5 text-2xl font-extrabold text-navy">Cenové statistiky</h2>
-      <div className="grid gap-4 md:grid-cols-4">
-        {cards.map((card) => (
-          <article key={card.label} className="rounded-lg border border-line bg-white p-5 shadow-sm">
-            <Icon name={card.icon} className="h-8 w-8 text-primary" />
-            <p className="mt-3 text-sm font-bold text-muted">{card.label}</p>
-            <p className="mt-1 text-xl font-black text-primary">{card.value}</p>
-            <p className="mt-1 text-xs font-semibold text-muted">{card.note}</p>
-          </article>
-        ))}
-      </div>
-      <p className="sr-only">{formatPrice(stats.minimum, product.currency ?? undefined, locale)}</p>
-    </section>
-  );
-};
-
-const QuickSummary = ({ product, locale }: { product: ProductSeries; locale: "cs" | "en" }) => (
-  <aside className="rounded-lg border border-line bg-white p-6 shadow-sm">
-    <h2 className="text-lg font-extrabold text-navy">Rychlé shrnutí</h2>
-    <div className="mt-5 space-y-5">
-      <div className="flex items-center gap-4">
-        <Icon name="tag" className="h-9 w-9 text-primary" />
-        <div>
-          <p className="font-extrabold text-navy">Nejlepší cena dnes</p>
-          <p className="text-sm font-bold text-primary">{formatPrice(product.latestPrice, product.currency ?? undefined, locale) ?? "Čekáme na cenu"}</p>
-        </div>
-      </div>
-      <div className="flex items-center gap-4">
-        <Icon name="barChart" className="h-9 w-9 text-primary" />
-        <div>
-          <p className="font-extrabold text-navy">Cena klesá</p>
-          <p className="text-sm text-muted">podle posledních záznamů</p>
-        </div>
-      </div>
-      <div className="flex items-center gap-4">
-        <Icon name="store" className="h-9 w-9 text-primary" />
-        <div>
-          <p className="font-extrabold text-navy">Skladem dle e-shopů</p>
-          <p className="text-sm text-muted">{product.availabilityLabel ?? `${product.sellers.length} aktivních nabídek`}</p>
-        </div>
-      </div>
-    </div>
-  </aside>
-);
-
-export const ProductDetailPage = ({ productSlug, onNavigateToProduct, onNavigateHome, onNavigatePath, activePath }: ProductDetailPageProps) => {
+export const ProductDetailPage = ({
+  productSlug,
+  onNavigateToProduct,
+  onNavigateHome,
+  onNavigatePath,
+  activePath,
+}: ProductDetailPageProps) => {
   const { t, locale } = useTranslation();
   const { product, loading, error, reload } = useProductDetail(productSlug);
   const searchState = useSearchOverlayState(INLINE_SEARCH_LIMIT);
@@ -109,7 +58,17 @@ export const ProductDetailPage = ({ productSlug, onNavigateToProduct, onNavigate
 
   return (
     <div className="min-h-screen bg-background text-navy">
-      <Seo title={pageTitle} description={seoDescription ?? "Sledujte vývoj ceny a dostupnosti českých deskových her."} path={canonicalPath} imageUrl={ogImage} locale={locale} type={product ? "product" : "website"} noIndex={!product || Boolean(error)} keywords={keywords} structuredData={structuredData ?? undefined} />
+      <Seo
+        title={pageTitle}
+        description={seoDescription ?? t("detailSeoFallback")}
+        path={canonicalPath}
+        imageUrl={ogImage}
+        locale={locale}
+        type={product ? "product" : "website"}
+        noIndex={!product || Boolean(error)}
+        keywords={keywords}
+        structuredData={structuredData ?? undefined}
+      />
       <AppHeader
         searchValue={searchState.searchValue}
         onSearchChange={(value) => {
@@ -146,36 +105,30 @@ export const ProductDetailPage = ({ productSlug, onNavigateToProduct, onNavigate
             <>
               <section className="grid min-w-0 gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)_260px]">
                 <ProductGallery series={product} />
-                <ProductHero series={product} locale={locale} t={t} />
-                <QuickSummary product={product} locale={locale} />
+                <ProductHero series={product} locale={locale} offersSectionId={OFFERS_SECTION_ID} t={t} />
+                <ProductQuickSummary product={product} locale={locale} t={t} />
               </section>
 
-              <section className="rounded-lg border border-line bg-white p-5 shadow-sm">
-                <div className="mb-4 flex items-center justify-between gap-4">
-                  <h2 className="text-2xl font-extrabold text-navy">Historie ceny</h2>
-                  <div className="flex gap-2 text-xs font-bold text-muted">
-                    {["1M", "3M", "6M", "1R", "MAX"].map((range) => (
-                      <span key={range} className={`rounded-md border px-3 py-1 ${range === "6M" ? "border-primary bg-emerald-50 text-primary" : "border-line"}`}>
-                        {range}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                <ProductChart series={product} locale={locale} priceLabel={t("price")} dateLabel={t("date")} />
-              </section>
+              <PriceHistorySection
+                series={product}
+                locale={locale}
+                priceLabel={t("price")}
+                dateLabel={t("date")}
+                t={t}
+              />
 
-              <section>
-                <h2 className="mb-5 text-2xl font-extrabold text-navy">Kde koupit nejlevněji</h2>
+              <section id={OFFERS_SECTION_ID} className="scroll-mt-28">
+                <h2 className="mb-5 text-2xl font-extrabold text-navy">{t("detailOffersTitle")}</h2>
                 <SellerOfferTable series={product} locale={locale} />
               </section>
 
-              <PriceStatsCards product={product} locale={locale} />
+              <ProductPriceStats product={product} locale={locale} t={t} />
 
               <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr_0.8fr]">
                 <article className="rounded-lg border border-line bg-white p-6 shadow-sm">
-                  <h2 className="text-2xl font-extrabold text-navy">O hře</h2>
+                  <h2 className="text-2xl font-extrabold text-navy">{t("detailDescriptionTitle")}</h2>
                   <p className="mt-4 whitespace-pre-line text-sm leading-7 text-muted">
-                    {product.shortDescription ?? "Popis hry zatím není v datech dostupný."}
+                    {product.shortDescription ?? t("detailDescriptionEmpty")}
                   </p>
                   <div className="mt-5 flex flex-wrap gap-2">
                     {product.categoryTags.slice(0, 6).map((category) => (
@@ -186,20 +139,11 @@ export const ProductDetailPage = ({ productSlug, onNavigateToProduct, onNavigate
                   </div>
                 </article>
                 <article className="rounded-lg border border-line bg-white p-6 shadow-sm">
-                  <h2 className="mb-4 text-xl font-extrabold text-navy">Základní informace</h2>
+                  <h2 className="mb-4 text-xl font-extrabold text-navy">{t("detailBasicInfoTitle")}</h2>
                   <SupplementaryParametersPanel parameters={product.supplementaryParameters} t={t} />
                 </article>
-                <article className="rounded-lg border border-line bg-white p-6 shadow-sm">
-                  <h2 className="text-xl font-extrabold text-navy">Obsah balení</h2>
-                  <ul className="mt-4 list-disc space-y-3 pl-5 text-sm font-semibold text-muted">
-                    <li>{product.galleryImages?.length ?? 0} obrázků v galerii</li>
-                    <li>{product.sellers.length} prodejců</li>
-                    <li>{product.categoryTags.length} kategorií</li>
-                  </ul>
-                </article>
+                <ProductDataSummary product={product} t={t} />
               </section>
-
-              <CtaBanner title="Hlídáte cenu této hry?" subtitle="Jakmile cena klesne, dáme vám vědět e-mailem." actionLabel="Zapnout hlídání" href={canonicalPath} />
             </>
           ) : null}
         </div>

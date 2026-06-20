@@ -4,20 +4,33 @@ import type { ProductSeries } from "../../types/product";
 const toLargeImageUrl = (url: string): string =>
   url.includes("/related/") ? url.replace("/related/", "/big/") : url;
 
+const isUsableGalleryImage = (url: string): boolean => {
+  const normalized = url.toLowerCase();
+  return (
+    normalized.length > 0 &&
+    !normalized.includes("blank.gif") &&
+    !normalized.includes("/150x150")
+  );
+};
+
 export const ProductGallery = ({ series }: { series: ProductSeries }) => {
   const images = useMemo(() => {
     const unique = new Set<string>();
     const ordered: string[] = [];
-    if (series.heroImage) {
-      unique.add(series.heroImage);
-      ordered.push(series.heroImage);
-    }
-    (series.galleryImages ?? []).forEach((url) => {
-      if (url && !unique.has(url)) {
-        unique.add(url);
-        ordered.push(url);
+    const addImage = (url: string | null | undefined) => {
+      if (!url) {
+        return;
       }
-    });
+      const largeImage = toLargeImageUrl(url);
+      if (!isUsableGalleryImage(largeImage) || unique.has(largeImage)) {
+        return;
+      }
+      unique.add(largeImage);
+      ordered.push(largeImage);
+    };
+
+    addImage(series.heroImage);
+    (series.galleryImages ?? []).forEach(addImage);
     return ordered;
   }, [series.galleryImages, series.heroImage]);
 
@@ -55,8 +68,9 @@ export const ProductGallery = ({ series }: { series: ProductSeries }) => {
               className="flex min-w-0 w-full flex-shrink-0 snap-center items-center justify-center"
             >
               <img
-                src={toLargeImageUrl(url)}
+                src={url}
                 alt={`${series.label} ${index + 1}`}
+                loading={index === 0 ? "eager" : "lazy"}
                 className="max-h-[410px] w-full rounded-lg object-contain"
               />
             </div>
@@ -74,11 +88,12 @@ export const ProductGallery = ({ series }: { series: ProductSeries }) => {
               key={`${url}-${index}`}
               type="button"
               onClick={() => scrollToIndex(index)}
+              aria-label={`Zobrazit obrázek ${index + 1} z ${images.length}`}
               className={`h-20 w-24 flex-shrink-0 rounded-lg border bg-white p-1 transition ${
                 index === activeIndex ? "border-primary ring-2 ring-primary/20" : "border-line"
               }`}
             >
-              <img src={url} alt="" className="h-full w-full rounded-md object-cover" />
+              <img src={url} alt="" loading="lazy" className="h-full w-full rounded-md object-cover" />
             </button>
           ))}
         </div>

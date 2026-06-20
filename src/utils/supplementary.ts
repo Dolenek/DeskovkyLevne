@@ -8,15 +8,15 @@ const toReadableLabel = (raw: unknown): string => {
   if (typeof raw !== "string") {
     return "";
   }
-  const trimmed = raw.trim();
+  const trimmed = raw
+    .trim()
+    .replace(/^\d+\.\s*/, "")
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ");
   if (!trimmed) {
     return "";
   }
-  return trimmed
-    .replace(/[_-]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .replace(/\b\w/g, (match) => match.toUpperCase());
+  return trimmed;
 };
 
 const stringifySupplementaryValue = (value: unknown): string => {

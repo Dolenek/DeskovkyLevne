@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import {
   CartesianGrid,
-  Legend,
   Line,
   LineChart,
   ResponsiveContainer,
@@ -15,11 +14,14 @@ import { formatPrice } from "../utils/numberFormat";
 import type { ProductSeries } from "../types/product";
 import { getSellerDisplayName } from "../utils/sellers";
 
+export type PriceChartRange = "1M" | "3M" | "6M" | "1R" | "MAX";
+
 interface ProductChartProps {
   series: ProductSeries;
   locale: LocaleKey;
   priceLabel: string;
   dateLabel: string;
+  range: PriceChartRange;
 }
 
 interface TooltipPayload {
@@ -39,7 +41,14 @@ interface ChartTooltipProps {
   dateLabel: string;
 }
 
-const SELLER_COLORS = ["#079455", "#f97316", "#0b6b5b", "#2563eb", "#9333ea"];
+const SELLER_COLORS = ["#079455", "#f97316", "#0b6b5b", "#2563eb", "#9333ea", "#c026d3"];
+const RANGE_DAYS: Record<Exclude<PriceChartRange, "MAX">, number> = {
+  "1M": 31,
+  "3M": 92,
+  "6M": 183,
+  "1R": 366,
+};
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 const ChartTooltip = ({
   active,
@@ -72,8 +81,7 @@ const ChartTooltip = ({
               {sellerLabels[entry.dataKey] ?? entry.dataKey}
             </span>
             <span className="font-extrabold text-primary">
-              {formatPrice(entry.value, currencyBySeller[entry.dataKey] ?? undefined, locale) ??
-                "--"}
+              {formatPrice(entry.value, currencyBySeller[entry.dataKey] ?? undefined, locale) ?? "--"}
             </span>
           </li>
         ))}
@@ -94,7 +102,23 @@ const buildSellerConfigs = (series: ProductSeries) =>
     };
   });
 
-const buildChartData = (series: ProductSeries, locale: LocaleKey) => {
+const filterDatesByRange = (dates: string[], range: PriceChartRange): string[] => {
+  if (range === "MAX" || dates.length === 0) {
+    return dates;
+  }
+  const latestTimestamp = Math.max(...dates.map((date) => new Date(date).getTime()));
+  if (!Number.isFinite(latestTimestamp)) {
+    return dates;
+  }
+  const minimumTimestamp = latestTimestamp - RANGE_DAYS[range] * DAY_MS;
+  const filteredDates = dates.filter((date) => {
+    const timestamp = new Date(date).getTime();
+    return Number.isFinite(timestamp) && timestamp >= minimumTimestamp;
+  });
+  return filteredDates.length > 0 ? filteredDates : dates.slice(-1);
+};
+
+const buildChartData = (series: ProductSeries, locale: LocaleKey, range: PriceChartRange) => {
   const sellerConfigs = buildSellerConfigs(series);
   const dateSet = new Set<string>();
   sellerConfigs.forEach((config) => {
@@ -103,8 +127,9 @@ const buildChartData = (series: ProductSeries, locale: LocaleKey) => {
   const sortedDates = Array.from(dateSet).sort(
     (a, b) => new Date(a).getTime() - new Date(b).getTime()
   );
+  const visibleDates = filterDatesByRange(sortedDates, range);
 
-  const data = sortedDates.map((rawDate) => {
+  const data = visibleDates.map((rawDate) => {
     const entry: Record<string, string | number> = {
       date: formatDateLabel(rawDate, locale),
     };
@@ -132,10 +157,11 @@ export const ProductChart = ({
   locale,
   priceLabel,
   dateLabel,
+  range,
 }: ProductChartProps) => {
   const { data, sellerConfigs, sellerLabels, currencyBySeller } = useMemo(
-    () => buildChartData(series, locale),
-    [series, locale]
+    () => buildChartData(series, locale, range),
+    [series, locale, range]
   );
 
   if (data.length === 0 || sellerConfigs.length === 0) {
@@ -143,59 +169,57 @@ export const ProductChart = ({
   }
 
   return (
-    <div className="h-64 min-w-0 w-full">
-      <ResponsiveContainer>
-        <LineChart data={data} margin={{ top: 8, right: 18, bottom: 4, left: 0 }}>
-          <defs>
-            <linearGradient id="chartSoftFill" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stopColor="#079455" stopOpacity={0.18} />
-              <stop offset="100%" stopColor="#079455" stopOpacity={0} />
-            </linearGradient>
-          </defs>
-          <CartesianGrid stroke="#e7edf5" vertical={false} />
-          <XAxis dataKey="date" stroke="#60708c" tick={{ fill: "#60708c", fontSize: 12 }} />
-          <YAxis
-            stroke="#60708c"
-            tick={{ fill: "#60708c", fontSize: 12 }}
-            width={78}
-            tickFormatter={(value) =>
-              formatPrice(Number(value), series.currency ?? undefined, locale) ?? ""
-            }
-          />
-          <Tooltip
-            content={
-              <ChartTooltip
-                locale={locale}
-                sellerLabels={sellerLabels}
-                currencyBySeller={currencyBySeller}
-                priceLabel={priceLabel}
-                dateLabel={dateLabel}
+    <div className="min-w-0">
+      <div className="mb-4 flex flex-wrap gap-x-4 gap-y-2">
+        {sellerConfigs.map((config) => (
+          <span key={config.id} className="inline-flex items-center gap-2 text-xs font-bold text-muted">
+            <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: config.color }} />
+            {config.label}
+          </span>
+        ))}
+      </div>
+      <div className="custom-scrollbar overflow-x-auto">
+        <div className="h-[260px] min-w-[640px] md:min-w-0">
+          <ResponsiveContainer width="100%" height={260}>
+            <LineChart data={data} margin={{ top: 8, right: 18, bottom: 4, left: 0 }}>
+              <CartesianGrid stroke="#e7edf5" vertical={false} />
+              <XAxis dataKey="date" stroke="#60708c" tick={{ fill: "#60708c", fontSize: 12 }} />
+              <YAxis
+                stroke="#60708c"
+                tick={{ fill: "#60708c", fontSize: 12 }}
+                width={78}
+                tickFormatter={(value) =>
+                  formatPrice(Number(value), series.currency ?? undefined, locale) ?? ""
+                }
               />
-            }
-          />
-          <Legend
-            iconType="circle"
-            formatter={(value) => (
-              <span className="text-xs font-bold text-muted">
-                {sellerLabels[String(value)] ?? String(value)}
-              </span>
-            )}
-          />
-          {sellerConfigs.map((config) => (
-            <Line
-              key={config.id}
-              type="monotone"
-              dataKey={config.id}
-              stroke={config.color}
-              strokeWidth={3}
-              dot={{ r: 3, strokeWidth: 2, fill: "#fff" }}
-              activeDot={{ r: 5 }}
-              connectNulls
-              isAnimationActive={false}
-            />
-          ))}
-        </LineChart>
-      </ResponsiveContainer>
+              <Tooltip
+                content={
+                  <ChartTooltip
+                    locale={locale}
+                    sellerLabels={sellerLabels}
+                    currencyBySeller={currencyBySeller}
+                    priceLabel={priceLabel}
+                    dateLabel={dateLabel}
+                  />
+                }
+              />
+              {sellerConfigs.map((config) => (
+                <Line
+                  key={config.id}
+                  type="monotone"
+                  dataKey={config.id}
+                  stroke={config.color}
+                  strokeWidth={3}
+                  dot={{ r: 3, strokeWidth: 2, fill: "#fff" }}
+                  activeDot={{ r: 5 }}
+                  connectNulls
+                  isAnimationActive={false}
+                />
+              ))}
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
     </div>
   );
 };
