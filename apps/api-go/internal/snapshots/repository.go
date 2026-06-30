@@ -125,8 +125,14 @@ select
   h.seller`
 
 	if historyPoints <= 0 {
-		query := selectClause + `
+		query := `
+with requested_product as (
+  select public.canonical_product_slug(null, null, $1) as canonical_product_id
+)
+` + selectClause + `
 from public.catalog_daily_price_history h
+join requested_product requested
+  on requested.canonical_product_id = h.canonical_product_id
 join public.catalog_slug_seller_state s
   on s.seller = h.seller
   and public.canonical_product_slug(
@@ -134,18 +140,21 @@ join public.catalog_slug_seller_state s
     s.product_code,
     s.product_name_normalized
   ) = h.canonical_product_id
-where h.canonical_product_id = $1
 order by h.price_date asc, h.seller asc;`
 		return query, []any{slug}
 	}
 
 	query := `
-with recent_history as (
-select *
-from public.catalog_daily_price_history
-where canonical_product_id = $1
-order by price_date desc, seller desc
-limit $2
+with requested_product as (
+  select public.canonical_product_slug(null, null, $1) as canonical_product_id
+),
+recent_history as (
+  select h.*
+  from public.catalog_daily_price_history h
+  join requested_product requested
+    on requested.canonical_product_id = h.canonical_product_id
+  order by h.price_date desc, h.seller desc
+  limit $2
 )
 ` + selectClause + `
 from recent_history h

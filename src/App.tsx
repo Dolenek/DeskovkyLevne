@@ -29,6 +29,7 @@ const App = () => {
         onNavigateToProduct={(slug) => navigate(buildProductDetailPath(slug))}
         onNavigateHome={() => navigate("/")}
         onNavigatePath={navigate}
+        onReplacePath={(targetPath) => navigate(targetPath, { replace: true })}
         activePath={path}
       />
     );

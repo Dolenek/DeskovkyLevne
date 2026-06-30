@@ -15,6 +15,7 @@ import { AppFooter } from "../components/ui/AppFooter";
 import { useSearchOverlayState } from "../hooks/useSearchOverlayState";
 import { useTranslation } from "../hooks/useTranslation";
 import { useProductDetail } from "../hooks/useProductDetail";
+import { buildProductDetailPath } from "../routing/routes";
 import { buildProductDescription, buildProductStructuredData, pickPrimaryImage } from "../utils/productSeo";
 import { buildAbsoluteUrl } from "../utils/urls";
 
@@ -23,6 +24,7 @@ interface ProductDetailPageProps {
   onNavigateToProduct: (productSlug: string) => void;
   onNavigateHome: () => void;
   onNavigatePath: (path: string) => void;
+  onReplacePath: (path: string) => void;
   activePath: string;
 }
 
@@ -34,6 +36,7 @@ export const ProductDetailPage = ({
   onNavigateToProduct,
   onNavigateHome,
   onNavigatePath,
+  onReplacePath,
   activePath,
 }: ProductDetailPageProps) => {
   const { t, locale } = useTranslation();
@@ -45,7 +48,18 @@ export const ProductDetailPage = ({
     setSearchActive(false);
   }, [productSlug, setSearchActive]);
 
-  const canonicalPath = useMemo(() => `/deskove-hry/${encodeURIComponent(productSlug)}`, [productSlug]);
+  useEffect(() => {
+    const canonicalSlug = product?.slug?.trim().toLowerCase();
+    if (!canonicalSlug || canonicalSlug === productSlug.trim().toLowerCase()) {
+      return;
+    }
+    onReplacePath(buildProductDetailPath(canonicalSlug));
+  }, [onReplacePath, product?.slug, productSlug]);
+
+  const canonicalPath = useMemo(
+    () => buildProductDetailPath(product?.slug ?? productSlug),
+    [product?.slug, productSlug]
+  );
   const seoDescription = useMemo(() => (product ? buildProductDescription(product, locale) : null), [locale, product]);
   const structuredData = useMemo(() => {
     if (!product || !seoDescription) return null;

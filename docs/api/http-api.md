@@ -26,7 +26,9 @@ Query params:
 - `playtime` (optional, comma-separated string): supported values are `under-30`, `30-60`, `60-plus`.
 - `age` (optional, comma-separated int): supported UI values are `6`, `8`, `10`, `12`; matches products with `min_age <= value`.
 - `price_movement` (optional, string): `decreased` returns products with `price_movement = decreased` or `latest_price < list_price_with_vat`.
-- `q` (optional, string): token search against normalized product name and `product_code`. Special characters are treated as token separators, and all query tokens must match in any order.
+- `q` (optional, string): token search against normalized product name,
+  approved alias terms, and `product_code`. Special characters are treated as
+  token separators, and all query tokens must match in any order.
 - `random_seed` (optional, int): returns a deterministic pseudo-random order for the filtered result set. Use for small random product selections; normal catalog browsing omits it and keeps name sorting.
 
 Category slugs map to catalog tags:
@@ -49,10 +51,12 @@ Response shape:
 
 ## Search Suggestions
 ### `GET /api/v1/search/suggest`
-Returns lightweight search suggestions from slug summary rows.
+Returns lightweight search suggestions from canonical slug rows.
 
 Query params:
-- `q` (required for results): if length `< 2`, returns empty list. Special characters are treated as token separators, and all query tokens must match normalized product name or `product_code` in any order.
+- `q` (required for results): if length `< 2`, returns empty list. Special
+  characters are treated as token separators, and all query tokens must match
+  normalized product name, approved alias terms, or `product_code` in any order.
 - `availability` (optional): same semantics as catalog.
 - `limit` (optional, int): default `60`, capped by backend max page size.
 
@@ -70,12 +74,14 @@ Response row fields:
 
 ## Product Snapshots
 ### `GET /api/v1/products/{slug}`
-Returns seller-day history rows for a canonical slug. Price points come from
-`catalog_daily_price_history`; current seller metadata such as name, image,
-availability label, and source URL comes from `catalog_slug_seller_state`.
+Returns seller-day history rows for a canonical slug or an approved alias slug.
+Price points come from `catalog_daily_price_history`; current seller metadata
+such as name, image, availability label, and source URL comes from
+`catalog_slug_seller_state`.
 
 Path params:
-- `slug` (required): lowercased by server before query.
+- `slug` (required): lowercased by server before query, then resolved through
+  `canonical_product_slug(...)`.
 
 Query params:
 - `history_points` (optional, int): limits response to the latest N seller-day
@@ -86,6 +92,8 @@ History row fields include the normal product snapshot fields plus:
 - `price_date`: checked calendar date used by charts.
 - `snapshot_count`: successful check count for that seller and date.
 - `scraped_at`: last successful check timestamp for that seller and date.
+
+For alias lookups, row `product_name_normalized` is the resolved canonical slug.
 
 Error behavior:
 - empty slug returns `400` with code `validation_error`.

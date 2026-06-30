@@ -7,7 +7,9 @@
 - Product detail page: `/deskove-hry/:slug`
 - Unknown paths render an explicit not-found screen.
 
-All product navigation is slug-based.
+All product navigation is slug-based. Product detail can be opened through an
+approved alias slug, but after data loads the page replaces the browser URL and
+SEO canonical link with the resolved canonical slug.
 
 ## Data Access
 - Frontend runtime reads data through backend API (`VITE_API_BASE_URL`).
