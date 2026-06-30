@@ -1,3 +1,5 @@
+import type { RefObject } from "react";
+import { createPortal } from "react-dom";
 import type { LocaleKey } from "../../i18n/translations";
 import { formatPrice } from "../../utils/numberFormat";
 import { chartCopy } from "./chartCopy";
@@ -12,6 +14,8 @@ interface PriceChartTooltipProps {
   active?: boolean;
   payload?: TooltipPayload[];
   label?: string;
+  coordinate?: { x: number; y: number };
+  chartContainerRef: RefObject<HTMLDivElement | null>;
   locale: LocaleKey;
   sellerLabels: Record<string, string>;
   currencyBySeller: Record<string, string | null>;
@@ -52,6 +56,8 @@ export const PriceChartTooltip = ({
   active,
   payload,
   label,
+  coordinate,
+  chartContainerRef,
   locale,
   sellerLabels,
   currencyBySeller,
@@ -63,10 +69,20 @@ export const PriceChartTooltip = ({
     return null;
   }
 
-  const bestPrice = rows[0]?.value ?? null;
+  const chartBounds = chartContainerRef.current?.getBoundingClientRect();
+  if (!chartBounds || !coordinate || typeof document === "undefined") {
+    return null;
+  }
 
-  return (
-    <div className="max-w-[320px] rounded-lg border border-line bg-white px-4 py-3 text-sm text-navy shadow-xl">
+  const bestPrice = rows[0]?.value ?? null;
+  const left = Math.max(12, Math.min(chartBounds.left + coordinate.x + 16, window.innerWidth - 340));
+  const top = Math.max(12, chartBounds.top + coordinate.y - 128);
+
+  return createPortal(
+    <div
+      className="pointer-events-none fixed z-[100] max-w-[320px] rounded-lg border border-line bg-white px-4 py-3 text-sm text-navy shadow-xl"
+      style={{ left, top }}
+    >
       <p className="text-muted">
         {dateLabel}: <span className="font-bold text-navy">{label}</span>
       </p>
@@ -101,6 +117,7 @@ export const PriceChartTooltip = ({
           );
         })}
       </ul>
-    </div>
+    </div>,
+    document.body
   );
 };

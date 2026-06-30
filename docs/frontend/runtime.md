@@ -61,9 +61,10 @@ All product navigation is slug-based.
   be reached because the browser reports `Failed to fetch` or the API/proxy
   returns a transient 5xx failure.
 - Product detail renders a filtered gallery, hero price summary, quick summary,
-  seller-offer table, actual price statistics, multi-seller history chart with
-  range controls, interactive seller visibility, a zoomed price axis based on
-  visible values, supplementary parameters, and a data summary.
+  seller-offer table, actual price statistics, a multi-seller history chart with
+  range controls, interactive seller visibility, a portal-rendered tooltip, a
+  zoomed price axis based on visible values, supplementary parameters, and a
+  data summary.
 - Product detail chart points prefer API `price_date` and fall back to
   `scraped_at` for raw snapshot-shaped rows.
 - Product detail renders one mock product with multi-seller price history when

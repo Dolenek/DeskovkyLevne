@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactElement } from "react";
+import { useRef, type ReactElement } from "react";
 import {
   CartesianGrid,
   Line,
@@ -9,8 +9,6 @@ import {
   YAxis,
 } from "recharts";
 import { formatPrice } from "../utils/numberFormat";
-import { buildPriceChartModel } from "./product-chart/chartData";
-import { PriceChartLegend } from "./product-chart/PriceChartLegend";
 import { PriceChartTooltip } from "./product-chart/PriceChartTooltip";
 import type { PriceChartDatum, ProductChartProps } from "./product-chart/types";
 
@@ -21,9 +19,6 @@ interface EndpointDotProps {
   cy?: number;
   payload?: PriceChartDatum;
 }
-
-const getSellerIds = (series: ProductChartProps["series"]): string[] =>
-  series.sellers.map((seller, index) => seller.seller || `seller-${index}`);
 
 const renderEndpointDot = (
   props: EndpointDotProps,
@@ -42,41 +37,18 @@ export const ProductChart = ({
   locale,
   priceLabel,
   dateLabel,
-  range,
+  model,
 }: ProductChartProps) => {
-  const [selectedSellerIds, setSelectedSellerIds] = useState<string[]>([]);
-  const allSellerIds = useMemo(() => getSellerIds(series), [series]);
-  const activeSellerIds = useMemo(() => {
-    const existingSelectedIds = selectedSellerIds.filter((id) => allSellerIds.includes(id));
-    return new Set(existingSelectedIds.length > 0 ? existingSelectedIds : allSellerIds);
-  }, [allSellerIds, selectedSellerIds]);
-  const model = useMemo(
-    () => buildPriceChartModel(series, locale, range, activeSellerIds),
-    [activeSellerIds, locale, range, series]
-  );
+  const chartContainerRef = useRef<HTMLDivElement | null>(null);
 
   if (model.data.length === 0 || model.activeSellerConfigs.length === 0) {
     return null;
   }
 
-  const toggleSeller = (sellerId: string) => {
-    setSelectedSellerIds((currentIds) => {
-      const existingIds = currentIds.filter((id) => allSellerIds.includes(id));
-      const visibleIds = existingIds.length > 0 ? existingIds : allSellerIds;
-
-      if (!visibleIds.includes(sellerId)) {
-        return [...visibleIds, sellerId];
-      }
-
-      return visibleIds.length > 1 ? visibleIds.filter((id) => id !== sellerId) : visibleIds;
-    });
-  };
-
   return (
-    <div className="min-w-0 space-y-4">
-      <PriceChartLegend items={model.legendItems} locale={locale} onToggleSeller={toggleSeller} />
-      <div className="custom-scrollbar overflow-x-auto">
-        <div className="h-[320px] min-w-[760px] md:min-w-0">
+    <div className="min-w-0">
+      <div className="custom-scrollbar overflow-x-auto lg:overflow-visible">
+        <div ref={chartContainerRef} className="h-[320px] min-w-[760px] lg:min-w-0">
           <ResponsiveContainer width="100%" height={320}>
             <LineChart data={model.data} margin={{ top: 14, right: 22, bottom: 0, left: 0 }}>
               <CartesianGrid stroke="#e7edf5" vertical={false} />
@@ -98,8 +70,11 @@ export const ProductChart = ({
                 }
               />
               <Tooltip
+                allowEscapeViewBox={{ x: true, y: true }}
+                wrapperStyle={{ pointerEvents: "none", zIndex: 100 }}
                 content={
                   <PriceChartTooltip
+                    chartContainerRef={chartContainerRef}
                     locale={locale}
                     sellerLabels={model.sellerLabels}
                     currencyBySeller={model.currencyBySeller}

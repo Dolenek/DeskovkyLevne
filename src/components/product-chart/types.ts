@@ -44,5 +44,5 @@ export interface ProductChartProps {
   locale: LocaleKey;
   priceLabel: string;
   dateLabel: string;
-  range: PriceChartRange;
+  model: PriceChartModel;
 }
