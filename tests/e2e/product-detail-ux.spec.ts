@@ -119,19 +119,54 @@ test("product detail removes misleading UI and normalizes seller data", async ({
   await expect(page.getByText("(1423)")).toHaveCount(0);
 
   await expect(page.getByText("https://schema.org/InStock")).toHaveCount(0);
-  await expect(page.getByText("Skladem >5 ks")).toBeVisible();
+  await expect(page.getByText("Skladem >5 ks")).toHaveCount(2);
   await expect(page.getByText("Nedostupné")).toBeVisible();
-  await expect(page.getByText("Najáda")).toBeVisible();
+  await expect(page.locator("#nabidky").getByText("Najáda")).toBeVisible();
 
   await expect(page.locator('main img[alt^="Alpha Game"]')).toHaveCount(2);
   await expect(page.locator('main img[src*="blank.gif"]')).toHaveCount(0);
   await expect(page.locator('main img[src*="150x150"]')).toHaveCount(0);
-  await expect(page.getByText("ZáKladní")).toHaveCount(0);
+  await expect(page.getByText("ZáKladní", { exact: true })).toHaveCount(0);
   await expect(page.getByText("Základní hra / Rozšíření")).toBeVisible();
+
+  await expect(page.getByRole("button", { name: "3M" })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("button", { name: "Skrýt Tlama Games" })).toBeVisible();
+  await expect(page.getByText("Nejlevnější", { exact: true })).toBeVisible();
+  await expect(page.getByText("0,00 Kč", { exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: "Skrýt Tlama Games" }).click();
+  await expect(page.getByRole("button", { name: "Zobrazit Tlama Games" })).toHaveAttribute(
+    "aria-pressed",
+    "false"
+  );
+  await page.getByRole("button", { name: "Zobrazit Tlama Games" }).click();
+  await expect(page.getByRole("button", { name: "Skrýt Tlama Games" })).toHaveAttribute("aria-pressed", "true");
 
   await page.getByRole("button", { name: "1M" }).click();
   await expect(page.getByRole("button", { name: "1M" })).toHaveAttribute("aria-pressed", "true");
 
   await page.getByRole("link", { name: "Zobrazit nabídky" }).click();
   await expect(page).toHaveURL(/#nabidky$/);
+});
+
+test("product detail renders mock product when the API cannot be reached", async ({ page }) => {
+  await page.route("**/api/v1/**", async (route) => {
+    const url = new URL(route.request().url());
+    if (url.pathname === "/api/v1/products/api-down") {
+      await route.abort("failed");
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ rows: [] }),
+    });
+  });
+
+  await page.goto("/deskove-hry/api-down");
+
+  await expect(page.getByRole("heading", { name: "Ukázková hra cenové historie" })).toBeVisible();
+  await expect(page.getByText("Failed to fetch")).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Historie ceny" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Kde koupit nejlevněji" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Skrýt Tlama Games" })).toBeVisible();
 });

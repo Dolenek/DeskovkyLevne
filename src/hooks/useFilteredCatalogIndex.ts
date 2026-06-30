@@ -8,8 +8,10 @@ import type {
   PriceMovementFilter,
 } from "../types/filters";
 import type { ProductSeries } from "../types/product";
+import { MOCK_CATALOG_ROW } from "../mocks/mockCatalogRows";
 import { fetchFilteredCatalogIndex } from "../services/api/catalogApi";
 import { buildSeriesFromCatalogIndexRow } from "../utils/catalogTransforms";
+import { isApiFallbackFailure } from "../utils/networkErrors";
 
 interface UseFilteredCatalogIndexOptions {
   priceRange: { min: number | null; max: number | null };
@@ -111,6 +113,12 @@ export const useFilteredCatalogIndex = (
         setError(null);
       } catch (err) {
         if (controller.signal.aborted || requestRef.current !== requestId) {
+          return;
+        }
+        if (isApiFallbackFailure(err)) {
+          setSeries([buildSeriesFromCatalogIndexRow(MOCK_CATALOG_ROW)]);
+          setTotal(1);
+          setError(null);
           return;
         }
         setSeries([]);

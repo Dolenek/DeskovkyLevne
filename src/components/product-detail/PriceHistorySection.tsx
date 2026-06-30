@@ -21,13 +21,16 @@ export const PriceHistorySection = ({
   dateLabel,
   t,
 }: PriceHistorySectionProps) => {
-  const [selectedRange, setSelectedRange] = useState<PriceChartRange>("6M");
+  const [selectedRange, setSelectedRange] = useState<PriceChartRange>("3M");
 
   return (
     <section className="rounded-lg border border-line bg-white p-5 shadow-sm">
       <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-2xl font-extrabold text-navy">{t("detailHistoryTitle")}</h2>
-        <div className="flex flex-wrap gap-2 text-xs font-bold text-muted" aria-label={t("detailHistoryRangeLabel")}>
+        <div
+          className="inline-flex w-fit flex-wrap gap-1 rounded-lg border border-line bg-background p-1 text-xs font-bold text-muted"
+          aria-label={t("detailHistoryRangeLabel")}
+        >
           {RANGE_OPTIONS.map((range) => {
             const active = range === selectedRange;
             return (
@@ -36,8 +39,8 @@ export const PriceHistorySection = ({
                 type="button"
                 onClick={() => setSelectedRange(range)}
                 aria-pressed={active}
-                className={`rounded-md border px-3 py-1 transition ${
-                  active ? "border-primary bg-emerald-50 text-primary" : "border-line hover:border-primary/50"
+                className={`rounded-md px-3 py-1.5 transition ${
+                  active ? "bg-white text-primary shadow-sm" : "hover:bg-white hover:text-navy"
                 }`}
               >
                 {range}

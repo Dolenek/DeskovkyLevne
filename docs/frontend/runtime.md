@@ -54,11 +54,18 @@ All product navigation is slug-based.
   seed-ordered catalog request.
 - Filtered catalog sends price range, availability, discounted state, player-count buckets, playtime buckets, age buckets, and canonical category slugs to the API for server-side filtering.
 - Filter options and price bounds are fetched from metadata endpoints, not a full in-browser catalog preload.
+- Catalog and search overlay render one mock product when API requests cannot
+  be reached because the browser reports `Failed to fetch` or the API/proxy
+  returns a transient 5xx failure.
 - Product detail renders a filtered gallery, hero price summary, quick summary,
   seller-offer table, actual price statistics, multi-seller history chart with
-  range controls, supplementary parameters, and a data summary.
+  range controls, interactive seller visibility, a zoomed price axis based on
+  visible values, supplementary parameters, and a data summary.
 - Product detail chart points prefer API `price_date` and fall back to
   `scraped_at` for raw snapshot-shaped rows.
+- Product detail renders one mock product with multi-seller price history when
+  the product API cannot be reached because the browser reports `Failed to fetch`
+  or the API/proxy returns a transient 5xx failure.
 - Product detail offer CTA scrolls to the seller-offer section. Price-watch and
   favorite actions are not rendered until backend support exists.
 - Seller-offer rows show only API-backed values: seller, price, normalized

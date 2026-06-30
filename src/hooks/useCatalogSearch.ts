@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { AvailabilityFilter } from "../types/filters";
 import type { ProductSearchResult } from "../types/product";
+import { MOCK_CATALOG_SEARCH_ROW } from "../mocks/mockCatalogRows";
 import { searchCatalogIndexByName } from "../services/api/catalogApi";
+import { buildSearchResultFromCatalogRow } from "../utils/catalogTransforms";
+import { isApiFallbackFailure } from "../utils/networkErrors";
 
 const MIN_QUERY_LENGTH = 2;
 const MAX_CACHE_ENTRIES = 50;
@@ -122,6 +125,16 @@ export const useCatalogSearch = ({
         });
       } catch (err) {
         if (requestRef.current !== requestId || isAbortError(err)) {
+          return;
+        }
+        if (isApiFallbackFailure(err)) {
+          const fallbackResults = [buildSearchResultFromCatalogRow(MOCK_CATALOG_SEARCH_ROW)];
+          setResults(fallbackResults);
+          setError(null);
+          setCacheEntry(cacheRef.current, cacheKey, {
+            results: fallbackResults,
+            timestamp: Date.now(),
+          });
           return;
         }
         setError(err instanceof Error ? err.message : "Unknown error");
