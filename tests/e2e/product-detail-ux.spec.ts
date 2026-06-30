@@ -149,7 +149,7 @@ test("product detail removes misleading UI and normalizes seller data", async ({
   await expect(page.getByText("(1423)")).toHaveCount(0);
 
   await expect(page.getByText("https://schema.org/InStock")).toHaveCount(0);
-  await expect(page.getByText("Skladem >5 ks")).toHaveCount(2);
+  await expect(page.getByText("Skladem >5 ks")).toHaveCount(1);
   await expect(page.getByText("Nedostupné")).toBeVisible();
   await expect(page.locator("#nabidky").getByText("Najáda")).toBeVisible();
 

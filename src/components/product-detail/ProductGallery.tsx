@@ -72,7 +72,7 @@ export const ProductGallery = ({ series }: { series: ProductSeries }) => {
                 src={url}
                 alt={`${series.label} ${index + 1}`}
                 loading={index === 0 ? "eager" : "lazy"}
-                className="h-full max-h-[410px] w-full rounded-lg object-contain"
+                className="h-full max-h-[540px] w-full rounded-lg object-contain"
               />
             </div>
           ))

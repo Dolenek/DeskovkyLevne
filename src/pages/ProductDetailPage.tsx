@@ -7,7 +7,6 @@ import { ProductDataSummary } from "../components/product-detail/ProductDataSumm
 import { ProductGallery } from "../components/product-detail/ProductGallery";
 import { ProductHero } from "../components/product-detail/ProductHero";
 import { ProductPriceStats } from "../components/product-detail/ProductPriceStats";
-import { ProductQuickSummary } from "../components/product-detail/ProductQuickSummary";
 import { PriceHistorySection } from "../components/product-detail/PriceHistorySection";
 import { SupplementaryParametersPanel } from "../components/product-detail/SupplementaryParametersPanel";
 import { SellerOfferTable } from "../components/SellerOfferTable";
@@ -104,10 +103,9 @@ export const ProductDetailPage = ({
           {!loading && !error && !product ? <EmptyState message={t("detailNotFoundDescription", { code: productSlug })} /> : null}
           {product ? (
             <>
-              <section className="grid min-w-0 gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)_260px]">
+              <section className="grid min-w-0 items-start gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">
                 <ProductGallery series={product} />
                 <ProductHero series={product} locale={locale} offersSectionId={OFFERS_SECTION_ID} t={t} />
-                <ProductQuickSummary product={product} locale={locale} t={t} />
               </section>
 
               <PriceHistorySection

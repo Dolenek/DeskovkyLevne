@@ -1,7 +1,7 @@
 import { SkeletonBlock } from "./SkeletonBlock";
 
 const ProductDetailTopSkeleton = () => (
-  <section className="grid min-w-0 gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)_260px]">
+  <section className="grid min-w-0 items-start gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">
     <div>
       <SkeletonBlock className="aspect-[4/3] w-full" />
       <div className="mt-4 flex gap-3 overflow-hidden">
@@ -19,12 +19,6 @@ const ProductDetailTopSkeleton = () => (
       <SkeletonBlock className="mt-6 h-28 w-full" />
       <SkeletonBlock className="mt-6 h-12 w-full" />
     </section>
-    <aside className="rounded-lg border border-line bg-white p-5 shadow-sm">
-      <SkeletonBlock className="h-5 w-32" />
-      <SkeletonBlock className="mt-5 h-8 w-24" />
-      <SkeletonBlock className="mt-4 h-4 w-full" />
-      <SkeletonBlock className="mt-3 h-4 w-3/4" />
-    </aside>
   </section>
 );
 
