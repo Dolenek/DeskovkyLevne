@@ -1,5 +1,6 @@
 import type { MouseEvent } from "react";
 import { ProductTile } from "../../components/ProductTile";
+import { ProductCardSkeleton, SkeletonBlock, SkeletonImage } from "../../components/skeleton";
 import { Icon } from "../../components/ui/Icon";
 import type { LocaleKey } from "../../i18n/translations";
 import type { ProductSeries } from "../../types/product";
@@ -17,9 +18,9 @@ const getHeroProductMeta = (series: ProductSeries) =>
   series.categoryTags[0] ?? series.availabilityLabel ?? "Desková hra";
 
 const HeroProductImage = ({ series }: { series: ProductSeries }) => (
-  <div className="aspect-[5/3] overflow-hidden rounded-lg bg-slate-50">
+  <div className="relative aspect-[5/3] overflow-hidden rounded-lg bg-slate-50">
     {series.heroImage ? (
-      <img
+      <SkeletonImage
         src={series.heroImage}
         alt={series.label}
         className="h-full w-full object-contain p-4 transition duration-300 group-hover:scale-105"
@@ -49,6 +50,21 @@ const HeroProductSummary = ({
     <p className="shrink-0 text-2xl font-black text-primary">
       {formatPrice(series.latestPrice, series.currency ?? undefined, locale) ?? "--"}
     </p>
+  </div>
+);
+
+const HeroPreviewSkeleton = () => (
+  <div aria-label="Nacitani doporucene hry" role="status" className="hidden justify-end lg:flex">
+    <div className="w-full max-w-xl rounded-lg border border-line bg-white p-5 shadow-lg">
+      <SkeletonBlock className="aspect-[5/3] w-full" />
+      <div className="mt-5 flex items-end justify-between gap-4">
+        <div className="flex-1">
+          <SkeletonBlock className="h-4 w-32" />
+          <SkeletonBlock className="mt-2 h-8 w-4/5" />
+        </div>
+        <SkeletonBlock className="h-8 w-28" />
+      </div>
+    </div>
   </div>
 );
 
@@ -100,13 +116,19 @@ export const HowItWorks = () => {
 
 export const HeroPreview = ({
   series,
+  loading,
   locale,
   onNavigate,
 }: {
   series: ProductSeries | null;
+  loading: boolean;
   locale: LocaleKey;
   onNavigate: (slug: string) => void;
 }) => {
+  if (loading) {
+    return <HeroPreviewSkeleton />;
+  }
+
   if (!series) {
     return null;
   }
@@ -136,12 +158,14 @@ export const HeroPreview = ({
 export const FeaturedProducts = ({
   title,
   series,
+  loading,
   locale,
   onNavigate,
   onShowAll,
 }: {
   title: string;
   series: ProductSeries[];
+  loading: boolean;
   locale: LocaleKey;
   onNavigate: (slug: string) => void;
   onShowAll: () => void;
@@ -154,9 +178,11 @@ export const FeaturedProducts = ({
       </button>
     </div>
     <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-      {series.slice(0, 4).map((entry) => (
-        <ProductTile key={entry.slug} series={entry} locale={locale} onNavigate={onNavigate} />
-      ))}
+      {loading
+        ? Array.from({ length: 4 }, (_, index) => <ProductCardSkeleton key={index} />)
+        : series.slice(0, 4).map((entry) => (
+            <ProductTile key={entry.slug} series={entry} locale={locale} onNavigate={onNavigate} />
+          ))}
     </div>
   </section>
 );

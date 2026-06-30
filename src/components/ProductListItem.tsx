@@ -3,6 +3,7 @@ import type { ProductSeries } from "../types/product";
 import type { LocaleKey } from "../i18n/translations";
 import { formatPrice } from "../utils/numberFormat";
 import { handleInAppNavigation } from "../utils/navigation";
+import { SkeletonImage } from "./skeleton";
 
 interface ProductListItemProps {
   series: ProductSeries;
@@ -50,9 +51,9 @@ export const ProductListItem = ({
           : "border-slate-800 bg-surface/50 hover:border-primary/70"
       }`}
     >
-      <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-2xl bg-slate-900/70 sm:h-20 sm:w-20">
+      <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-2xl bg-slate-900/70 sm:h-20 sm:w-20">
         {series.heroImage ? (
-          <img
+          <SkeletonImage
             src={series.heroImage}
             alt={series.label}
             className="h-full w-full object-cover"

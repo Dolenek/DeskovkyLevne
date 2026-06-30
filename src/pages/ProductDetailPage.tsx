@@ -1,7 +1,8 @@
 import { useEffect, useMemo } from "react";
-import { EmptyState, ErrorState, LoadingState } from "../components/AsyncStates";
+import { EmptyState, ErrorState } from "../components/AsyncStates";
 import { AppHeader } from "../components/AppHeader";
 import { ProductSearchOverlay } from "../components/ProductSearchOverlay";
+import { ProductDetailSkeleton } from "../components/skeleton";
 import { ProductDataSummary } from "../components/product-detail/ProductDataSummary";
 import { ProductGallery } from "../components/product-detail/ProductGallery";
 import { ProductHero } from "../components/product-detail/ProductHero";
@@ -98,7 +99,7 @@ export const ProductDetailPage = ({
       />
       <main className="px-4 pb-12 pt-6 sm:px-6 lg:px-10">
         <div className="mx-auto flex max-w-7xl flex-col gap-8">
-          {loading ? <LoadingState /> : null}
+          {loading ? <ProductDetailSkeleton /> : null}
           {error ? <ErrorState message={error} retryLabel={t("retry")} onRetry={reload} /> : null}
           {!loading && !error && !product ? <EmptyState message={t("detailNotFoundDescription", { code: productSlug })} /> : null}
           {product ? (

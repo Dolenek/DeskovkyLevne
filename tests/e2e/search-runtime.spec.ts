@@ -117,6 +117,83 @@ test("filter metadata comes from API and reset clears active filters", async ({ 
   await expect(saleFilter).not.toBeChecked();
 });
 
+test("catalog and search overlay show skeletons while API responses are pending", async ({ page }) => {
+  let releaseCatalogResponse: () => void = () => undefined;
+  let releaseSearchResponse: () => void = () => undefined;
+  const catalogResponsePending = new Promise<void>((resolve) => {
+    releaseCatalogResponse = resolve;
+  });
+  const searchResponsePending = new Promise<void>((resolve) => {
+    releaseSearchResponse = resolve;
+  });
+
+  await page.route("**/api/v1/**", async (route) => {
+    const url = new URL(route.request().url());
+    if (url.pathname === "/api/v1/catalog") {
+      await catalogResponsePending;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          rows: [catalogRow],
+          total: 1,
+          total_estimate: 1,
+          limit: 10,
+          offset: 0,
+        }),
+      });
+      return;
+    }
+    if (url.pathname === "/api/v1/meta/filter-options") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          categories: [],
+          player_ranges: [],
+          playtime_ranges: [],
+          age_ratings: [],
+          availability: [],
+          price_movement: [],
+        }),
+      });
+      return;
+    }
+    if (url.pathname === "/api/v1/meta/price-range") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ min_price: 149, max_price: 1999 }),
+      });
+      return;
+    }
+    if (url.pathname === "/api/v1/search/suggest") {
+      await searchResponsePending;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ rows: [catalogRow] }),
+      });
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ rows: [] }),
+    });
+  });
+
+  await page.goto("/deskove-hry");
+  await expect(page.getByRole("status", { name: "Nacitani produktu" })).toBeVisible();
+  releaseCatalogResponse();
+  await expect(page.getByRole("heading", { name: "Alpha Game" })).toBeVisible();
+
+  await page.getByRole("banner").getByRole("textbox").fill("alpha");
+  await expect(page.getByRole("status", { name: "Nacitani vysledku vyhledavani" })).toBeVisible();
+  releaseSearchResponse();
+  await expect(page.getByRole("button", { name: /Alpha Game/ })).toBeVisible();
+});
+
 test("search keeps latest result when previous request is slower", async ({ page }) => {
   await mockSearchPageApi(page);
 

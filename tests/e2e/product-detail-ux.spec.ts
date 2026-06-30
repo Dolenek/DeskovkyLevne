@@ -88,6 +88,36 @@ const productRows = [
   },
 ];
 
+test("product detail shows a skeleton while product data is pending", async ({ page }) => {
+  let releaseProductResponse: () => void = () => undefined;
+  const productResponsePending = new Promise<void>((resolve) => {
+    releaseProductResponse = resolve;
+  });
+
+  await page.route("**/api/v1/**", async (route) => {
+    const url = new URL(route.request().url());
+    if (url.pathname === "/api/v1/products/alpha-game") {
+      await productResponsePending;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ rows: productRows }),
+      });
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ rows: [] }),
+    });
+  });
+
+  await page.goto("/deskove-hry/alpha-game");
+  await expect(page.getByRole("status", { name: "Nacitani detailu produktu" })).toBeVisible();
+  releaseProductResponse();
+  await expect(page.getByRole("heading", { name: "Alpha Game" })).toBeVisible();
+});
+
 test("product detail removes misleading UI and normalizes seller data", async ({ page }) => {
   await page.route("**/api/v1/**", async (route) => {
     const url = new URL(route.request().url());

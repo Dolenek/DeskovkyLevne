@@ -1,5 +1,6 @@
-import { EmptyState, ErrorState, LoadingState } from "../../components/AsyncStates";
+import { EmptyState, ErrorState } from "../../components/AsyncStates";
 import { ProductTile } from "../../components/ProductTile";
+import { CatalogSkeleton } from "../../components/skeleton";
 import type { TranslationHook } from "../../hooks/useTranslation";
 import type { ActiveFilterChip } from "../../types/filters";
 import type { ProductSeries } from "../../types/product";
@@ -38,7 +39,7 @@ export const FilteredProductsSection = ({
   const pageCount = Math.max(1, Math.ceil(total / FILTERED_PAGE_SIZE));
   const pageSeries = series.slice(0, FILTERED_PAGE_SIZE);
 
-  if (loading) return <LoadingState />;
+  if (loading) return <CatalogSkeleton itemCount={FILTERED_PAGE_SIZE} />;
   if (error) return <ErrorState message={error} retryLabel={t("retry")} onRetry={reload} />;
   if (total === 0) return <EmptyState message={t("filteredResultsEmpty")} />;
 

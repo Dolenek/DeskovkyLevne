@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import type { ProductSearchResult } from "../types/product";
 import { formatPrice } from "../utils/numberFormat";
 import type { TranslationHook } from "../hooks/useTranslation";
+import { SearchOverlaySkeleton, SkeletonImage } from "./skeleton";
 import { Icon } from "./ui/Icon";
 
 interface ProductSearchOverlayProps {
@@ -45,11 +46,13 @@ const OverlayResultsList = ({
           >
             <div className="flex items-center gap-4">
               {image ? (
-                <img
-                  src={image}
-                  alt={series.label}
-                  className="h-14 w-14 rounded-lg border border-line object-cover"
-                />
+                <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-lg border border-line bg-slate-50">
+                  <SkeletonImage
+                    src={image}
+                    alt={series.label}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
               ) : (
                 <div className="flex h-14 w-14 items-center justify-center rounded-lg border border-dashed border-line bg-slate-50 text-lg font-semibold text-muted">
                   {fallbackLabel}
@@ -91,11 +94,7 @@ const renderOverlayContent = ({
   onSelect,
 }: OverlayContentProps): ReactNode => {
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-6">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-line border-t-primary" />
-      </div>
-    );
+    return <SearchOverlaySkeleton />;
   }
   if (error) {
     return (

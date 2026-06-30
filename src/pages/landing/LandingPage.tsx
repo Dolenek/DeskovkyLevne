@@ -44,7 +44,11 @@ export const LandingPage = ({
   const landingPath = variant === "levne" ? "/" : "/deskove-hry";
   const searchState = useSearchOverlayState(OVERLAY_LIMIT);
   const landingRandomSeed = useMemo(createLandingRandomSeed, []);
-  const { series: randomCatalogSeries, total } = useFilteredCatalogIndex({
+  const {
+    series: randomCatalogSeries,
+    total,
+    loading: landingCatalogLoading,
+  } = useFilteredCatalogIndex({
     availabilityFilter: "available",
     priceRange: { min: null, max: null },
     categoryFilters: [],
@@ -148,11 +152,23 @@ export const LandingPage = ({
                 <StatPill icon="refresh" value="99 %" label="aktualizace cen každý den" />
               </div>
             </div>
-            <HeroPreview series={heroProduct} locale={locale} onNavigate={onNavigateToProduct} />
+            <HeroPreview
+              series={heroProduct}
+              loading={landingCatalogLoading}
+              locale={locale}
+              onNavigate={onNavigateToProduct}
+            />
           </section>
 
           <HowItWorks />
-          <FeaturedProducts title={copy.featuredTitle} series={randomFeaturedSeries} locale={locale} onNavigate={onNavigateToProduct} onShowAll={() => onNavigatePath("/deskove-hry")} />
+          <FeaturedProducts
+            title={copy.featuredTitle}
+            series={randomFeaturedSeries}
+            loading={landingCatalogLoading}
+            locale={locale}
+            onNavigate={onNavigateToProduct}
+            onShowAll={() => onNavigatePath("/deskove-hry")}
+          />
 
         </div>
       </main>

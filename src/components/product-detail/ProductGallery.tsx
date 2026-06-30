@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ProductSeries } from "../../types/product";
+import { SkeletonImage } from "../skeleton";
 
 const toLargeImageUrl = (url: string): string =>
   url.includes("/related/") ? url.replace("/related/", "/big/") : url;
@@ -65,13 +66,13 @@ export const ProductGallery = ({ series }: { series: ProductSeries }) => {
           images.map((url, index) => (
             <div
               key={`${url}-${index}`}
-              className="flex min-w-0 w-full flex-shrink-0 snap-center items-center justify-center"
+              className="relative flex aspect-[4/3] min-w-0 w-full flex-shrink-0 snap-center items-center justify-center"
             >
-              <img
+              <SkeletonImage
                 src={url}
                 alt={`${series.label} ${index + 1}`}
                 loading={index === 0 ? "eager" : "lazy"}
-                className="max-h-[410px] w-full rounded-lg object-contain"
+                className="h-full max-h-[410px] w-full rounded-lg object-contain"
               />
             </div>
           ))
@@ -89,11 +90,11 @@ export const ProductGallery = ({ series }: { series: ProductSeries }) => {
               type="button"
               onClick={() => scrollToIndex(index)}
               aria-label={`Zobrazit obrázek ${index + 1} z ${images.length}`}
-              className={`h-20 w-24 flex-shrink-0 rounded-lg border bg-white p-1 transition ${
+              className={`relative h-20 w-24 flex-shrink-0 overflow-hidden rounded-lg border bg-white p-1 transition ${
                 index === activeIndex ? "border-primary ring-2 ring-primary/20" : "border-line"
               }`}
             >
-              <img src={url} alt="" loading="lazy" className="h-full w-full rounded-md object-cover" />
+              <SkeletonImage src={url} alt="" loading="lazy" className="h-full w-full rounded-md object-cover" />
             </button>
           ))}
         </div>

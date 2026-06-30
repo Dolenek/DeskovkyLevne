@@ -3,6 +3,7 @@ import type { LocaleKey } from "../i18n/translations";
 import type { ProductSeries } from "../types/product";
 import { formatPrice } from "../utils/numberFormat";
 import { getSeriesDiscountPercent } from "../utils/priceStats";
+import { SkeletonImage } from "./skeleton";
 import { Icon } from "./ui/Icon";
 
 interface ProductTileProps {
@@ -41,7 +42,7 @@ export const ProductTile = ({ series, locale, onNavigate }: ProductTileProps) =>
     >
       <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-slate-50">
         {series.heroImage ? (
-          <img
+          <SkeletonImage
             src={series.heroImage}
             alt={series.label}
             className="h-full w-full object-cover transition duration-300 group-hover:scale-105"

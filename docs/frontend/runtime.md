@@ -45,6 +45,9 @@ All product navigation is slug-based.
 - Shared presentation components use static generated board-game scene assets
   for catalog decorative artwork and product-detail CTA artwork. Landing hero,
   product cards, and product galleries are API-image driven.
+- API-backed catalog, search overlay, landing product blocks, and product
+  detail use skeleton loading states. Product images keep a skeleton placeholder
+  until each image load either succeeds or fails.
 - Search overlay activates on debounced input and shows suggestions.
 - Catalog renders a search/filter toolbar, category chips, sticky desktop
   filter sidebar, mobile filter drawer, active filter chips, product card grid,
