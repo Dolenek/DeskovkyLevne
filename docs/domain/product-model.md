@@ -23,6 +23,8 @@
 
 ## Search and Filtering Semantics
 - Catalog and suggestion search are slug-centered but can match name and code.
+- Search treats punctuation and other special characters as token separators.
+  All tokens in a multi-word query must match in any order.
 - Suggestion responses may use a reduced field projection, but slug/name/code/price/image/category-tag semantics stay unchanged.
 - Category filtering uses normalized tag arrays from supplementary parameters: `category_tags`, `genre_tags`, `game_type_tags`, and `mechanic_tags`.
 - Filter metadata and price bounds are served through API metadata endpoints, not from full client-side catalog scans.

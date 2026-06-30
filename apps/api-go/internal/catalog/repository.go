@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"unicode"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"golang.org/x/text/unicode/norm"
 )
 
 type Repository struct {
@@ -21,6 +23,7 @@ type RepositoryOptions struct {
 const defaultSummaryRelation = "public.catalog_slug_state"
 
 var relationNamePattern = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*)?$`)
+var searchTokenSeparatorPattern = regexp.MustCompile(`[^a-z0-9]+`)
 
 func NewRepository(db *pgxpool.Pool, options ...RepositoryOptions) *Repository {
 	config := RepositoryOptions{SummaryRelation: defaultSummaryRelation}
@@ -60,8 +63,8 @@ func (r *Repository) Search(
 	availability string,
 	limit int,
 ) ([]SuggestionRow, error) {
-	safeQuery := strings.TrimSpace(query)
-	if safeQuery == "" {
+	safeQuery := normalizeSearchQuery(query)
+	if len(safeQuery) < 2 {
 		return []SuggestionRow{}, nil
 	}
 	filters := Filters{
@@ -285,11 +288,8 @@ func buildWhere(filters Filters) (string, []any) {
 			"(price_movement = 'decreased' or latest_price < list_price_with_vat)",
 		)
 	}
-	if strings.TrimSpace(filters.Query) != "" {
-		pattern := "%" + normalizeSearchQuery(filters.Query) + "%"
-		args = append(args, pattern)
-		current := len(args)
-		clauses = append(clauses, fmt.Sprintf("(product_name_search ilike $%d or product_code ilike $%d)", current, current))
+	if searchClause := buildSearchClause(&args, filters.Query); searchClause != "" {
+		clauses = append(clauses, searchClause)
 	}
 	if len(clauses) == 0 {
 		return "", args
@@ -298,10 +298,36 @@ func buildWhere(filters Filters) (string, []any) {
 }
 
 func normalizeSearchQuery(value string) string {
-	cleaned := strings.TrimSpace(value)
-	cleaned = strings.ReplaceAll(cleaned, ",", " ")
-	cleaned = strings.ReplaceAll(cleaned, "*", " ")
+	cleaned := strings.TrimSpace(stripDiacritics(value))
+	cleaned = searchTokenSeparatorPattern.ReplaceAllString(strings.ToLower(cleaned), " ")
 	return strings.ToLower(strings.Join(strings.Fields(cleaned), " "))
+}
+
+func stripDiacritics(value string) string {
+	var builder strings.Builder
+	for _, character := range norm.NFD.String(value) {
+		if !unicode.Is(unicode.Mn, character) {
+			builder.WriteRune(character)
+		}
+	}
+	return builder.String()
+}
+
+func buildSearchClause(args *[]any, query string) string {
+	tokens := strings.Fields(normalizeSearchQuery(query))
+	if len(tokens) == 0 {
+		return ""
+	}
+	clauses := make([]string, 0, len(tokens))
+	for _, token := range tokens {
+		*args = append(*args, "%"+token+"%")
+		current := len(*args)
+		clauses = append(
+			clauses,
+			fmt.Sprintf("(product_name_search ilike $%d or product_code ilike $%d)", current, current),
+		)
+	}
+	return "(" + strings.Join(clauses, " and ") + ")"
 }
 
 func collectRows(rows pgxRows) ([]Row, error) {

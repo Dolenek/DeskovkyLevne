@@ -48,7 +48,10 @@ All product navigation is slug-based.
 - API-backed catalog, search overlay, landing product blocks, and product
   detail use skeleton loading states. Product images keep a skeleton placeholder
   until each image load either succeeds or fails.
-- Search overlay activates on debounced input and shows suggestions.
+- The desktop header uses a three-zone layout with centered search. Search
+  overlay activates on debounced input and shows suggestions.
+- Frontend search strips diacritics, treats punctuation and special characters
+  as spaces, lowercases the query, and sends a compact token string to the API.
 - Catalog renders a search/filter toolbar, category chips, sticky desktop
   filter sidebar, mobile filter drawer, active filter chips, product card grid,
   and pagination controls.

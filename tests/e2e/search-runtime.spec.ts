@@ -194,6 +194,87 @@ test("catalog and search overlay show skeletons while API responses are pending"
   await expect(page.getByRole("button", { name: /Alpha Game/ })).toBeVisible();
 });
 
+test("search normalizes punctuation and matches non-adjacent tokens", async ({ page }) => {
+  const searchQueries: string[] = [];
+  const partyRow = {
+    ...catalogRow,
+    product_code: "P-PARTY",
+    product_name: "Výbušná koťátka: párty karty",
+    product_name_normalized: "vybusna-kotatka-party-karty",
+    product_name_search: "vybusna kotatka party karty",
+    latest_price: 615,
+  };
+
+  await page.route("**/api/v1/**", async (route) => {
+    const url = new URL(route.request().url());
+    if (url.pathname === "/api/v1/catalog") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          rows: [catalogRow],
+          total: 1,
+          total_estimate: 1,
+          limit: 10,
+          offset: 0,
+        }),
+      });
+      return;
+    }
+    if (url.pathname === "/api/v1/meta/filter-options") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          categories: [],
+          player_ranges: [],
+          playtime_ranges: [],
+          age_ratings: [],
+          availability: [],
+          price_movement: [],
+        }),
+      });
+      return;
+    }
+    if (url.pathname === "/api/v1/meta/price-range") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ min_price: 149, max_price: 1999 }),
+      });
+      return;
+    }
+    if (url.pathname === "/api/v1/search/suggest") {
+      const query = url.searchParams.get("q") ?? "";
+      searchQueries.push(query);
+      const rows = query === "vybusna kotatka party karty" || query === "vybusna party"
+        ? [partyRow]
+        : [];
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ rows }),
+      });
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ rows: [] }),
+    });
+  });
+
+  await page.goto("/deskove-hry");
+  const searchInput = page.getByRole("banner").getByRole("textbox");
+  await searchInput.fill("Výbušná koťátka: párty karty");
+  await expect.poll(() => searchQueries.at(-1)).toBe("vybusna kotatka party karty");
+  await expect(page.getByRole("button", { name: /Výbušná koťátka/ })).toBeVisible();
+
+  await searchInput.fill("Výbušná párty");
+  await expect.poll(() => searchQueries.includes("vybusna party")).toBe(true);
+  await expect(page.getByRole("button", { name: /Výbušná koťátka/ })).toBeVisible();
+});
+
 test("search keeps latest result when previous request is slower", async ({ page }) => {
   await mockSearchPageApi(page);
 

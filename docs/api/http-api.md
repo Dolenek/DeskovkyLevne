@@ -26,7 +26,7 @@ Query params:
 - `playtime` (optional, comma-separated string): supported values are `under-30`, `30-60`, `60-plus`.
 - `age` (optional, comma-separated int): supported UI values are `6`, `8`, `10`, `12`; matches products with `min_age <= value`.
 - `price_movement` (optional, string): `decreased` returns products with `price_movement = decreased` or `latest_price < list_price_with_vat`.
-- `q` (optional, string): substring search against normalized product name and `product_code`.
+- `q` (optional, string): token search against normalized product name and `product_code`. Special characters are treated as token separators, and all query tokens must match in any order.
 - `random_seed` (optional, int): returns a deterministic pseudo-random order for the filtered result set. Use for small random product selections; normal catalog browsing omits it and keeps name sorting.
 
 Category slugs map to catalog tags:
@@ -52,7 +52,7 @@ Response shape:
 Returns lightweight search suggestions from slug summary rows.
 
 Query params:
-- `q` (required for results): if length `< 2`, returns empty list.
+- `q` (required for results): if length `< 2`, returns empty list. Special characters are treated as token separators, and all query tokens must match normalized product name or `product_code` in any order.
 - `availability` (optional): same semantics as catalog.
 - `limit` (optional, int): default `60`, capped by backend max page size.
 

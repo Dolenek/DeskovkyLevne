@@ -17,11 +17,13 @@ export const filterRowsByCode = <T extends { product_code?: string | null }>(
 };
 
 export const sanitizeSearchTerm = (term: string) =>
-  term.replace(/[,*]/g, " ").trim();
+  term.replace(/[^\p{L}\p{N}]+/gu, " ").trim();
 
 export const normalizeSearchTerm = (term: string) =>
   term
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9]+/g, " ")
     .toLowerCase()
-    .trim();
+    .trim()
+    .replace(/\s+/g, " ");

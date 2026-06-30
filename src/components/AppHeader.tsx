@@ -46,8 +46,8 @@ export const AppHeader = ({
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-line bg-white/95 shadow-sm backdrop-blur">
-      <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:px-6 lg:flex-row lg:items-center lg:px-10">
-        <div className="flex items-center justify-between gap-3">
+      <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:px-6 lg:grid lg:grid-cols-[minmax(260px,1fr)_minmax(0,480px)_minmax(180px,1fr)] lg:items-center lg:px-10">
+        <div className="flex items-center justify-between gap-3 lg:justify-start">
           <button
             type="button"
             onClick={onLogoClick}
@@ -58,29 +58,29 @@ export const AppHeader = ({
           <div className="lg:hidden">
             <LocaleSwitcher size="compact" showLabel={false} />
           </div>
+
+          <nav className="hidden items-center justify-start gap-8 text-sm font-bold text-navy lg:ml-8 lg:flex">
+            {navItems.map((item) => {
+              const active = activePath.startsWith(item.href);
+              return (
+                <a
+                  key={`${item.href}-${item.label}`}
+                  href={item.href}
+                  onClick={handleNavigate(item.href)}
+                  className={`border-b-2 py-2 transition ${
+                    active
+                      ? "border-primary text-primary"
+                      : "border-transparent hover:border-primary/40 hover:text-primary"
+                  }`}
+                >
+                  {item.label}
+                </a>
+              );
+            })}
+          </nav>
         </div>
 
-        <nav className="hidden items-center justify-start gap-8 text-sm font-bold text-navy lg:ml-8 lg:flex">
-          {navItems.map((item) => {
-            const active = activePath.startsWith(item.href);
-            return (
-              <a
-                key={`${item.href}-${item.label}`}
-                href={item.href}
-                onClick={handleNavigate(item.href)}
-                className={`border-b-2 py-2 transition ${
-                  active
-                    ? "border-primary text-primary"
-                    : "border-transparent hover:border-primary/40 hover:text-primary"
-                }`}
-              >
-                {item.label}
-              </a>
-            );
-          })}
-        </nav>
-
-        <div className="flex items-center gap-3 lg:ml-auto lg:w-[460px]">
+        <div className="flex items-center gap-3 lg:justify-self-center lg:w-full">
           <div className="flex min-w-0 flex-1 items-center rounded-lg border border-line bg-white shadow-sm transition focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15">
             <Icon name="search" className="ml-3 h-5 w-5 flex-shrink-0 text-muted" />
             <input
@@ -109,9 +109,10 @@ export const AppHeader = ({
           >
             <Icon name="search" className="h-5 w-5" />
           </button>
-          <div className="hidden xl:block">
-            <LocaleSwitcher showLabel={false} />
-          </div>
+        </div>
+
+        <div className="hidden justify-self-end xl:block">
+          <LocaleSwitcher showLabel={false} />
         </div>
       </div>
     </header>

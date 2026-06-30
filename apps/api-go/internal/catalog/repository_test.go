@@ -119,6 +119,32 @@ func TestBuildWhereIncludesRangeFilterSemantics(t *testing.T) {
 	}
 }
 
+func TestNormalizeSearchQueryRemovesDiacriticsAndSpecialCharacters(t *testing.T) {
+	got := normalizeSearchQuery(" Výbušná koťátka: párty/karty*** ")
+	want := "vybusna kotatka party karty"
+	if got != want {
+		t.Fatalf("expected %q, got %q", want, got)
+	}
+}
+
+func TestBuildWhereUsesAllSearchTokensAgainstNameAndCode(t *testing.T) {
+	whereSQL, args := buildWhere(Filters{Query: "vybusna party"})
+
+	expectedFragments := []string{
+		"(product_name_search ilike $1 or product_code ilike $1)",
+		"(product_name_search ilike $2 or product_code ilike $2)",
+		" and ",
+	}
+	for _, fragment := range expectedFragments {
+		if !strings.Contains(whereSQL, fragment) {
+			t.Fatalf("expected %q in %s", fragment, whereSQL)
+		}
+	}
+	if len(args) != 2 || args[0] != "%vybusna%" || args[1] != "%party%" {
+		t.Fatalf("unexpected args: %#v", args)
+	}
+}
+
 func TestBuildRowsQueryUsesSeededRandomOrder(t *testing.T) {
 	seed := int64(123)
 	query, args := buildRowsQuery(
