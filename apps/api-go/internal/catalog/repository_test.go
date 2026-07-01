@@ -179,7 +179,8 @@ func TestBuildSearchQueryIncludesSellerCount(t *testing.T) {
 	)
 
 	expectedFragments := []string{
-		"coalesce(seller_count, 1)::integer",
+		"from public.catalog_slug_seller_state seller_state",
+		"seller_state.product_name_normalized = catalog_summary.product_name_normalized",
 		"limit $2",
 	}
 	for _, fragment := range expectedFragments {

@@ -234,9 +234,13 @@ select
   latest_price::double precision,
   hero_image_url,
   coalesce(gallery_image_urls, '{}'::text[]),
-  coalesce(seller_count, 1)::integer,
+  greatest(1, (
+    select count(distinct seller_state.seller)::integer
+    from public.catalog_slug_seller_state seller_state
+    where seller_state.product_name_normalized = catalog_summary.product_name_normalized
+  )) as seller_count,
   coalesce(category_tags, '{}'::text[])
-from ` + relation + whereSQL + `
+from ` + relation + ` catalog_summary` + whereSQL + `
 order by product_name asc
 limit ` + limitPlaceholder + `;`
 
