@@ -1,4 +1,6 @@
 import type { TranslationHook } from "../../hooks/useTranslation";
+import type { FilterOptionGroup } from "../../utils/filterLabels";
+import { translateFilterOptionLabel } from "../../utils/filterLabels";
 import type {
   AgeRatingFilter,
   AvailabilityFilter,
@@ -55,12 +57,14 @@ const PriceRangeSlider = ({ bounds, values, onSliderChange }: PriceRangeSliderPr
 
 interface OptionGroupProps<T extends string> {
   title: string;
+  group?: FilterOptionGroup;
   options: FilterOptionRow[];
   selected: T[];
   onToggle: (value: T) => void;
+  t: TranslationHook["t"];
 }
 
-const OptionGroup = <T extends string>({ title, options, selected, onToggle }: OptionGroupProps<T>) => (
+const OptionGroup = <T extends string>({ title, group, options, selected, onToggle, t }: OptionGroupProps<T>) => (
   <div className="mt-6 space-y-3">
     <p className="text-sm font-extrabold text-navy">{title}</p>
     <div className="space-y-2">
@@ -75,7 +79,7 @@ const OptionGroup = <T extends string>({ title, options, selected, onToggle }: O
               onChange={() => onToggle(value)}
               className="h-4 w-4 rounded border-line text-primary focus:ring-primary"
             />
-            {option.label}
+            {group ? translateFilterOptionLabel(group, option.value, option.label, t) : option.label}
           </label>
         );
       })}
@@ -139,21 +143,21 @@ export const FiltersPanel = ({
     ) : null}
 
     <div className="mt-6 space-y-3">
-      <p className="text-sm font-extrabold text-navy">Cena</p>
+      <p className="text-sm font-extrabold text-navy">{t("filtersPrice")}</p>
       <p className="text-sm font-semibold text-muted">
         {priceRangeValues.min ?? priceBounds.min} Kč - {priceRangeValues.max ?? priceBounds.max} Kč
       </p>
       <PriceRangeSlider bounds={priceBounds} values={priceRangeValues} onSliderChange={onSliderChange} />
       <div className="grid grid-cols-2 gap-2">
-        <input type="number" value={priceFilter.min} onChange={(event) => onPriceFilterChange("min", event.target.value)} placeholder="Od" className="rounded-lg border border-line px-3 py-2 text-sm font-bold text-navy outline-none focus:border-primary" />
-        <input type="number" value={priceFilter.max} onChange={(event) => onPriceFilterChange("max", event.target.value)} placeholder="Do" className="rounded-lg border border-line px-3 py-2 text-sm font-bold text-navy outline-none focus:border-primary" />
+        <input type="number" value={priceFilter.min} onChange={(event) => onPriceFilterChange("min", event.target.value)} placeholder={t("fromPrice")} className="rounded-lg border border-line px-3 py-2 text-sm font-bold text-navy outline-none focus:border-primary" />
+        <input type="number" value={priceFilter.max} onChange={(event) => onPriceFilterChange("max", event.target.value)} placeholder={t("toPrice")} className="rounded-lg border border-line px-3 py-2 text-sm font-bold text-navy outline-none focus:border-primary" />
       </div>
     </div>
 
-    <OptionGroup title="Počet hráčů" options={filterOptions.player_ranges} selected={selectedPlayerRanges} onToggle={onPlayerRangeToggle} />
-    <OptionGroup title="Herní doba" options={filterOptions.playtime_ranges} selected={selectedPlaytimeRanges} onToggle={onPlaytimeRangeToggle} />
-    <OptionGroup title="Doporučený věk" options={filterOptions.age_ratings} selected={selectedAgeRatings} onToggle={onAgeRatingToggle} />
-    <OptionGroup title={t("filtersCategoryTitle")} options={filterOptions.categories} selected={selectedCategories} onToggle={onCategoryToggle} />
+    <OptionGroup title={t("filtersPlayerCount")} options={filterOptions.player_ranges} selected={selectedPlayerRanges} onToggle={onPlayerRangeToggle} t={t} />
+    <OptionGroup title={t("filtersPlaytime")} group="playtime_ranges" options={filterOptions.playtime_ranges} selected={selectedPlaytimeRanges} onToggle={onPlaytimeRangeToggle} t={t} />
+    <OptionGroup title={t("filtersAgeRating")} options={filterOptions.age_ratings} selected={selectedAgeRatings} onToggle={onAgeRatingToggle} t={t} />
+    <OptionGroup title={t("filtersCategoryTitle")} group="categories" options={filterOptions.categories} selected={selectedCategories} onToggle={onCategoryToggle} t={t} />
 
     <div className="mt-6 space-y-3">
       <p className="text-sm font-extrabold text-navy">{t("filtersAvailability")}</p>
@@ -162,13 +166,13 @@ export const FiltersPanel = ({
         return (
           <label key={option.value} className="flex cursor-pointer items-center gap-3 text-sm font-bold text-muted">
             <input type="checkbox" checked={availabilityFilter === value} onChange={() => onAvailabilityChange(availabilityFilter === value ? "all" : value)} className="h-4 w-4 rounded border-line text-primary focus:ring-primary" />
-            {option.label}
+            {translateFilterOptionLabel("availability", option.value, option.label, t)}
           </label>
         );
       })}
       <label className="flex cursor-pointer items-center gap-3 text-sm font-bold text-muted">
         <input type="checkbox" checked={priceMovementFilter === "decreased"} onChange={onSaleToggle} className="h-4 w-4 rounded border-line text-primary focus:ring-primary" />
-        Ve slevě
+        {t("filtersOnSale")}
       </label>
     </div>
   </aside>

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { Translator } from "../../types/i18n";
 import type { ProductSeries } from "../../types/product";
 import { SkeletonImage } from "../skeleton";
 
@@ -14,7 +15,7 @@ const isUsableGalleryImage = (url: string): boolean => {
   );
 };
 
-export const ProductGallery = ({ series }: { series: ProductSeries }) => {
+export const ProductGallery = ({ series, t }: { series: ProductSeries; t: Translator }) => {
   const images = useMemo(() => {
     const unique = new Set<string>();
     const ordered: string[] = [];
@@ -89,7 +90,7 @@ export const ProductGallery = ({ series }: { series: ProductSeries }) => {
               key={`${url}-${index}`}
               type="button"
               onClick={() => scrollToIndex(index)}
-              aria-label={`Zobrazit obrázek ${index + 1} z ${images.length}`}
+              aria-label={t("galleryShowImageAria", { index: index + 1, count: images.length })}
               className={`relative h-20 w-24 flex-shrink-0 overflow-hidden rounded-lg border bg-white p-1 transition ${
                 index === activeIndex ? "border-primary ring-2 ring-primary/20" : "border-line"
               }`}

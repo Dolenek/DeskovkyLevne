@@ -3,7 +3,9 @@ import { ProductTile } from "../../components/ProductTile";
 import { ProductCardSkeleton, SkeletonBlock, SkeletonImage } from "../../components/skeleton";
 import { Icon } from "../../components/ui/Icon";
 import type { LocaleKey } from "../../i18n/translations";
+import type { Translator } from "../../types/i18n";
 import type { ProductSeries } from "../../types/product";
+import { formatAvailabilityLabel } from "../../utils/availability";
 import { formatPrice } from "../../utils/numberFormat";
 
 const shouldUseClientNavigation = (event: MouseEvent<HTMLAnchorElement>) =>
@@ -14,8 +16,9 @@ const shouldUseClientNavigation = (event: MouseEvent<HTMLAnchorElement>) =>
   !event.altKey &&
   !event.shiftKey;
 
-const getHeroProductMeta = (series: ProductSeries) =>
-  series.categoryTags[0] ?? series.availabilityLabel ?? "Desková hra";
+const getHeroProductMeta = (series: ProductSeries, locale: LocaleKey, t: Translator) =>
+  series.categoryTags[0] ??
+  formatAvailabilityLabel(series.availabilityLabel, locale, t("fallbackBoardGame"));
 
 const HeroProductImage = ({ series }: { series: ProductSeries }) => (
   <div className="relative aspect-[5/3] overflow-hidden rounded-lg bg-slate-50">
@@ -36,13 +39,15 @@ const HeroProductImage = ({ series }: { series: ProductSeries }) => (
 const HeroProductSummary = ({
   series,
   locale,
+  t,
 }: {
   series: ProductSeries;
   locale: LocaleKey;
+  t: Translator;
 }) => (
   <div className="mt-5 flex items-end justify-between gap-4">
     <div>
-      <p className="text-sm font-bold text-primary">{getHeroProductMeta(series)}</p>
+      <p className="text-sm font-bold text-primary">{getHeroProductMeta(series, locale, t)}</p>
       <h2 className="mt-1 line-clamp-2 text-2xl font-black leading-tight text-navy">
         {series.label}
       </h2>
@@ -53,8 +58,8 @@ const HeroProductSummary = ({
   </div>
 );
 
-const HeroPreviewSkeleton = () => (
-  <div aria-label="Nacitani doporucene hry" role="status" className="hidden justify-end lg:flex">
+const HeroPreviewSkeleton = ({ label }: { label: string }) => (
+  <div aria-label={label} role="status" className="hidden justify-end lg:flex">
     <div className="w-full max-w-xl rounded-lg border border-line bg-white p-5 shadow-lg">
       <SkeletonBlock className="aspect-[5/3] w-full" />
       <div className="mt-5 flex items-end justify-between gap-4">
@@ -86,16 +91,16 @@ export const StatPill = ({
   </div>
 );
 
-export const HowItWorks = () => {
+export const HowItWorks = ({ t }: { t: Translator }) => {
   const items = [
-    ["store", "1. Sbíráme ceny", "Každý den procházíme desítky e-shopů a sbíráme aktuální ceny deskových her."],
-    ["barChart", "2. Sledujeme vývoj", "U každé hry ukládáme historii cen, abyste viděli, jak se mění v čase."],
-    ["tag", "3. Porovnáváme nabídky", "Porovnáme nabídky e-shopů a ukážeme vám, kde koupíte nejlevněji právě teď."],
+    ["store", t("landingHowCollectTitle"), t("landingHowCollectBody")],
+    ["barChart", t("landingHowTrendTitle"), t("landingHowTrendBody")],
+    ["tag", t("landingHowCompareTitle"), t("landingHowCompareBody")],
   ] as const;
 
   return (
     <section>
-      <h2 className="text-center text-2xl font-extrabold text-navy">Jak to funguje</h2>
+      <h2 className="text-center text-2xl font-extrabold text-navy">{t("landingHowTitle")}</h2>
       <div className="mt-5 grid gap-5 md:grid-cols-3">
         {items.map(([icon, title, body], index) => (
           <article key={title} className="rounded-lg border border-line bg-white p-6 shadow-sm">
@@ -118,15 +123,17 @@ export const HeroPreview = ({
   series,
   loading,
   locale,
+  t,
   onNavigate,
 }: {
   series: ProductSeries | null;
   loading: boolean;
   locale: LocaleKey;
+  t: Translator;
   onNavigate: (slug: string) => void;
 }) => {
   if (loading) {
-    return <HeroPreviewSkeleton />;
+    return <HeroPreviewSkeleton label={t("landingFeaturedLoading")} />;
   }
 
   if (!series) {
@@ -149,7 +156,7 @@ export const HeroPreview = ({
         className="group w-full max-w-xl rounded-lg border border-line bg-white p-5 shadow-lg transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-xl"
       >
         <HeroProductImage series={series} />
-        <HeroProductSummary series={series} locale={locale} />
+        <HeroProductSummary series={series} locale={locale} t={t} />
       </a>
     </div>
   );
@@ -160,6 +167,7 @@ export const FeaturedProducts = ({
   series,
   loading,
   locale,
+  t,
   onNavigate,
   onShowAll,
 }: {
@@ -167,6 +175,7 @@ export const FeaturedProducts = ({
   series: ProductSeries[];
   loading: boolean;
   locale: LocaleKey;
+  t: Translator;
   onNavigate: (slug: string) => void;
   onShowAll: () => void;
 }) => (
@@ -174,14 +183,14 @@ export const FeaturedProducts = ({
     <div className="flex items-center justify-between gap-4">
       <h2 className="text-2xl font-extrabold text-navy">{title}</h2>
       <button type="button" onClick={onShowAll} className="text-sm font-extrabold text-primary">
-        Zobrazit všechny hry →
+        {t("landingShowAllGames")}
       </button>
     </div>
     <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
       {loading
         ? Array.from({ length: 4 }, (_, index) => <ProductCardSkeleton key={index} />)
         : series.slice(0, 4).map((entry) => (
-            <ProductTile key={entry.slug} series={entry} locale={locale} onNavigate={onNavigate} />
+            <ProductTile key={entry.slug} series={entry} locale={locale} t={t} onNavigate={onNavigate} />
           ))}
     </div>
   </section>

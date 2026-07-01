@@ -14,10 +14,11 @@ import type {
   PlaytimeRangeFilter,
   PriceMovementFilter,
 } from "../../types/filters";
-import type { FilterOptionRow, FilterOptionsResponse } from "../../services/api/types";
+import type { Translator } from "../../types/i18n";
 import type { ProductSearchResult, ProductSeries } from "../../types/product";
 import { uniqueSeriesBySlug } from "../../utils/series";
 import { FILTERED_PAGE_SIZE } from "./FilteredProductsSection";
+import { buildActiveFilterChips, filterSearchResultsByCategory } from "./searchPageFilters";
 
 const parsePriceInput = (value: string): number | null => {
   if (!value.trim()) {
@@ -31,78 +32,6 @@ const buildPriceRange = (minValue: string, maxValue: string) => ({
   min: parsePriceInput(minValue),
   max: parsePriceInput(maxValue),
 });
-
-const findOptionLabel = (options: FilterOptionRow[], value: string) =>
-  options.find((option) => option.value === value)?.label ?? value;
-
-const buildOptionChips = <T extends string>(
-  groupKey: string,
-  values: T[],
-  options: FilterOptionRow[]
-): ActiveFilterChip[] =>
-  values.map((value) => ({
-    key: `${groupKey}-${value}`,
-    label: findOptionLabel(options, value),
-  }));
-
-const buildActiveFilterChips = (
-  priceRange: { min: number | null; max: number | null },
-  filterOptions: FilterOptionsResponse,
-  filters: {
-    availabilityFilter: AvailabilityFilter;
-    categoryFilters: CategoryFilter[];
-    playerRangeFilters: PlayerRangeFilter[];
-    playtimeRangeFilters: PlaytimeRangeFilter[];
-    ageRatingFilters: AgeRatingFilter[];
-    priceMovementFilter: PriceMovementFilter | null;
-  }
-): ActiveFilterChip[] => {
-  const chips: ActiveFilterChip[] = [];
-  if (priceRange.min !== null || priceRange.max !== null) {
-    chips.push({
-      key: "price",
-      label: `${priceRange.min ?? "Libovolně"} - ${priceRange.max ?? "Libovolně"} Kč`,
-    });
-  }
-  if (filters.availabilityFilter !== "all") {
-    chips.push({
-      key: `availability-${filters.availabilityFilter}`,
-      label: findOptionLabel(filterOptions.availability, filters.availabilityFilter),
-    });
-  }
-  chips.push(...buildOptionChips("category", filters.categoryFilters, filterOptions.categories));
-  chips.push(...buildOptionChips("players", filters.playerRangeFilters, filterOptions.player_ranges));
-  chips.push(...buildOptionChips("playtime", filters.playtimeRangeFilters, filterOptions.playtime_ranges));
-  chips.push(...buildOptionChips("age", filters.ageRatingFilters, filterOptions.age_ratings));
-  if (filters.priceMovementFilter) {
-    chips.push({
-      key: `movement-${filters.priceMovementFilter}`,
-      label: findOptionLabel(filterOptions.price_movement, filters.priceMovementFilter),
-    });
-  }
-  return chips;
-};
-
-const filterSearchResultsByCategory = (
-  rows: ProductSearchResult[],
-  selectedCategories: CategoryFilter[]
-) => {
-  if (selectedCategories.length === 0) {
-    return rows;
-  }
-  const categoryLabels: Record<CategoryFilter, string[]> = {
-    strategicka: ["Strategická"],
-    rodinna: ["Rodinná"],
-    fantasy: ["Fantasy"],
-    kooperativni: ["Kooperativní", "Cooperative Game"],
-    ekonomicka: ["Ekonomické"],
-  };
-  return rows.filter((series) =>
-    selectedCategories.some((category) =>
-      categoryLabels[category].some((label) => series.categoryTags.includes(label))
-    )
-  );
-};
 
 interface SearchPageState {
   searchValue: string;
@@ -151,7 +80,8 @@ interface SearchPageState {
 
 export const useSearchPageState = (
   maxSearchSeries: number,
-  overlaySearchLimit: number
+  overlaySearchLimit: number,
+  t: Translator
 ): SearchPageState => {
   const [searchValue, setSearchValue] = useState("");
   const [searchActive, setSearchActive] = useState(false);
@@ -297,7 +227,7 @@ export const useSearchPageState = (
 
   const activeFilterChips = useMemo(
     () =>
-      buildActiveFilterChips(priceRange, filterOptions, {
+      buildActiveFilterChips(priceRange, filterOptions, t, {
         availabilityFilter,
         categoryFilters,
         playerRangeFilters,
@@ -314,6 +244,7 @@ export const useSearchPageState = (
       playtimeRangeFilters,
       priceMovementFilter,
       priceRange,
+      t,
     ]
   );
 

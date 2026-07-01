@@ -1,3 +1,5 @@
+import type { LocaleKey } from "../i18n/translations";
+
 export type AvailabilityTone = "available" | "unavailable" | "preorder" | "unknown";
 
 const ENTITY_REPLACEMENTS: Record<string, string> = {
@@ -29,9 +31,28 @@ const stripSchemaPrefix = (value: string): string =>
 const capitalizeFirst = (value: string): string =>
   value.length > 0 ? `${value.charAt(0).toUpperCase()}${value.slice(1)}` : value;
 
+const AVAILABILITY_COPY: Record<
+  LocaleKey,
+  { available: string; unavailable: string; preorder: string; unknown: string }
+> = {
+  cs: {
+    available: "Skladem",
+    unavailable: "Nedostupné",
+    preorder: "Předobjednávka",
+    unknown: "Dostupnost neznámá",
+  },
+  en: {
+    available: "In stock",
+    unavailable: "Unavailable",
+    preorder: "Preorder",
+    unknown: "Availability unknown",
+  },
+};
+
 export const formatAvailabilityLabel = (
   availabilityLabel: string | null | undefined,
-  fallback = "Dostupnost neznámá"
+  locale: LocaleKey = "cs",
+  fallback = AVAILABILITY_COPY[locale].unknown
 ): string => {
   if (!availabilityLabel) {
     return fallback;
@@ -46,13 +67,13 @@ export const formatAvailabilityLabel = (
 
   const normalized = normalizeForMatch(decoded);
   if (["instock", "in stock", "skladem", "do kosiku"].includes(normalized)) {
-    return "Skladem";
+    return AVAILABILITY_COPY[locale].available;
   }
   if (["outofstock", "out of stock", "nedostupne", "vyprodano"].includes(normalized)) {
-    return "Nedostupné";
+    return AVAILABILITY_COPY[locale].unavailable;
   }
   if (["preorder", "pre order", "predobjednavka"].includes(normalized)) {
-    return "Předobjednávka";
+    return AVAILABILITY_COPY[locale].preorder;
   }
 
   return capitalizeFirst(decoded);

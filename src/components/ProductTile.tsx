@@ -1,6 +1,8 @@
 import type { MouseEvent } from "react";
 import type { LocaleKey } from "../i18n/translations";
+import type { Translator } from "../types/i18n";
 import type { ProductSeries } from "../types/product";
+import { formatAvailabilityLabel } from "../utils/availability";
 import { formatPrice } from "../utils/numberFormat";
 import { getSeriesDiscountPercent } from "../utils/priceStats";
 import { SkeletonImage } from "./skeleton";
@@ -9,6 +11,7 @@ import { Icon } from "./ui/Icon";
 interface ProductTileProps {
   series: ProductSeries;
   locale: LocaleKey;
+  t: Translator;
   onNavigate: (slug: string) => void;
 }
 
@@ -23,7 +26,7 @@ const shouldUseClientNavigation = (event: MouseEvent<HTMLAnchorElement>) =>
 const getPointCount = (series: ProductSeries) =>
   series.points.length || series.sellers.reduce((sum, seller) => sum + seller.points.length, 0);
 
-export const ProductTile = ({ series, locale, onNavigate }: ProductTileProps) => {
+export const ProductTile = ({ series, locale, t, onNavigate }: ProductTileProps) => {
   const href = `/deskove-hry/${encodeURIComponent(series.slug)}`;
   const discount = getSeriesDiscountPercent(series);
   const pointCount = getPointCount(series);
@@ -61,7 +64,8 @@ export const ProductTile = ({ series, locale, onNavigate }: ProductTileProps) =>
           {series.label}
         </h3>
         <p className="mt-2 text-sm font-semibold text-muted">
-          {series.categoryTags.slice(0, 1).join(", ") || series.availabilityLabel || "Desková hra"}
+          {series.categoryTags.slice(0, 1).join(", ") ||
+            formatAvailabilityLabel(series.availabilityLabel, locale, t("fallbackBoardGame"))}
         </p>
         <div className="mt-3 flex items-center gap-1 text-xs font-bold text-muted">
           {Array.from({ length: 5 }, (_, index) => (
@@ -80,10 +84,10 @@ export const ProductTile = ({ series, locale, onNavigate }: ProductTileProps) =>
           ) : null}
         </div>
         <span className="mt-1 text-sm font-semibold text-muted">
-          od {series.sellers.length} e-shopů
+          {t("productTileSellerCount", { count: series.sellers.length })}
         </span>
         <span className="mt-4 inline-flex items-center justify-center rounded-lg border border-primary px-4 py-2 text-sm font-extrabold text-primary transition group-hover:bg-primary group-hover:text-white">
-          Zobrazit detail
+          {t("productTileDetail")}
         </span>
       </div>
     </a>

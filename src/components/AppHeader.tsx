@@ -1,6 +1,7 @@
 import type { MouseEvent } from "react";
 import { LocaleSwitcher } from "./LocaleSwitcher";
 import type { TranslationHook } from "../hooks/useTranslation";
+import type { TranslationKey } from "../i18n/translations";
 import { BrandLogo } from "./ui/BrandLogo";
 import { Icon } from "./ui/Icon";
 
@@ -15,8 +16,8 @@ interface AppHeaderProps {
 }
 
 const navItems = [
-  { href: "/deskove-hry", label: "Katalog" },
-];
+  { href: "/deskove-hry", labelKey: "navCatalog" },
+] satisfies Array<{ href: string; labelKey: TranslationKey }>;
 
 const shouldNavigateClientSide = (event: MouseEvent<HTMLAnchorElement>) =>
   !event.defaultPrevented &&
@@ -64,7 +65,7 @@ export const AppHeader = ({
               const active = activePath.startsWith(item.href);
               return (
                 <a
-                  key={`${item.href}-${item.label}`}
+                  key={`${item.href}-${item.labelKey}`}
                   href={item.href}
                   onClick={handleNavigate(item.href)}
                   className={`border-b-2 py-2 transition ${
@@ -73,7 +74,7 @@ export const AppHeader = ({
                       : "border-transparent hover:border-primary/40 hover:text-primary"
                   }`}
                 >
-                  {item.label}
+                  {t(item.labelKey)}
                 </a>
               );
             })}

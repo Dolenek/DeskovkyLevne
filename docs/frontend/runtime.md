@@ -57,6 +57,11 @@ SEO canonical link with the resolved canonical slug.
 - Catalog renders a search/filter toolbar, category chips, sticky desktop
   filter sidebar, mobile filter drawer, active filter chips, product card grid,
   and pagination controls.
+- Locale switching affects static UI labels, number/date formatting, normalized
+  availability labels, and frontend-owned filter labels. Catalog data text from
+  the API, including product names, category tags, seller names, supplementary
+  parameters, and `short_description`, is rendered as source data and is not
+  translated in the browser.
 - Landing pages render a search hero with one random available product on each
   visit, live catalog metrics, and random available product cards from one
   seed-ordered catalog request.

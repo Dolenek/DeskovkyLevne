@@ -118,7 +118,7 @@ export const ProductDetailPage = ({
           {product ? (
             <>
               <section className="grid min-w-0 items-start gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">
-                <ProductGallery series={product} />
+                <ProductGallery series={product} t={t} />
                 <ProductHero series={product} locale={locale} offersSectionId={OFFERS_SECTION_ID} t={t} />
               </section>
 
@@ -132,7 +132,7 @@ export const ProductDetailPage = ({
 
               <section id={OFFERS_SECTION_ID} className="scroll-mt-28">
                 <h2 className="mb-5 text-2xl font-extrabold text-navy">{t("detailOffersTitle")}</h2>
-                <SellerOfferTable series={product} locale={locale} />
+                <SellerOfferTable series={product} locale={locale} t={t} />
               </section>
 
               <ProductPriceStats product={product} locale={locale} t={t} />

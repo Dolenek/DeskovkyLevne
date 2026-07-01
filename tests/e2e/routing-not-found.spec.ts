@@ -26,12 +26,19 @@ test("root renders landing page and catalog lives at deskove-hry", async ({ page
 
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Jak to funguje" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Objevte nové deskové hry" })).toBeVisible();
   await expect(page.getByRole("banner").getByRole("link", { name: "Katalog" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Kontakt" })).toHaveCount(0);
 
+  await page.getByRole("button", { name: "English" }).click();
+  await expect(page.getByRole("heading", { name: "How it works" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Discover new board games" })).toBeVisible();
+  await expect(page.getByPlaceholder("Type a board game name...")).toBeVisible();
+
   await page.goto("/deskove-hry");
-  await expect(page.getByText(/Zobrazeno/)).toBeVisible();
-  await expect(page.getByRole("banner").getByRole("link", { name: "Katalog" })).toBeVisible();
+  await expect(page.getByText(/Showing/)).toBeVisible();
+  await expect(page.getByRole("banner").getByRole("link", { name: "Catalog" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Filters \(\d+\)/ })).toBeVisible();
 });
 
 test("product detail route remains slug based under deskove-hry", async ({ page }) => {

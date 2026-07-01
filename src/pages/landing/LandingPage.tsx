@@ -15,7 +15,7 @@ import {
   HowItWorks,
   StatPill,
 } from "./LandingSections";
-import { buildLandingCopy } from "./landingUtils";
+import { buildLandingCopy, toAppLocaleTag } from "./landingUtils";
 
 interface LandingPageProps {
   variant: "levne" | "deskove";
@@ -40,7 +40,8 @@ export const LandingPage = ({
 }: LandingPageProps) => {
   const { t, locale } = useTranslation();
   const seoCopy = LANDING_SEO_COPY[locale][variant];
-  const copy = buildLandingCopy(variant);
+  const copy = buildLandingCopy(variant, t);
+  const localeTag = toAppLocaleTag(locale);
   const landingPath = variant === "levne" ? "/" : "/deskove-hry";
   const searchState = useSearchOverlayState(OVERLAY_LIMIT);
   const landingRandomSeed = useMemo(createLandingRandomSeed, []);
@@ -139,33 +140,35 @@ export const LandingPage = ({
                     searchState.setSearchActive(true);
                   }}
                   onFocus={() => searchState.setSearchActive(true)}
-                  placeholder="Zadejte název deskové hry..."
+                  placeholder={t("landingSearchPlaceholder")}
                   className="min-w-0 flex-1 px-3 py-3 text-sm font-semibold outline-none placeholder:text-muted"
                 />
                 <button className="rounded-lg bg-primary px-5 py-3 text-sm font-extrabold text-white">
-                  Vyhledat
+                  {t("searchButton")}
                 </button>
               </div>
               <div className="mt-8 grid gap-5 sm:grid-cols-3">
-                <StatPill icon="spark" value={total ? total.toLocaleString("cs-CZ") : "5 842"} label="sledovaných her" />
-                <StatPill icon="store" value="15" label="e-shopů" />
-                <StatPill icon="refresh" value="99 %" label="aktualizace cen každý den" />
+                <StatPill icon="spark" value={total ? total.toLocaleString(localeTag) : "5 842"} label={t("landingTrackedGames")} />
+                <StatPill icon="store" value="15" label={t("landingShopCount")} />
+                <StatPill icon="refresh" value="99 %" label={t("landingDailyUpdates")} />
               </div>
             </div>
             <HeroPreview
               series={heroProduct}
               loading={landingCatalogLoading}
               locale={locale}
+              t={t}
               onNavigate={onNavigateToProduct}
             />
           </section>
 
-          <HowItWorks />
+          <HowItWorks t={t} />
           <FeaturedProducts
             title={copy.featuredTitle}
             series={randomFeaturedSeries}
             loading={landingCatalogLoading}
             locale={locale}
+            t={t}
             onNavigate={onNavigateToProduct}
             onShowAll={() => onNavigatePath("/deskove-hry")}
           />

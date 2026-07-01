@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { ProductSearchResult } from "../types/product";
+import { formatAvailabilityLabel } from "../utils/availability";
 import { formatPrice } from "../utils/numberFormat";
 import type { TranslationHook } from "../hooks/useTranslation";
 import { SearchOverlaySkeleton, SkeletonImage } from "./skeleton";
@@ -68,7 +69,7 @@ const OverlayResultsList = ({
             <div className="flex flex-wrap items-center gap-2">
               {series.availabilityLabel ? (
                 <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-primary">
-                  {series.availabilityLabel}
+                  {formatAvailabilityLabel(series.availabilityLabel, locale)}
                 </span>
               ) : null}
               <span className="text-lg font-extrabold text-primary">
@@ -135,7 +136,7 @@ export const ProductSearchOverlay = ({
         type="button"
         className="absolute inset-0 bg-navy/20 backdrop-blur-sm"
         onClick={onClose}
-        aria-label="Zavřít vyhledávání"
+        aria-label={contentProps.t("searchOverlayClose")}
       />
       <div className="relative z-10 flex max-h-[calc(100vh-8.5rem)] w-full max-w-3xl flex-col rounded-lg border border-line bg-white p-4 shadow-2xl">
         <div className="mb-3 flex items-center justify-center gap-2 text-sm font-extrabold text-navy">

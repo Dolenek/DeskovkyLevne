@@ -1,5 +1,7 @@
 import type { AvailabilityFilter, CategoryFilter } from "../../types/filters";
 import { Icon } from "../../components/ui/Icon";
+import type { TranslationKey } from "../../i18n/translations";
+import type { Translator } from "../../types/i18n";
 
 interface CatalogToolbarProps {
   searchValue: string;
@@ -9,16 +11,17 @@ interface CatalogToolbarProps {
   categoryFilters: CategoryFilter[];
   availabilityFilter: AvailabilityFilter;
   activeFilterCount: number;
+  t: Translator;
   onCategoryToggle: (category: CategoryFilter) => void;
 }
 
 const categoryChips = [
-  { value: "strategicka", label: "Strategické" },
-  { value: "rodinna", label: "Rodinné" },
-  { value: "kooperativni", label: "Kooperativní" },
-  { value: "fantasy", label: "Fantasy" },
-  { value: "ekonomicka", label: "Budovatelské" },
-] satisfies Array<{ value: CategoryFilter; label: string }>;
+  { value: "strategicka", labelKey: "catalogChipStrategic" },
+  { value: "rodinna", labelKey: "catalogChipFamily" },
+  { value: "kooperativni", labelKey: "catalogChipCooperative" },
+  { value: "fantasy", labelKey: "catalogChipFantasy" },
+  { value: "ekonomicka", labelKey: "catalogChipEconomic" },
+] satisfies Array<{ value: CategoryFilter; labelKey: TranslationKey }>;
 
 export const CatalogToolbar = ({
   searchValue,
@@ -28,6 +31,7 @@ export const CatalogToolbar = ({
   categoryFilters,
   availabilityFilter,
   activeFilterCount,
+  t,
   onCategoryToggle,
 }: CatalogToolbarProps) => (
   <section className="rounded-lg border border-line bg-white p-5 shadow-sm">
@@ -41,7 +45,7 @@ export const CatalogToolbar = ({
             onSearchActiveChange(Boolean(event.target.value.trim()));
           }}
           onFocus={() => onSearchActiveChange(true)}
-          placeholder="Zadejte název hry, kategorii nebo vydavatele..."
+          placeholder={t("catalogSearchPlaceholder")}
           className="min-w-0 flex-1 px-3 py-3 text-sm font-semibold outline-none placeholder:text-muted"
         />
       </div>
@@ -51,21 +55,21 @@ export const CatalogToolbar = ({
         className="inline-flex items-center justify-center gap-2 rounded-lg border border-line px-5 py-3 text-sm font-extrabold text-navy"
       >
         <Icon name="filter" className="h-5 w-5" />
-        Filtry ({activeFilterCount})
+        {t("catalogFiltersButton", { count: activeFilterCount })}
       </button>
       <label className="flex items-center gap-3 text-sm font-extrabold text-navy">
-        Seřadit:
+        {t("catalogSortLabel")}
         <select className="rounded-lg border border-line px-5 py-3 text-sm font-bold text-navy outline-none">
-          <option>Nejpopulárnější</option>
-          <option>Nejlevnější</option>
-          <option>{availabilityFilter === "available" ? "Skladem" : "Vše"}</option>
+          <option>{t("catalogSortPopular")}</option>
+          <option>{t("catalogSortCheapest")}</option>
+          <option>{availabilityFilter === "available" ? t("catalogSortAvailable") : t("catalogSortAll")}</option>
         </select>
       </label>
       <div className="flex gap-2">
-        <button className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary text-white" type="button" aria-label="Mřížka">
+        <button className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary text-white" type="button" aria-label={t("catalogGridView")}>
           <Icon name="grid" className="h-5 w-5" />
         </button>
-        <button className="flex h-11 w-11 items-center justify-center rounded-lg border border-line text-muted" type="button" aria-label="Seznam">
+        <button className="flex h-11 w-11 items-center justify-center rounded-lg border border-line text-muted" type="button" aria-label={t("catalogListView")}>
           <Icon name="list" className="h-5 w-5" />
         </button>
       </div>
@@ -82,7 +86,7 @@ export const CatalogToolbar = ({
               active ? "border-primary bg-primary text-white" : "border-line bg-white text-navy"
             }`}
           >
-            {chip.label}
+            {t(chip.labelKey)}
           </button>
         );
       })}

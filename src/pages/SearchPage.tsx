@@ -24,7 +24,7 @@ const SearchPage = ({ onProductNavigate, onNavigatePath, activePath }: SearchPag
   const { t, locale } = useTranslation();
   const homeSeo = useMemo(() => HOME_SEO_COPY[locale], [locale]);
   const homeStructuredData = useMemo(() => buildHomeStructuredData(locale), [locale]);
-  const state = useSearchPageState(MAX_SEARCH_SERIES, OVERLAY_SEARCH_LIMIT);
+  const state = useSearchPageState(MAX_SEARCH_SERIES, OVERLAY_SEARCH_LIMIT, t);
 
   return (
     <div className="min-h-screen bg-background text-navy">
@@ -94,6 +94,7 @@ const SearchPage = ({ onProductNavigate, onNavigatePath, activePath }: SearchPag
             categoryFilters={state.categoryFilters}
             availabilityFilter={state.availabilityFilter}
             activeFilterCount={state.activeFilterCount}
+            t={t}
             onCategoryToggle={state.handleCategoryToggle}
           />
           <div className="grid gap-8 lg:grid-cols-[260px_minmax(0,1fr)]">

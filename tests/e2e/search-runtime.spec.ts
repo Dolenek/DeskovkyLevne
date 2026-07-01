@@ -93,7 +93,7 @@ test("filter metadata comes from API and reset clears active filters", async ({ 
   await expect(page.getByText("Nejvýhodnější ceny")).toHaveCount(0);
 
   await page.getByRole("button", { name: /Strategick/ }).first().click();
-  await expect(page.locator("span").filter({ hasText: "Strategy" })).toBeVisible();
+  await expect(page.locator("span").filter({ hasText: "Strategická" })).toBeVisible();
   await expect
     .poll(() => priceRangeUrls.some((entry) => entry.includes("categories=strategicka")))
     .toBe(true);
@@ -106,7 +106,7 @@ test("filter metadata comes from API and reset clears active filters", async ({ 
 
   const saleFilter = page.getByLabel(/slev/i);
   await saleFilter.click();
-  await expect(page.getByText("Sale").last()).toBeVisible();
+  await expect(page.getByText("Ve slevě").last()).toBeVisible();
   await expect
     .poll(() => priceRangeUrls.some((entry) => entry.includes("price_movement=decreased")))
     .toBe(true);

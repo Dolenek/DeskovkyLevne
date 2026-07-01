@@ -45,12 +45,13 @@ export const FilteredProductsSection = ({
 
   const showingFrom = (page - 1) * FILTERED_PAGE_SIZE + 1;
   const showingTo = Math.min(page * FILTERED_PAGE_SIZE, total);
+  const formattedTotal = total.toLocaleString(locale === "cs" ? "cs-CZ" : "en-US");
 
   return (
     <section className="flex flex-col gap-5">
       <div>
         <h2 className="text-xl font-extrabold text-navy">
-          Zobrazeno {showingFrom}-{showingTo} z {total.toLocaleString("cs-CZ")} her
+          {t("filteredResultsShowing", { from: showingFrom, to: showingTo, total: formattedTotal })}
         </h2>
         {activeFilterChips.length > 0 ? (
           <div className="mt-3 flex flex-wrap gap-2">
@@ -67,7 +68,7 @@ export const FilteredProductsSection = ({
               onClick={onResetFilters}
               className="px-2 py-2 text-sm font-bold text-primary"
             >
-              Vymazat vše
+              {t("filteredResetAll")}
             </button>
           </div>
         ) : null}
@@ -79,6 +80,7 @@ export const FilteredProductsSection = ({
             key={entry.slug}
             series={entry}
             locale={locale}
+            t={t}
             onNavigate={() => onNavigateToSeries(entry)}
           />
         ))}
@@ -90,7 +92,7 @@ export const FilteredProductsSection = ({
         onClick={() => onPageChange(Math.min(page + 1, pageCount))}
         className="rounded-lg border border-dashed border-line bg-white px-4 py-4 text-sm font-extrabold text-muted transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
       >
-        Načíst více
+        {t("filteredLoadMore")}
       </button>
 
       {total > FILTERED_PAGE_SIZE ? (
@@ -101,7 +103,7 @@ export const FilteredProductsSection = ({
             disabled={page === 1}
             className="rounded-lg border border-line bg-white px-4 py-2 text-sm font-bold text-muted disabled:opacity-40"
           >
-            Předchozí
+            {t("filteredPaginationPrev")}
           </button>
           {Array.from({ length: Math.min(pageCount, 5) }, (_, index) => index + 1).map(
             (pageNumber) => (
@@ -125,7 +127,7 @@ export const FilteredProductsSection = ({
             disabled={page === pageCount}
             className="rounded-lg border border-line bg-white px-4 py-2 text-sm font-bold text-muted disabled:opacity-40"
           >
-            Další
+            {t("filteredPaginationNext")}
           </button>
         </div>
       ) : null}
