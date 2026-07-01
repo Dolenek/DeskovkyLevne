@@ -55,6 +55,9 @@ SEO canonical link with the resolved canonical slug.
 - The `/` key focuses the header search from non-editable page content. While
   suggestions are open, arrow keys move the highlighted suggestion, `Enter`
   opens it, and `Escape` closes the overlay without clearing the query.
+- Search overlay keeps a larger deduplicated suggestion candidate pool, ranks
+  available products before unavailable or unknown-availability products, and
+  dynamically renders the number of rows that fit in the viewport minus one.
 - Frontend search strips diacritics, treats punctuation and special characters
   as spaces, lowercases the query, and sends a compact token string to the API.
 - Catalog renders a search/filter toolbar, category chips, sticky desktop

@@ -26,7 +26,7 @@ interface LandingPageProps {
   activePath: string;
 }
 
-const OVERLAY_LIMIT = 6;
+const OVERLAY_LIMIT = 60;
 const FEATURED_PAGE_SIZE = 12;
 const LANDING_RANDOM_PAGE_SIZE = 12;
 

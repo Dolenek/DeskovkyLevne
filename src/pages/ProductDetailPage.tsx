@@ -29,7 +29,7 @@ interface ProductDetailPageProps {
   activePath: string;
 }
 
-const INLINE_SEARCH_LIMIT = 6;
+const INLINE_SEARCH_LIMIT = 60;
 const OFFERS_SECTION_ID = "nabidky";
 
 export const ProductDetailPage = ({

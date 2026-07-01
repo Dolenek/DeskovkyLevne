@@ -1,8 +1,9 @@
 import { useCallback } from "react";
-import type { ReactNode } from "react";
+import type { ReactNode, RefObject } from "react";
 import type { ProductSearchResult } from "../types/product";
 import { formatPrice } from "../utils/numberFormat";
 import type { TranslationHook } from "../hooks/useTranslation";
+import { useDynamicSearchResultLimit } from "../hooks/useDynamicSearchResultLimit";
 import { useSearchOverlayKeyboard } from "../hooks/useSearchOverlayKeyboard";
 import { SearchOverlaySkeleton } from "./skeleton";
 import { Icon } from "./ui/Icon";
@@ -24,6 +25,7 @@ interface ProductSearchOverlayProps {
 
 type OverlayContentProps = Omit<ProductSearchOverlayProps, "visible" | "onClose"> & {
   activeIndex: number;
+  listRef: RefObject<HTMLUListElement | null>;
   onActivateIndex: (index: number) => void;
 };
 
@@ -37,6 +39,7 @@ const renderOverlayContent = ({
   onRetry,
   onSelect,
   activeIndex,
+  listRef,
   onActivateIndex,
 }: OverlayContentProps): ReactNode => {
   if (loading) {
@@ -68,6 +71,7 @@ const renderOverlayContent = ({
       results={results}
       activeIndex={activeIndex}
       locale={locale}
+      listRef={listRef}
       onActivateIndex={onActivateIndex}
       onSelect={onSelect}
     />
@@ -80,16 +84,24 @@ export const ProductSearchOverlay = ({
   ...contentProps
 }: ProductSearchOverlayProps) => {
   const { results, loading, error, onSelect } = contentProps;
+  const { headerRef, hintsRef, listRef, panelRef, visibleResultLimit } =
+    useDynamicSearchResultLimit({
+      visible,
+      resultCount: loading || error ? 0 : results.length,
+    });
+  const fallbackResultLimit = Math.min(results.length, 10);
+  const effectiveResultLimit = visibleResultLimit || fallbackResultLimit;
+  const visibleResults = results.slice(0, effectiveResultLimit);
   const handleSelectActive = useCallback(
     (index: number) => {
-      const selectedResult = results[index];
+      const selectedResult = visibleResults[index];
       if (selectedResult) {
         onSelect(selectedResult);
       }
     },
-    [onSelect, results]
+    [onSelect, visibleResults]
   );
-  const selectableCount = loading || error ? 0 : results.length;
+  const selectableCount = loading || error ? 0 : visibleResults.length;
   const { activeIndex, setActiveIndex } = useSearchOverlayKeyboard({
     visible,
     resultCount: selectableCount,
@@ -109,19 +121,27 @@ export const ProductSearchOverlay = ({
         onClick={onClose}
         aria-label={contentProps.t("searchOverlayClose")}
       />
-      <div className="relative z-10 flex max-h-[calc(100vh-8.5rem)] w-full max-w-3xl flex-col rounded-lg border border-line bg-white p-4 shadow-2xl">
-        <div className="mb-3 flex items-center justify-center gap-2 text-sm font-extrabold text-navy">
+      <div
+        ref={panelRef}
+        className="relative z-10 flex max-h-[calc(100vh-8.5rem)] w-full max-w-3xl flex-col rounded-lg border border-line bg-white p-4 shadow-2xl"
+      >
+        <div
+          ref={headerRef}
+          className="mb-3 flex items-center justify-center gap-2 text-sm font-extrabold text-navy"
+        >
           <Icon name="search" className="h-4 w-4 text-primary" />
           {contentProps.t("searchResultsTitle")}
         </div>
         <div className="overflow-y-auto pr-1">
           {renderOverlayContent({
             ...contentProps,
+            results: visibleResults,
             activeIndex,
             onActivateIndex: setActiveIndex,
+            listRef,
           })}
         </div>
-        <SearchKeyboardHints t={contentProps.t} />
+        <SearchKeyboardHints ref={hintsRef} t={contentProps.t} />
       </div>
     </div>
   );

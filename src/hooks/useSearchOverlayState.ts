@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useCatalogSearch } from "./useCatalogSearch";
 import { useDebouncedValue } from "./useDebouncedValue";
 import { uniqueSeriesBySlug } from "../utils/series";
+import { sortSearchResultsByAvailability } from "../utils/searchResults";
 import type { ProductSearchResult } from "../types/product";
 
 interface UseSearchOverlayStateResult {
@@ -17,7 +18,7 @@ interface UseSearchOverlayStateResult {
 }
 
 export const useSearchOverlayState = (
-  limit: number
+  candidateLimit: number
 ): UseSearchOverlayStateResult => {
   const [searchValue, setSearchValue] = useState("");
   const [searchActive, setSearchActive] = useState(false);
@@ -25,11 +26,11 @@ export const useSearchOverlayState = (
   const { results, loading, error, reload } = useCatalogSearch({
     query: debouncedQuery,
     availabilityFilter: "all",
-    limit: limit * 6,
+    limit: candidateLimit,
   });
   const overlayResults = useMemo(
-    () => uniqueSeriesBySlug(results).slice(0, limit),
-    [limit, results]
+    () => sortSearchResultsByAvailability(uniqueSeriesBySlug(results)).slice(0, candidateLimit),
+    [candidateLimit, results]
   );
   const overlayVisible = searchActive && debouncedQuery.length >= 2;
 

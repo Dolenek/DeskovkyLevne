@@ -1,3 +1,4 @@
+import type { RefObject } from "react";
 import type { ProductSearchResult } from "../../types/product";
 import { formatAvailabilityLabel } from "../../utils/availability";
 import { formatPrice } from "../../utils/numberFormat";
@@ -7,6 +8,7 @@ interface SearchOverlayResultsListProps {
   results: ProductSearchResult[];
   activeIndex: number;
   locale: Parameters<typeof formatPrice>[2];
+  listRef: RefObject<HTMLUListElement | null>;
   onActivateIndex: (index: number) => void;
   onSelect: (series: ProductSearchResult) => void;
 }
@@ -19,7 +21,7 @@ const fallbackInitial = (series: ProductSearchResult) =>
 
 const resultButtonClass = (active: boolean) =>
   [
-    "flex w-full flex-col gap-3 rounded-lg border px-4 py-3 text-left shadow-sm transition",
+    "flex w-full flex-col gap-2 rounded-lg border px-4 py-2 text-left shadow-sm transition",
     "sm:flex-row sm:items-center sm:justify-between",
     active
       ? "border-primary bg-emerald-50 shadow-md ring-2 ring-primary/20"
@@ -30,14 +32,14 @@ const SearchResultImage = ({ series }: { series: ProductSearchResult }) => {
   const image = getSeriesImage(series);
   if (!image) {
     return (
-      <div className="flex h-14 w-14 items-center justify-center rounded-lg border border-dashed border-line bg-slate-50 text-lg font-semibold text-muted">
+      <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center text-lg font-semibold text-muted">
         {fallbackInitial(series)}
       </div>
     );
   }
   return (
-    <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-lg border border-line bg-slate-50">
-      <SkeletonImage src={image} alt={series.label} className="h-full w-full object-cover" />
+    <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden">
+      <SkeletonImage src={image} alt={series.label} className="h-full w-full object-contain" />
     </div>
   );
 };
@@ -81,7 +83,7 @@ const SearchResultRow = ({
   onActivate: () => void;
   onSelect: () => void;
 }) => (
-  <li>
+  <li data-search-result-row="true">
     <button
       type="button"
       onClick={onSelect}
@@ -103,10 +105,11 @@ export const SearchOverlayResultsList = ({
   results,
   activeIndex,
   locale,
+  listRef,
   onActivateIndex,
   onSelect,
 }: SearchOverlayResultsListProps) => (
-  <ul className="space-y-2">
+  <ul ref={listRef} className="space-y-2">
     {results.map((series, index) => (
       <SearchResultRow
         key={series.slug}

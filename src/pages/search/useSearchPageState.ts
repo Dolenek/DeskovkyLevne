@@ -17,6 +17,7 @@ import type {
 import type { Translator } from "../../types/i18n";
 import type { ProductSearchResult, ProductSeries } from "../../types/product";
 import { uniqueSeriesBySlug } from "../../utils/series";
+import { sortSearchResultsByAvailability } from "../../utils/searchResults";
 import { FILTERED_PAGE_SIZE } from "./FilteredProductsSection";
 import { buildActiveFilterChips, filterSearchResultsByCategory } from "./searchPageFilters";
 
@@ -159,7 +160,7 @@ export const useSearchPageState = (
 
   const visibleSeries = useMemo(() => {
     const uniqueSeries = uniqueSeriesBySlug(filteredSearchSeries);
-    return uniqueSeries.slice(0, maxSearchSeries);
+    return sortSearchResultsByAvailability(uniqueSeries).slice(0, maxSearchSeries);
   }, [filteredSearchSeries, maxSearchSeries]);
 
   const handlePriceFilterChange = useCallback((key: "min" | "max", value: string) => {

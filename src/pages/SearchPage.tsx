@@ -18,14 +18,14 @@ interface SearchPageProps {
   activePath: string;
 }
 
-const MAX_SEARCH_SERIES = Number(import.meta.env.VITE_SEARCH_MAX_SERIES ?? "6");
-const OVERLAY_SEARCH_LIMIT = MAX_SEARCH_SERIES * 6;
+const SEARCH_CANDIDATE_LIMIT = Number(import.meta.env.VITE_SEARCH_MAX_SERIES ?? "60");
+const OVERLAY_SEARCH_LIMIT = SEARCH_CANDIDATE_LIMIT;
 
 const SearchPage = ({ onProductNavigate, onNavigatePath, activePath }: SearchPageProps) => {
   const { t, locale } = useTranslation();
   const homeSeo = useMemo(() => HOME_SEO_COPY[locale], [locale]);
   const homeStructuredData = useMemo(() => buildHomeStructuredData(locale), [locale]);
-  const state = useSearchPageState(MAX_SEARCH_SERIES, OVERLAY_SEARCH_LIMIT, t);
+  const state = useSearchPageState(SEARCH_CANDIDATE_LIMIT, OVERLAY_SEARCH_LIMIT, t);
   const { setSearchActive } = state;
   const searchInputRef = useRef<HTMLInputElement>(null);
   const activateHeaderSearch = useCallback(() => {
