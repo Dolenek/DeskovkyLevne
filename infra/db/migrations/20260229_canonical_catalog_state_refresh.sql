@@ -16,6 +16,7 @@ alter table public.catalog_slug_seller_state
   add column if not exists manufacturer text,
   add column if not exists price_movement text,
   add column if not exists boardgamegeek_rating numeric,
+  add column if not exists seller_count integer,
   add column if not exists is_discounted boolean;
 
 alter table public.catalog_slug_state
@@ -340,9 +341,10 @@ begin
       coalesce(array_agg(distinct mechanic_tag order by mechanic_tag)
         filter (where mechanic_tag is not null), '{}'::text[]) as mechanic_tags,
       coalesce(array_agg(distinct ean_code order by ean_code)
-        filter (where ean_code is not null), '{}'::text[]) as ean_codes,
+      filter (where ean_code is not null), '{}'::text[]) as ean_codes,
       bool_or(css.is_available) as is_available,
       bool_or(css.is_preorder) as is_preorder,
+      count(distinct css.seller)::integer as seller_count,
       min(css.min_age) as min_age,
       min(css.min_players) as min_players,
       max(css.max_players) as max_players,
@@ -397,7 +399,7 @@ begin
       else p.availability_status end as availability_status,
     m.min_age, m.min_players, m.max_players, m.min_playtime_minutes,
     m.max_playtime_minutes, m.ean_codes, p.manufacturer, p.boardgamegeek_rating,
-    p.price_movement
+    p.price_movement, coalesce(m.seller_count, 1) as seller_count
   from primary_seller p
   left join merged m using (product_name_normalized)
   left join search_terms st using (product_name_normalized);
@@ -409,7 +411,8 @@ begin
     gallery_image_urls, short_description, supplementary_parameters, metadata, category_tags,
     is_available, is_preorder, price_points, genre_tags, game_type_tags, mechanic_tags,
     availability_status, min_age, min_players, max_players, min_playtime_minutes,
-    max_playtime_minutes, ean_codes, manufacturer, boardgamegeek_rating, price_movement
+    max_playtime_minutes, ean_codes, manufacturer, boardgamegeek_rating, price_movement,
+    seller_count
   )
   select * from tmp_slug_state_delta
   on conflict (product_name_normalized) do update set
@@ -430,7 +433,8 @@ begin
     max_players = excluded.max_players, min_playtime_minutes = excluded.min_playtime_minutes,
     max_playtime_minutes = excluded.max_playtime_minutes, ean_codes = excluded.ean_codes,
     manufacturer = excluded.manufacturer, boardgamegeek_rating = excluded.boardgamegeek_rating,
-    price_movement = excluded.price_movement, updated_at = now();
+    price_movement = excluded.price_movement, seller_count = excluded.seller_count,
+    updated_at = now();
   get diagnostics v_upserted_slug_rows = row_count;
 
   delete from public.catalog_slug_state existing

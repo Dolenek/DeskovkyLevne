@@ -234,6 +234,7 @@ select
   latest_price::double precision,
   hero_image_url,
   coalesce(gallery_image_urls, '{}'::text[]),
+  coalesce(seller_count, 1)::integer,
   coalesce(category_tags, '{}'::text[])
 from ` + relation + whereSQL + `
 order by product_name asc
@@ -377,6 +378,7 @@ func collectSuggestionRows(rows pgxRows) ([]SuggestionRow, error) {
 			&row.LatestPrice,
 			&row.HeroImageURL,
 			&row.GalleryImageURLs,
+			&row.SellerCount,
 			&row.CategoryTags,
 		); err != nil {
 			return nil, err

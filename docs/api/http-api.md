@@ -70,6 +70,7 @@ Response row fields:
 - `latest_price`
 - `hero_image_url`
 - `gallery_image_urls`
+- `seller_count`
 - `category_tags`
 
 ## Product Snapshots

@@ -17,6 +17,7 @@ const alphaRow = {
   latest_scraped_at: "2026-01-01",
   hero_image_url: null,
   gallery_image_urls: [],
+  seller_count: 1,
   short_description: null,
   supplementary_parameters: [],
   metadata: {},
@@ -32,7 +33,20 @@ const betaRow = {
   product_name_search: "beta game",
   availability_label: "Skladem",
   stock_status_label: "Skladem",
+  seller_count: 4,
   latest_price: 649,
+};
+
+const gammaRow = {
+  ...alphaRow,
+  product_code: "P-GAMMA",
+  product_name: "Gamma Game",
+  product_name_normalized: "gamma-game",
+  product_name_search: "gamma game",
+  availability_label: "Skladem",
+  stock_status_label: "Skladem",
+  seller_count: 1,
+  latest_price: 599,
 };
 
 const buildExtraRow = (index: number) => ({
@@ -41,11 +55,13 @@ const buildExtraRow = (index: number) => ({
   product_name: `Extra Game ${index}`,
   product_name_normalized: `extra-game-${index}`,
   product_name_search: `extra game ${index}`,
+  seller_count: 1,
   latest_price: 700 + index,
 });
 
 const searchRows = [
   alphaRow,
+  gammaRow,
   betaRow,
   ...Array.from({ length: 10 }, (_, index) => buildExtraRow(index + 3)),
 ];
@@ -121,6 +137,8 @@ test("slash focuses search and keyboard opens highlighted suggestion", async ({ 
   const tallViewportResultCount = await page.locator('[data-search-result-row="true"]').count();
   expect(tallViewportResultCount).toBeLessThan(searchRows.length);
   await expect(page.locator('[data-active-result="true"]')).toContainText("Beta Game");
+  await expect(page.locator('[data-search-result-row="true"]').first()).toContainText("Beta Game");
+  await expect(page.locator('[data-search-result-row="true"]').nth(1)).toContainText("Gamma Game");
 
   await page.setViewportSize({ width: 1280, height: 560 });
   await expect
@@ -132,6 +150,8 @@ test("slash focuses search and keyboard opens highlighted suggestion", async ({ 
     .toBe(tallViewportResultCount);
   await expect(page.locator('[data-active-result="true"]')).toContainText("Beta Game");
 
+  await page.keyboard.press("ArrowDown");
+  await expect(page.locator('[data-active-result="true"]')).toContainText("Gamma Game");
   await page.keyboard.press("ArrowDown");
   await expect(page.locator('[data-active-result="true"]')).toContainText("Alpha Game");
   await page.keyboard.press("ArrowDown");

@@ -78,6 +78,7 @@ const toCatalogSearchRow = (row: ProductCatalogIndexRow): CatalogSearchRow => ({
   latest_price: row.latest_price,
   hero_image_url: row.hero_image_url,
   gallery_image_urls: row.gallery_image_urls,
+  seller_count: row.seller_count ?? null,
   category_tags: row.category_tags,
 });
 
@@ -170,6 +171,7 @@ export const buildSearchResultFromCatalogRow = (
         (tag): tag is string => typeof tag === "string" && tag.trim().length > 0
       )
     : [],
+  sellerCount: row.seller_count ?? null,
   availabilityLabel: row.availability_label ?? null,
   latestPrice: toNumericPrice(row.latest_price),
   currency: row.currency_code ?? null,

@@ -45,7 +45,7 @@ const SearchResultImage = ({ series }: { series: ProductSearchResult }) => {
 };
 
 const SearchResultLabel = ({ series }: { series: ProductSearchResult }) => (
-  <div>
+  <div className="min-w-0">
     <p className="text-base font-extrabold text-navy">{series.label}</p>
     <p className="text-sm text-muted">{series.primaryProductCode ?? series.slug}</p>
   </div>
@@ -58,13 +58,13 @@ const SearchResultMeta = ({
   series: ProductSearchResult;
   locale: Parameters<typeof formatPrice>[2];
 }) => (
-  <div className="flex flex-wrap items-center gap-2">
+  <div className="flex shrink-0 items-center justify-end gap-3 sm:min-w-[240px]">
     {series.availabilityLabel ? (
-      <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-primary">
+      <span className="max-w-40 truncate rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-primary">
         {formatAvailabilityLabel(series.availabilityLabel, locale)}
       </span>
     ) : null}
-    <span className="text-lg font-extrabold text-primary">
+    <span className="whitespace-nowrap text-lg font-extrabold text-primary">
       {formatPrice(series.latestPrice, series.currency ?? undefined, locale) ?? "--"}
     </span>
   </div>
@@ -92,7 +92,7 @@ const SearchResultRow = ({
       aria-current={active ? "true" : undefined}
       data-active-result={active ? "true" : undefined}
     >
-      <div className="flex items-center gap-4">
+      <div className="flex min-w-0 items-center gap-4">
         <SearchResultImage series={series} />
         <SearchResultLabel series={series} />
       </div>

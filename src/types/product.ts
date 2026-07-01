@@ -57,6 +57,7 @@ export interface ProductCatalogIndexRow {
   is_available?: boolean | null;
   is_preorder?: boolean | null;
   primary_seller?: string | null;
+  seller_count?: number | null;
 }
 
 export type CatalogSearchRow = Pick<
@@ -70,6 +71,7 @@ export type CatalogSearchRow = Pick<
   | "latest_price"
   | "hero_image_url"
   | "gallery_image_urls"
+  | "seller_count"
   | "category_tags"
 >;
 
@@ -127,6 +129,7 @@ export interface ProductSearchResult {
   heroImage?: string | null;
   galleryImages?: string[];
   categoryTags: string[];
+  sellerCount?: number | null;
   availabilityLabel?: string | null;
   latestPrice: number | null;
   currency?: string | null;

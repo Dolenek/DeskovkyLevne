@@ -169,3 +169,25 @@ func TestBuildRowsQueryUsesSeededRandomOrder(t *testing.T) {
 		t.Fatalf("unexpected args: %#v", args)
 	}
 }
+
+func TestBuildSearchQueryIncludesSellerCount(t *testing.T) {
+	query, args := buildSearchQuery(
+		"public.catalog_slug_state",
+		" where product_name_search ilike $1",
+		[]any{"%implozivni%"},
+		12,
+	)
+
+	expectedFragments := []string{
+		"coalesce(seller_count, 1)::integer",
+		"limit $2",
+	}
+	for _, fragment := range expectedFragments {
+		if !strings.Contains(query, fragment) {
+			t.Fatalf("expected %q in %s", fragment, query)
+		}
+	}
+	if len(args) != 2 || args[0] != "%implozivni%" || args[1] != 12 {
+		t.Fatalf("unexpected args: %#v", args)
+	}
+}

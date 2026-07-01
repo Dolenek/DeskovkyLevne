@@ -78,6 +78,7 @@ type SuggestionRow struct {
 	LatestPrice           *float64 `json:"latest_price"`
 	HeroImageURL          *string  `json:"hero_image_url"`
 	GalleryImageURLs      []string `json:"gallery_image_urls"`
+	SellerCount           *int     `json:"seller_count,omitempty"`
 	CategoryTags          []string `json:"category_tags"`
 }
 
