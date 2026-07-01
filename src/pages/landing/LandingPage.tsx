@@ -1,10 +1,11 @@
-import { useMemo } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { AppHeader } from "../../components/AppHeader";
 import { ProductSearchOverlay } from "../../components/ProductSearchOverlay";
 import { Seo } from "../../components/Seo";
 import { AppFooter } from "../../components/ui/AppFooter";
 import { Icon } from "../../components/ui/Icon";
 import { useFilteredCatalogIndex } from "../../hooks/useFilteredCatalogIndex";
+import { useSearchHotkey } from "../../hooks/useSearchHotkey";
 import { useSearchOverlayState } from "../../hooks/useSearchOverlayState";
 import { useTranslation } from "../../hooks/useTranslation";
 import { buildAbsoluteUrl } from "../../utils/urls";
@@ -44,6 +45,16 @@ export const LandingPage = ({
   const localeTag = toAppLocaleTag(locale);
   const landingPath = variant === "levne" ? "/" : "/deskove-hry";
   const searchState = useSearchOverlayState(OVERLAY_LIMIT);
+  const { setSearchActive } = searchState;
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const activateHeaderSearch = useCallback(() => {
+    setSearchActive(true);
+  }, [setSearchActive]);
+
+  useSearchHotkey({
+    inputRef: searchInputRef,
+    onActivate: activateHeaderSearch,
+  });
   const landingRandomSeed = useMemo(createLandingRandomSeed, []);
   const {
     series: randomCatalogSeries,
@@ -102,7 +113,8 @@ export const LandingPage = ({
           searchState.setSearchValue(value);
           searchState.setSearchActive(Boolean(value.trim()));
         }}
-        onSearchFocus={() => searchState.setSearchActive(true)}
+        onSearchFocus={activateHeaderSearch}
+        searchInputRef={searchInputRef}
         onLogoClick={onNavigateHome}
         onNavigatePath={onNavigatePath}
         activePath={activePath}

@@ -1,10 +1,13 @@
+import { useCallback } from "react";
 import type { ReactNode } from "react";
 import type { ProductSearchResult } from "../types/product";
-import { formatAvailabilityLabel } from "../utils/availability";
 import { formatPrice } from "../utils/numberFormat";
 import type { TranslationHook } from "../hooks/useTranslation";
-import { SearchOverlaySkeleton, SkeletonImage } from "./skeleton";
+import { useSearchOverlayKeyboard } from "../hooks/useSearchOverlayKeyboard";
+import { SearchOverlaySkeleton } from "./skeleton";
 import { Icon } from "./ui/Icon";
+import { SearchKeyboardHints } from "./search-overlay/SearchKeyboardHints";
+import { SearchOverlayResultsList } from "./search-overlay/SearchOverlayResultsList";
 
 interface ProductSearchOverlayProps {
   visible: boolean;
@@ -19,70 +22,10 @@ interface ProductSearchOverlayProps {
   onClose: () => void;
 }
 
-type OverlayContentProps = Omit<ProductSearchOverlayProps, "visible" | "onClose">;
-
-const getSeriesImage = (series: ProductSearchResult): string | null =>
-  series.heroImage ?? series.galleryImages?.[0] ?? null;
-
-const OverlayResultsList = ({
-  results,
-  locale,
-  onSelect,
-}: {
-  results: ProductSearchResult[];
-  locale: Parameters<typeof formatPrice>[2];
-  onSelect: (series: ProductSearchResult) => void;
-}) => (
-  <ul className="space-y-2">
-    {results.map((series) => {
-      const image = getSeriesImage(series);
-      const fallbackLabel =
-        series.label?.charAt(0).toUpperCase() || series.slug.charAt(0).toUpperCase();
-      return (
-        <li key={series.slug}>
-          <button
-            type="button"
-            onClick={() => onSelect(series)}
-            className="flex w-full flex-col gap-3 rounded-lg border border-line bg-white px-4 py-3 text-left shadow-sm transition hover:border-primary hover:shadow-md sm:flex-row sm:items-center sm:justify-between"
-          >
-            <div className="flex items-center gap-4">
-              {image ? (
-                <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-lg border border-line bg-slate-50">
-                  <SkeletonImage
-                    src={image}
-                    alt={series.label}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-              ) : (
-                <div className="flex h-14 w-14 items-center justify-center rounded-lg border border-dashed border-line bg-slate-50 text-lg font-semibold text-muted">
-                  {fallbackLabel}
-                </div>
-              )}
-              <div>
-                <p className="text-base font-extrabold text-navy">{series.label}</p>
-                <p className="text-sm text-muted">
-                  {series.primaryProductCode ?? series.slug}
-                </p>
-              </div>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              {series.availabilityLabel ? (
-                <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-primary">
-                  {formatAvailabilityLabel(series.availabilityLabel, locale)}
-                </span>
-              ) : null}
-              <span className="text-lg font-extrabold text-primary">
-                {formatPrice(series.latestPrice, series.currency ?? undefined, locale) ??
-                  "--"}
-              </span>
-            </div>
-          </button>
-        </li>
-      );
-    })}
-  </ul>
-);
+type OverlayContentProps = Omit<ProductSearchOverlayProps, "visible" | "onClose"> & {
+  activeIndex: number;
+  onActivateIndex: (index: number) => void;
+};
 
 const renderOverlayContent = ({
   loading,
@@ -93,6 +36,8 @@ const renderOverlayContent = ({
   t,
   onRetry,
   onSelect,
+  activeIndex,
+  onActivateIndex,
 }: OverlayContentProps): ReactNode => {
   if (loading) {
     return <SearchOverlaySkeleton />;
@@ -118,7 +63,15 @@ const renderOverlayContent = ({
       </p>
     );
   }
-  return <OverlayResultsList results={results} locale={locale} onSelect={onSelect} />;
+  return (
+    <SearchOverlayResultsList
+      results={results}
+      activeIndex={activeIndex}
+      locale={locale}
+      onActivateIndex={onActivateIndex}
+      onSelect={onSelect}
+    />
+  );
 };
 
 export const ProductSearchOverlay = ({
@@ -126,6 +79,24 @@ export const ProductSearchOverlay = ({
   onClose,
   ...contentProps
 }: ProductSearchOverlayProps) => {
+  const { results, loading, error, onSelect } = contentProps;
+  const handleSelectActive = useCallback(
+    (index: number) => {
+      const selectedResult = results[index];
+      if (selectedResult) {
+        onSelect(selectedResult);
+      }
+    },
+    [onSelect, results]
+  );
+  const selectableCount = loading || error ? 0 : results.length;
+  const { activeIndex, setActiveIndex } = useSearchOverlayKeyboard({
+    visible,
+    resultCount: selectableCount,
+    onSelectActive: handleSelectActive,
+    onClose,
+  });
+
   if (!visible) {
     return null;
   }
@@ -143,7 +114,14 @@ export const ProductSearchOverlay = ({
           <Icon name="search" className="h-4 w-4 text-primary" />
           {contentProps.t("searchResultsTitle")}
         </div>
-        <div className="overflow-y-auto pr-1">{renderOverlayContent(contentProps)}</div>
+        <div className="overflow-y-auto pr-1">
+          {renderOverlayContent({
+            ...contentProps,
+            activeIndex,
+            onActivateIndex: setActiveIndex,
+          })}
+        </div>
+        <SearchKeyboardHints t={contentProps.t} />
       </div>
     </div>
   );

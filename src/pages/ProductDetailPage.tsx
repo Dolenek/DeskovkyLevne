@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { EmptyState, ErrorState } from "../components/AsyncStates";
 import { AppHeader } from "../components/AppHeader";
 import { ProductSearchOverlay } from "../components/ProductSearchOverlay";
@@ -13,6 +13,7 @@ import { SellerOfferTable } from "../components/SellerOfferTable";
 import { Seo } from "../components/Seo";
 import { AppFooter } from "../components/ui/AppFooter";
 import { useSearchOverlayState } from "../hooks/useSearchOverlayState";
+import { useSearchHotkey } from "../hooks/useSearchHotkey";
 import { useTranslation } from "../hooks/useTranslation";
 import { useProductDetail } from "../hooks/useProductDetail";
 import { buildProductDetailPath } from "../routing/routes";
@@ -43,6 +44,15 @@ export const ProductDetailPage = ({
   const { product, loading, error, reload } = useProductDetail(productSlug);
   const searchState = useSearchOverlayState(INLINE_SEARCH_LIMIT);
   const { setSearchActive } = searchState;
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const activateHeaderSearch = useCallback(() => {
+    setSearchActive(true);
+  }, [setSearchActive]);
+
+  useSearchHotkey({
+    inputRef: searchInputRef,
+    onActivate: activateHeaderSearch,
+  });
 
   useEffect(() => {
     setSearchActive(false);
@@ -89,7 +99,8 @@ export const ProductDetailPage = ({
           searchState.setSearchValue(value);
           searchState.setSearchActive(Boolean(value.trim()));
         }}
-        onSearchFocus={() => searchState.setSearchActive(true)}
+        onSearchFocus={activateHeaderSearch}
+        searchInputRef={searchInputRef}
         onLogoClick={onNavigateHome}
         onNavigatePath={onNavigatePath}
         activePath={activePath}

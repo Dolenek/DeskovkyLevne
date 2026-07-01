@@ -52,6 +52,9 @@ SEO canonical link with the resolved canonical slug.
   until each image load either succeeds or fails.
 - The desktop header uses a three-zone layout with centered search. Search
   overlay activates on debounced input and shows suggestions.
+- The `/` key focuses the header search from non-editable page content. While
+  suggestions are open, arrow keys move the highlighted suggestion, `Enter`
+  opens it, and `Escape` closes the overlay without clearing the query.
 - Frontend search strips diacritics, treats punctuation and special characters
   as spaces, lowercases the query, and sends a compact token string to the API.
 - Catalog renders a search/filter toolbar, category chips, sticky desktop

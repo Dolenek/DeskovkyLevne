@@ -1,4 +1,4 @@
-import type { MouseEvent } from "react";
+import type { MouseEvent, RefObject } from "react";
 import { LocaleSwitcher } from "./LocaleSwitcher";
 import type { TranslationHook } from "../hooks/useTranslation";
 import type { TranslationKey } from "../i18n/translations";
@@ -9,6 +9,7 @@ interface AppHeaderProps {
   searchValue: string;
   onSearchChange: (value: string) => void;
   onSearchFocus?: () => void;
+  searchInputRef?: RefObject<HTMLInputElement | null>;
   onLogoClick?: () => void;
   onNavigatePath?: (path: string) => void;
   activePath?: string;
@@ -31,6 +32,7 @@ export const AppHeader = ({
   searchValue,
   onSearchChange,
   onSearchFocus,
+  searchInputRef,
   onLogoClick,
   onNavigatePath,
   activePath = "",
@@ -44,6 +46,12 @@ export const AppHeader = ({
       event.preventDefault();
       onNavigatePath(path);
     };
+
+  const handleSearchButtonClick = () => {
+    onSearchFocus?.();
+    searchInputRef?.current?.focus();
+    searchInputRef?.current?.select();
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-line bg-white/95 shadow-sm backdrop-blur">
@@ -85,6 +93,7 @@ export const AppHeader = ({
           <div className="flex min-w-0 flex-1 items-center rounded-lg border border-line bg-white shadow-sm transition focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15">
             <Icon name="search" className="ml-3 h-5 w-5 flex-shrink-0 text-muted" />
             <input
+              ref={searchInputRef}
               value={searchValue}
               onChange={(event) => onSearchChange(event.target.value)}
               onFocus={onSearchFocus}
@@ -104,7 +113,7 @@ export const AppHeader = ({
           </div>
           <button
             type="button"
-            onClick={onSearchFocus}
+            onClick={handleSearchButtonClick}
             className="flex h-11 w-12 items-center justify-center rounded-lg bg-primary text-white shadow-sm transition hover:bg-emerald-700"
             aria-label={t("searchLabel")}
           >

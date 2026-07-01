@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { Seo } from "../components/Seo";
 import { useTranslation } from "../hooks/useTranslation";
 import { FiltersPanel } from "./search/FiltersPanel";
@@ -8,6 +8,7 @@ import { AppHeader } from "../components/AppHeader";
 import { ProductSearchOverlay } from "../components/ProductSearchOverlay";
 import { HOME_SEO_COPY, buildHomeStructuredData } from "../utils/seoContent";
 import { AppFooter } from "../components/ui/AppFooter";
+import { useSearchHotkey } from "../hooks/useSearchHotkey";
 import { CatalogToolbar } from "./search/CatalogToolbar";
 import { useSearchPageState } from "./search/useSearchPageState";
 
@@ -25,6 +26,16 @@ const SearchPage = ({ onProductNavigate, onNavigatePath, activePath }: SearchPag
   const homeSeo = useMemo(() => HOME_SEO_COPY[locale], [locale]);
   const homeStructuredData = useMemo(() => buildHomeStructuredData(locale), [locale]);
   const state = useSearchPageState(MAX_SEARCH_SERIES, OVERLAY_SEARCH_LIMIT, t);
+  const { setSearchActive } = state;
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const activateHeaderSearch = useCallback(() => {
+    setSearchActive(true);
+  }, [setSearchActive]);
+
+  useSearchHotkey({
+    inputRef: searchInputRef,
+    onActivate: activateHeaderSearch,
+  });
 
   return (
     <div className="min-h-screen bg-background text-navy">
@@ -39,7 +50,8 @@ const SearchPage = ({ onProductNavigate, onNavigatePath, activePath }: SearchPag
       <AppHeader
         searchValue={state.searchValue}
         onSearchChange={state.handleSearchChange}
-        onSearchFocus={() => state.setSearchActive(true)}
+        onSearchFocus={activateHeaderSearch}
+        searchInputRef={searchInputRef}
         onLogoClick={() => onNavigatePath("/")}
         onNavigatePath={onNavigatePath}
         activePath={activePath}
