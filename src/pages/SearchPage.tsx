@@ -104,7 +104,6 @@ const SearchPage = ({ onProductNavigate, onNavigatePath, activePath }: SearchPag
             onSearchActiveChange={state.setSearchActive}
             onOpenFilters={() => state.setFiltersOpen(true)}
             categoryFilters={state.categoryFilters}
-            availabilityFilter={state.availabilityFilter}
             activeFilterCount={state.activeFilterCount}
             t={t}
             onCategoryToggle={state.handleCategoryToggle}

@@ -1,4 +1,4 @@
-import type { AvailabilityFilter, CategoryFilter } from "../../types/filters";
+import type { CategoryFilter } from "../../types/filters";
 import { Icon } from "../../components/ui/Icon";
 import type { TranslationKey } from "../../i18n/translations";
 import type { Translator } from "../../types/i18n";
@@ -9,7 +9,6 @@ interface CatalogToolbarProps {
   onSearchActiveChange: (active: boolean) => void;
   onOpenFilters: () => void;
   categoryFilters: CategoryFilter[];
-  availabilityFilter: AvailabilityFilter;
   activeFilterCount: number;
   t: Translator;
   onCategoryToggle: (category: CategoryFilter) => void;
@@ -29,7 +28,6 @@ export const CatalogToolbar = ({
   onSearchActiveChange,
   onOpenFilters,
   categoryFilters,
-  availabilityFilter,
   activeFilterCount,
   t,
   onCategoryToggle,
@@ -57,22 +55,6 @@ export const CatalogToolbar = ({
         <Icon name="filter" className="h-5 w-5" />
         {t("catalogFiltersButton", { count: activeFilterCount })}
       </button>
-      <label className="flex items-center gap-3 text-sm font-extrabold text-navy">
-        {t("catalogSortLabel")}
-        <select className="rounded-lg border border-line px-5 py-3 text-sm font-bold text-navy outline-none">
-          <option>{t("catalogSortPopular")}</option>
-          <option>{t("catalogSortCheapest")}</option>
-          <option>{availabilityFilter === "available" ? t("catalogSortAvailable") : t("catalogSortAll")}</option>
-        </select>
-      </label>
-      <div className="flex gap-2">
-        <button className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary text-white" type="button" aria-label={t("catalogGridView")}>
-          <Icon name="grid" className="h-5 w-5" />
-        </button>
-        <button className="flex h-11 w-11 items-center justify-center rounded-lg border border-line text-muted" type="button" aria-label={t("catalogListView")}>
-          <Icon name="list" className="h-5 w-5" />
-        </button>
-      </div>
     </div>
     <div className="mt-5 flex flex-wrap gap-3">
       {categoryChips.map((chip) => {
