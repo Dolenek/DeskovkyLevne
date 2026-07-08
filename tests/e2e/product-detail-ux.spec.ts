@@ -13,7 +13,7 @@ const productRows = [
     list_price_with_vat: 799,
     source_url: "https://example.com/tlama",
     scraped_at: "2026-05-01",
-    hero_image_url: "https://cdn.example.com/user/shop/big/alpha.jpg",
+    hero_image_url: "https://cdn.example.com/user/shop/related/alpha.jpg",
     gallery_image_urls: [
       "https://cdn.example.com/user/shop/related/alpha.jpg",
       "https://cdn.example.com/user/shop/big/alpha-side.jpg",
@@ -41,7 +41,7 @@ const productRows = [
     list_price_with_vat: 799,
     source_url: "https://example.com/tlama",
     scraped_at: "2026-06-01",
-    hero_image_url: "https://cdn.example.com/user/shop/big/alpha.jpg",
+    hero_image_url: "https://cdn.example.com/user/shop/related/alpha.jpg",
     gallery_image_urls: [],
     short_description: "A compact card game.",
     supplementary_parameters: [],
@@ -139,6 +139,36 @@ test("product detail removes misleading UI and normalizes seller data", async ({
   await page.goto("/deskove-hry/alpha-game");
 
   await expect(page.getByRole("heading", { name: "Alpha Game" })).toBeVisible();
+  await expect(page).toHaveTitle("Alpha Game | Deskovky levně");
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", page.url());
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", "index,follow");
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute(
+    "content",
+    /Srovnejte nabídky hry Alpha Game v 3 e-shopech\. Nejlevněji aktuálně 529,00/
+  );
+  await expect(page.locator('meta[property="og:title"]')).toHaveAttribute(
+    "content",
+    "Alpha Game | Deskovky levně"
+  );
+  await expect(page.locator('meta[property="og:type"]')).toHaveAttribute("content", "product");
+  await expect(page.locator('meta[property="og:image"]')).toHaveAttribute(
+    "content",
+    "https://cdn.example.com/user/shop/big/alpha.jpg"
+  );
+  await expect(page.locator('meta[property="og:image:alt"]')).toHaveAttribute("content", "Alpha Game");
+  await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute(
+    "content",
+    "summary_large_image"
+  );
+  const productJsonLd = JSON.parse(await page.locator("#seo-jsonld").textContent() ?? "{}");
+  expect(productJsonLd).toMatchObject({
+    "@type": "Product",
+    name: "Alpha Game",
+    url: page.url(),
+  });
+  expect(productJsonLd.image).toContain("https://cdn.example.com/user/shop/big/alpha.jpg");
+  expect(productJsonLd.offers).toHaveLength(3);
+
   await expect(page.getByRole("link", { name: "Zobrazit nabídky" })).toHaveAttribute("href", "#nabidky");
   await expect(page.getByText("Hlídat cenu")).toHaveCount(0);
   await expect(page.getByText("Zapnout hlídání")).toHaveCount(0);

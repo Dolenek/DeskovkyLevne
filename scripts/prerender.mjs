@@ -1,10 +1,11 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { createReadStream } from "node:fs";
+import { createServer } from "node:http";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { createServer } from "node:http";
-import { createReadStream } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
 import { chromium } from "playwright";
+import { generateProductPreviewPages } from "./prerender-product-previews.mjs";
 
 const SUPABASE_URL =
   process.env.VITE_SUPABASE_URL ??
@@ -13,8 +14,6 @@ const SUPABASE_URL =
 const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY;
 const SITE_URL = (process.env.VITE_SITE_URL || "https://www.deskovkylevne.com")
   .replace(/\/$/, "");
-const PRERENDER_LIMIT = Number(process.env.VITE_PRERENDER_LIMIT ?? "200");
-const TABLE_NAME = "catalog_slug_state";
 const PORT = Number(process.env.VITE_PRERENDER_PORT ?? "4173");
 const HAS_SUPABASE_CREDENTIALS = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 
@@ -27,6 +26,12 @@ if (!HAS_SUPABASE_CREDENTIALS) {
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, "..");
 const distDir = path.join(rootDir, "dist");
+
+const client = HAS_SUPABASE_CREDENTIALS
+  ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession: false },
+    })
+  : null;
 
 const mimeTypes = {
   ".html": "text/html",
@@ -52,7 +57,6 @@ const serveDist = () =>
       }
 
       const ext = path.extname(filePath);
-      const contentType = mimeTypes[ext] ?? "application/octet-stream";
       const stream = createReadStream(filePath);
       stream.on("error", () => {
         const fallbackPath = path.join(distDir, "index.html");
@@ -60,42 +64,14 @@ const serveDist = () =>
         createReadStream(fallbackPath).pipe(res);
       });
       stream.on("open", () => {
-        res.writeHead(200, { "Content-Type": contentType });
+        res.writeHead(200, {
+          "Content-Type": mimeTypes[ext] ?? "application/octet-stream",
+        });
       });
       stream.pipe(res);
     });
     server.listen(PORT, () => resolve(server));
   });
-
-const fetchPrerenderSlugs = async () => {
-  if (!HAS_SUPABASE_CREDENTIALS) {
-    return [];
-  }
-
-  const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: { persistSession: false },
-  });
-  const { data, error } = await client
-    .from(TABLE_NAME)
-    .select("product_name_normalized, latest_scraped_at")
-    .order("latest_scraped_at", { ascending: false })
-    .limit(PRERENDER_LIMIT);
-  if (error) {
-    throw new Error(error.message);
-  }
-  return (data ?? [])
-    .map((row) => row.product_name_normalized?.trim())
-    .filter(Boolean);
-};
-
-const buildRoutes = async () => {
-  const slugs = await fetchPrerenderSlugs();
-  const routes = ["/", "/deskove-hry"];
-  slugs.forEach((slug) => {
-    routes.push(`/deskove-hry/${encodeURIComponent(slug)}`);
-  });
-  return routes;
-};
 
 const ensureDir = async (targetPath) => {
   await mkdir(path.dirname(targetPath), { recursive: true });
@@ -111,29 +87,38 @@ const writeHtmlForRoute = async (routePath, html) => {
   await writeFile(targetPath, html, "utf8");
 };
 
-const prerender = async () => {
-  const routes = await buildRoutes();
+const prerenderStaticRoutes = async () => {
   const server = await serveDist();
   const browser = await chromium.launch({ headless: true, args: ["--no-sandbox"] });
   const page = await browser.newPage();
 
-  for (const routePath of routes) {
-    const url = `http://localhost:${PORT}${routePath}`;
-    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 });
-    await page.waitForFunction(() => {
-      const robots = document.querySelector('meta[name="robots"]');
-      if (!robots) {
-        return false;
-      }
-      return robots.getAttribute("content") === "index,follow";
-    }, { timeout: 60000 });
-    const html = await page.content();
-    await writeHtmlForRoute(routePath, html);
-    console.log(`Prerendered ${routePath}`);
+  try {
+    for (const routePath of ["/", "/levne-deskovky", "/deskove-hry"]) {
+      const url = `http://localhost:${PORT}${routePath}`;
+      await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 });
+      await page.waitForFunction(() => {
+        const robots = document.querySelector('meta[name="robots"]');
+        return robots?.getAttribute("content") === "index,follow";
+      }, { timeout: 60000 });
+      const html = await page.content();
+      await writeHtmlForRoute(routePath, html);
+      console.log(`Prerendered ${routePath}`);
+    }
+  } finally {
+    await browser.close();
+    await new Promise((resolve) => server.close(resolve));
   }
+};
 
-  await browser.close();
-  await new Promise((resolve) => server.close(resolve));
+const prerender = async () => {
+  const shellHtml = await readFile(path.join(distDir, "index.html"), "utf8");
+  await prerenderStaticRoutes();
+  await generateProductPreviewPages({
+    client,
+    distDir,
+    shellHtml,
+    siteUrl: SITE_URL,
+  });
 };
 
 prerender().catch((error) => {

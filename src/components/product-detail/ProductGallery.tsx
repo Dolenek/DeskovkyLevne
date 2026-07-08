@@ -1,40 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Translator } from "../../types/i18n";
 import type { ProductSeries } from "../../types/product";
+import { collectProductImageUrls } from "../../utils/productImages";
 import { SkeletonImage } from "../skeleton";
 
-const toLargeImageUrl = (url: string): string =>
-  url.includes("/related/") ? url.replace("/related/", "/big/") : url;
-
-const isUsableGalleryImage = (url: string): boolean => {
-  const normalized = url.toLowerCase();
-  return (
-    normalized.length > 0 &&
-    !normalized.includes("blank.gif") &&
-    !normalized.includes("/150x150")
-  );
-};
-
 export const ProductGallery = ({ series, t }: { series: ProductSeries; t: Translator }) => {
-  const images = useMemo(() => {
-    const unique = new Set<string>();
-    const ordered: string[] = [];
-    const addImage = (url: string | null | undefined) => {
-      if (!url) {
-        return;
-      }
-      const largeImage = toLargeImageUrl(url);
-      if (!isUsableGalleryImage(largeImage) || unique.has(largeImage)) {
-        return;
-      }
-      unique.add(largeImage);
-      ordered.push(largeImage);
-    };
-
-    addImage(series.heroImage);
-    (series.galleryImages ?? []).forEach(addImage);
-    return ordered;
-  }, [series.galleryImages, series.heroImage]);
+  const images = useMemo(() => collectProductImageUrls(series), [series]);
 
   const [activeIndex, setActiveIndex] = useState(0);
   const sliderRef = useRef<HTMLDivElement | null>(null);

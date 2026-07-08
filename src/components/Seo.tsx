@@ -7,6 +7,7 @@ interface SeoProps {
   description?: string | null;
   path?: string;
   imageUrl?: string | null;
+  imageAlt?: string | null;
   type?: "website" | "article" | "product";
   locale?: LocaleKey;
   noIndex?: boolean;
@@ -85,6 +86,7 @@ interface MetaConfig {
   description?: string | null;
   canonicalUrl?: string | null;
   ogImage?: string | null;
+  ogImageAlt?: string | null;
   type: SeoProps["type"];
   locale: LocaleKey;
   noIndex: boolean;
@@ -97,6 +99,7 @@ const useApplySeoTags = ({
   description,
   canonicalUrl,
   ogImage,
+  ogImageAlt,
   type,
   locale,
   noIndex,
@@ -119,12 +122,14 @@ const useApplySeoTags = ({
     updateMetaTag("property", "og:url", canonicalUrl);
     updateMetaTag("property", "og:site_name", SITE_NAME);
     updateMetaTag("property", "og:image", ogImage);
+    updateMetaTag("property", "og:image:alt", ogImage ? ogImageAlt : null);
     updateMetaTag("property", "og:locale", toOgLocale(locale));
 
     updateMetaTag("name", "twitter:card", ogImage ? "summary_large_image" : "summary");
     updateMetaTag("name", "twitter:title", title);
     updateMetaTag("name", "twitter:description", description ?? null);
     updateMetaTag("name", "twitter:image", ogImage);
+    updateMetaTag("name", "twitter:image:alt", ogImage ? ogImageAlt : null);
 
     updateJsonLd(structuredData);
   }, [
@@ -134,6 +139,7 @@ const useApplySeoTags = ({
     locale,
     noIndex,
     ogImage,
+    ogImageAlt,
     structuredData,
     title,
     type,
@@ -154,6 +160,7 @@ export const Seo = ({
   description,
   path,
   imageUrl,
+  imageAlt,
   type = "website",
   locale = "cs",
   noIndex = false,
@@ -177,6 +184,7 @@ export const Seo = ({
     description,
     canonicalUrl,
     ogImage,
+    ogImageAlt: imageAlt ?? null,
     type,
     locale,
     noIndex,

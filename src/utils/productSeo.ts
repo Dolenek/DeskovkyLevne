@@ -1,6 +1,8 @@
 import type { LocaleKey } from "../i18n/translations";
 import type { ProductSeries } from "../types/product";
 import { formatPrice } from "./numberFormat";
+import { collectProductImageUrls, pickPrimaryProductImage } from "./productImages";
+import { getLatestComparablePrice, getLowestSeller } from "./priceStats";
 import { getSellerDisplayName } from "./sellers";
 import { buildAbsoluteUrl } from "./urls";
 
@@ -40,27 +42,21 @@ const truncateText = (value: string, limit = 200): string => {
   return `${clean.slice(0, limit - 3)}...`;
 };
 
-export const pickPrimaryImage = (series: ProductSeries): string | null => {
-  if (series.heroImage?.trim()) {
-    return series.heroImage;
+export const buildProductTitle = (series: ProductSeries): string =>
+  `${series.label} | Deskovky levně`;
+
+const buildSellerCountText = (count: number, locale: LocaleKey): string => {
+  if (locale === "en") {
+    return count === 1 ? "1 shop" : `${count} shops`;
   }
-  const fallback = series.galleryImages?.find((image) => image.trim().length > 0);
-  return fallback ?? null;
+  if (count === 1) {
+    return "1 e-shopu";
+  }
+  return `${count} e-shopech`;
 };
 
-const collectImageSet = (series: ProductSeries): string[] => {
-  const unique = new Set<string>();
-  if (series.heroImage?.trim()) {
-    unique.add(series.heroImage);
-  }
-  (series.galleryImages ?? []).forEach((image) => {
-    const trimmed = image?.trim();
-    if (trimmed) {
-      unique.add(trimmed);
-    }
-  });
-  return Array.from(unique).slice(0, 8);
-};
+export const pickPrimaryImage = (series: ProductSeries): string | null =>
+  pickPrimaryProductImage(series);
 
 export const buildProductDescription = (
   series: ProductSeries,
@@ -89,6 +85,39 @@ export const buildProductDescription = (
     locale === "en"
       ? `Track price history and availability for ${series.label} across Czech board game shops.`
       : `Sledujte vývoj ceny a dostupnosti pro ${series.label} napříč českými obchody s deskovkami.`,
+    200
+  );
+};
+
+export const buildProductSeoDescription = (
+  series: ProductSeries,
+  locale: LocaleKey
+): string => {
+  const sellerCountText = buildSellerCountText(
+    Math.max(series.sellers.length, 1),
+    locale
+  );
+  const lowestSeller = getLowestSeller(series);
+  const lowestPrice = lowestSeller ? getLatestComparablePrice(lowestSeller) : null;
+  const formattedPrice = formatPrice(
+    lowestPrice,
+    lowestSeller?.currency ?? series.currency ?? undefined,
+    locale
+  );
+
+  if (formattedPrice !== "--") {
+    return truncateText(
+      locale === "en"
+        ? `Compare offers for ${series.label} across ${sellerCountText}. Current lowest price ${formattedPrice}. Track availability and price history.`
+        : `Srovnejte nabídky hry ${series.label} v ${sellerCountText}. Nejlevněji aktuálně ${formattedPrice}. Sledujte dostupnost a historii cen.`,
+      200
+    );
+  }
+
+  return truncateText(
+    locale === "en"
+      ? `Compare offers for ${series.label} across ${sellerCountText}. Track availability and price history across Czech board game shops.`
+      : `Srovnejte nabídky hry ${series.label} v ${sellerCountText}. Sledujte dostupnost a historii cen v českých obchodech.`,
     200
   );
 };
@@ -124,7 +153,8 @@ export const buildProductStructuredData = (
   const offers = series.sellers
     .map((seller) => buildOfferEntry(seller, series, canonicalUrl))
     .filter((offer): offer is Record<string, unknown> => Boolean(offer));
-  const images = collectImageSet(series)
+  const images = collectProductImageUrls(series)
+    .slice(0, 8)
     .map((image) => buildAbsoluteUrl(image) ?? image)
     .filter((image): image is string => Boolean(image));
   return {

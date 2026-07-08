@@ -24,7 +24,10 @@ Build scripts also read:
 - `SUPABASE_URL`
 - `DATABASE_URL`
 
-Build-time DB access still requires `VITE_SUPABASE_ANON_KEY`; if missing, scripts switch to static-only output.
+Build-time DB access still requires `VITE_SUPABASE_ANON_KEY`; if missing,
+scripts switch to static-only output. With credentials, build scripts read
+`catalog_slug_state` for sitemap/product pages and `catalog_slug_seller_state`
+for product preview prices, offers, and fallback images.
 
 ### Optional frontend runtime tuning
 - `VITE_API_SEARCH_LIMIT` (fallback: `VITE_SUPABASE_SEARCH_LIMIT`, default `60`)
@@ -35,7 +38,6 @@ Build-time DB access still requires `VITE_SUPABASE_ANON_KEY`; if missing, script
 - `VITE_API_RETRY_ATTEMPTS` (default `2`)
 - `VITE_API_RETRY_DELAY_MS` (default `250`)
 - `VITE_SEARCH_MAX_SERIES` (default `6`)
-- `VITE_PRERENDER_LIMIT` (default `200`)
 - `VITE_PRERENDER_PORT` (default `4173`)
 
 ## Backend Environment Variables (`apps/api-go`)

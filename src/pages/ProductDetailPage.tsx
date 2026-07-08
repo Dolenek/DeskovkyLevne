@@ -17,7 +17,12 @@ import { useSearchHotkey } from "../hooks/useSearchHotkey";
 import { useTranslation } from "../hooks/useTranslation";
 import { useProductDetail } from "../hooks/useProductDetail";
 import { buildProductDetailPath } from "../routing/routes";
-import { buildProductDescription, buildProductStructuredData, pickPrimaryImage } from "../utils/productSeo";
+import {
+  buildProductSeoDescription,
+  buildProductStructuredData,
+  buildProductTitle,
+  pickPrimaryImage,
+} from "../utils/productSeo";
 import { buildAbsoluteUrl } from "../utils/urls";
 
 interface ProductDetailPageProps {
@@ -70,7 +75,7 @@ export const ProductDetailPage = ({
     () => buildProductDetailPath(product?.slug ?? productSlug),
     [product?.slug, productSlug]
   );
-  const seoDescription = useMemo(() => (product ? buildProductDescription(product, locale) : null), [locale, product]);
+  const seoDescription = useMemo(() => (product ? buildProductSeoDescription(product, locale) : null), [locale, product]);
   const structuredData = useMemo(() => {
     if (!product || !seoDescription) return null;
     const canonicalUrl = buildAbsoluteUrl(canonicalPath) ?? canonicalPath;
@@ -78,7 +83,7 @@ export const ProductDetailPage = ({
   }, [canonicalPath, locale, product, seoDescription]);
   const ogImage = useMemo(() => (product ? pickPrimaryImage(product) : null), [product]);
   const keywords = useMemo(() => (product ? [product.label, ...product.categoryTags].slice(0, 8) : undefined), [product]);
-  const pageTitle = product ? `${product.label} | Deskovky Levně` : "Deskovky Levně | Srovnávač cen deskových her";
+  const pageTitle = product ? buildProductTitle(product) : "Deskovky Levně | Srovnávač cen deskových her";
 
   return (
     <div className="min-h-screen bg-background text-navy">
@@ -87,6 +92,7 @@ export const ProductDetailPage = ({
         description={seoDescription ?? t("detailSeoFallback")}
         path={canonicalPath}
         imageUrl={ogImage}
+        imageAlt={product?.label ?? null}
         locale={locale}
         type={product ? "product" : "website"}
         noIndex={!product || Boolean(error)}

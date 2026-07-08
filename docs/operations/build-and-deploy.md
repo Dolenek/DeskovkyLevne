@@ -16,12 +16,17 @@ Pipeline stages:
 - In Linux/WSL environments, ensure optional Rollup binary packages are installed (for example `@rollup/rollup-linux-x64-gnu`). If missing, reinstall dependencies with `npm install`.
 
 ## Build-Time Data Sources
-- Dynamic sitemap/prerender slugs come from `catalog_slug_state`.
+- Dynamic sitemap slugs and product preview pages come from `catalog_slug_state`.
+- Product preview pages also read `catalog_slug_seller_state` so their static
+  descriptions, Product JSON-LD offers, and social images can use per-seller
+  prices and image fallbacks.
 - Build scripts read `VITE_SUPABASE_URL` first, then `SUPABASE_URL`, then `DATABASE_URL` for URL resolution.
 - Build scripts require `VITE_SUPABASE_ANON_KEY` for dynamic DB reads.
 
 ## Fallback Behavior Without Supabase Credentials
 If no URL is resolved (`VITE_SUPABASE_URL`/`SUPABASE_URL`/`DATABASE_URL`) or `VITE_SUPABASE_ANON_KEY` is missing, sitemap/prerender run in static-only mode and build still succeeds.
+Static-only mode does not write product-specific `/deskove-hry/:slug` preview
+HTML, so crawlers receive only the generic SPA fallback for product routes.
 
 ## Prerender Requirements
 ```bash
@@ -31,6 +36,10 @@ npx playwright install chromium
 Prerender waits for `domcontentloaded` and the SEO robots marker instead of
 `networkidle`, because catalog pages can keep API activity open after the first
 paint.
+
+The browser prerender pass covers `/`, `/levne-deskovky`, and `/deskove-hry`.
+Product route HTML is generated directly from the built SPA shell with
+product-specific SEO tags for every slug from the build-time read model.
 
 ## Backend Deployment (Go API)
 - Service code: `apps/api-go`

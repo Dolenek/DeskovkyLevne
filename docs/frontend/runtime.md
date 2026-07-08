@@ -11,6 +11,20 @@ All product navigation is slug-based. Product detail can be opened through an
 approved alias slug, but after data loads the page replaces the browser URL and
 SEO canonical link with the resolved canonical slug.
 
+## SEO Metadata
+- Product detail pages use product-specific browser and social metadata:
+  `{product name} | Deskovky levně` title, a comparison-focused description
+  with seller count and lowest current seller price when available, canonical
+  slug URL, product `og:type`, large Twitter card, and Product JSON-LD.
+- Product social images use the same first-image rules as the visible gallery:
+  prefer the hero image, then gallery images, normalize `/related/` image URLs
+  to `/big/`, deduplicate, and skip placeholder or thumbnail-only assets such
+  as `blank.gif` and `150x150` images.
+- Production prerender writes product-specific metadata into static HTML files
+  under `/deskove-hry/:slug` for all catalog slugs when build-time data
+  credentials are available. Crawlers that do not execute JavaScript receive
+  product metadata instead of landing-page fallback metadata.
+
 ## Data Access
 - Frontend runtime reads data through backend API (`VITE_API_BASE_URL`).
 - `npm run dev` starts the local Go API and Vite frontend together. Local Vite
