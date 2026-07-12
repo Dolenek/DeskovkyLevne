@@ -113,6 +113,23 @@ from ` + r.summaryRelation + whereSQL + `;`
 	return bounds, nil
 }
 
+func (r *Repository) FetchOverview(ctx context.Context) (Overview, error) {
+	query := `
+select
+  count(*)::bigint,
+  count(*) filter (where is_available = true)::bigint
+from ` + r.summaryRelation + `;`
+
+	var overview Overview
+	if err := r.db.QueryRow(ctx, query).Scan(
+		&overview.Total,
+		&overview.Available,
+	); err != nil {
+		return Overview{}, err
+	}
+	return overview, nil
+}
+
 func normalizeRelationName(value string) string {
 	normalized := strings.TrimSpace(value)
 	if normalized == "" {

@@ -43,6 +43,7 @@ func NewRouter(handler *Handler, allowedOrigin string, timeouts RouteTimeouts) h
 	withRouteTimeout(router, timeouts.Health, "/version", handler.Version)
 	router.Route("/api/v1", func(r chi.Router) {
 		withRouteTimeout(r, timeouts.Catalog, "/catalog", handler.Catalog)
+		withRouteTimeout(r, timeouts.Catalog, "/catalog/overview", handler.CatalogOverview)
 		withRouteTimeout(r, timeouts.Search, "/search/suggest", handler.SearchSuggest)
 		withRouteTimeout(r, timeouts.Product, "/products/{slug}", handler.ProductDetail)
 		withRouteTimeout(r, timeouts.Discounts, "/discounts/recent", handler.RecentDiscounts)

@@ -17,6 +17,11 @@ export interface CatalogResponse {
   total_estimate?: number;
 }
 
+export interface CatalogOverviewResponse {
+  total: number;
+  available: number;
+}
+
 export interface SearchResponse {
   rows: CatalogSearchRow[];
 }

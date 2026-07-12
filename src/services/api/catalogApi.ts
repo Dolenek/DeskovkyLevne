@@ -9,6 +9,7 @@ import { SEARCH_LIMIT } from "./config";
 import { filterRowsByCode, normalizeSearchTerm, sanitizeSearchTerm } from "./helpers";
 import type {
   CatalogFilterOptions,
+  CatalogOverviewResponse,
   CatalogResponse,
   FilterOptionsResponse,
   FilteredCatalogResult,
@@ -87,6 +88,11 @@ export const fetchFilteredCatalogIndex = async (
     total: payload.total ?? payload.total_estimate ?? 0,
   };
 };
+
+export const fetchCatalogOverview = async (
+  signal?: AbortSignal
+): Promise<CatalogOverviewResponse> =>
+  fetchApi<CatalogOverviewResponse>(buildApiUrl("/catalog/overview"), { signal });
 
 export const fetchFilterOptions = async (
   signal?: AbortSignal

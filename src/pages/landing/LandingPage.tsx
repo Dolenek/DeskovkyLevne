@@ -4,6 +4,7 @@ import { ProductSearchOverlay } from "../../components/ProductSearchOverlay";
 import { Seo } from "../../components/Seo";
 import { AppFooter } from "../../components/ui/AppFooter";
 import { Icon } from "../../components/ui/Icon";
+import { useCatalogOverview } from "../../hooks/useCatalogOverview";
 import { useFilteredCatalogIndex } from "../../hooks/useFilteredCatalogIndex";
 import { useSearchHotkey } from "../../hooks/useSearchHotkey";
 import { useSearchOverlayState } from "../../hooks/useSearchOverlayState";
@@ -56,9 +57,9 @@ export const LandingPage = ({
     onActivate: activateHeaderSearch,
   });
   const landingRandomSeed = useMemo(createLandingRandomSeed, []);
+  const catalogOverview = useCatalogOverview();
   const {
     series: randomCatalogSeries,
-    total,
     loading: landingCatalogLoading,
   } = useFilteredCatalogIndex({
     availabilityFilter: "available",
@@ -160,7 +161,15 @@ export const LandingPage = ({
                 </button>
               </div>
               <div className="mt-8 grid gap-5 sm:grid-cols-3">
-                <StatPill icon="spark" value={total ? total.toLocaleString(localeTag) : "5 842"} label={t("landingTrackedGames")} />
+                <StatPill
+                  icon="spark"
+                  value={catalogOverview?.total.toLocaleString(localeTag) ?? "—"}
+                  label={catalogOverview
+                    ? t("landingCatalogOverview", {
+                        available: catalogOverview.available.toLocaleString(localeTag),
+                      })
+                    : t("landingTrackedGames")}
+                />
                 <StatPill icon="store" value="15" label={t("landingShopCount")} />
                 <StatPill icon="refresh" value="99 %" label={t("landingDailyUpdates")} />
               </div>

@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"tlamasite/apps/api-go/internal/catalog"
 	"tlamasite/apps/api-go/internal/snapshots"
 )
 
@@ -60,6 +61,29 @@ func TestHandlerRejectsInvalidCatalogQuery(t *testing.T) {
 	handler.Catalog(recorder, request)
 	if recorder.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d", recorder.Code)
+	}
+}
+
+func TestCatalogOverviewReturnsTotalAndAvailableCounts(t *testing.T) {
+	handler := NewHandler(&fakeService{
+		catalogOverview: func(context.Context) (catalog.Overview, error) {
+			return catalog.Overview{Total: 22002, Available: 17424}, nil
+		},
+	}, 200)
+	recorder := httptest.NewRecorder()
+	handler.CatalogOverview(
+		recorder,
+		httptest.NewRequest(http.MethodGet, "/api/v1/catalog/overview", nil),
+	)
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", recorder.Code)
+	}
+	var payload catalog.Overview
+	if err := json.Unmarshal(recorder.Body.Bytes(), &payload); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if payload.Total != 22002 || payload.Available != 17424 {
+		t.Fatalf("unexpected overview: %#v", payload)
 	}
 }
 

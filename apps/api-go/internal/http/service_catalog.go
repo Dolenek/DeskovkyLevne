@@ -35,6 +35,19 @@ func (s *Service) Catalog(
 	return payload.Rows, payload.Total, nil
 }
 
+func (s *Service) CatalogOverview(ctx context.Context) (catalog.Overview, error) {
+	return fetchCached[catalog.Overview](
+		ctx,
+		s,
+		"catalog-overview",
+		"catalog-overview",
+		s.cacheTTL.Catalog,
+		func(innerCtx context.Context) (catalog.Overview, error) {
+			return s.catalogRepo.FetchOverview(innerCtx)
+		},
+	)
+}
+
 func (s *Service) Search(
 	ctx context.Context,
 	query string,

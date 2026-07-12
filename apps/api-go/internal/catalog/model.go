@@ -54,6 +54,11 @@ type PriceRange struct {
 	MaxPrice *float64 `json:"max_price"`
 }
 
+type Overview struct {
+	Total     int64 `json:"total"`
+	Available int64 `json:"available"`
+}
+
 type SuggestionRow struct {
 	ProductCode           *string  `json:"product_code"`
 	ProductName           *string  `json:"product_name"`

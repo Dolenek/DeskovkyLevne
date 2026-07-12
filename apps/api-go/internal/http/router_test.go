@@ -15,6 +15,7 @@ func TestRouterExposesCurrentEndpointsOnly(t *testing.T) {
 		{"/health", http.StatusOK},
 		{"/ready", http.StatusOK},
 		{"/version", http.StatusOK},
+		{"/api/v1/catalog/overview", http.StatusOK},
 		{"/api/v1/discounts/recent", http.StatusOK},
 		{"/api/v1/meta/filter-options", http.StatusOK},
 		{"/api/v1/snapshots/recent", http.StatusNotFound},

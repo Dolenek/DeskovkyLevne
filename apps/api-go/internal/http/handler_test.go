@@ -13,10 +13,11 @@ import (
 )
 
 type fakeService struct {
-	catalog       func(ctx context.Context, filters catalog.Filters) ([]catalog.Row, int64, error)
-	productDetail func(ctx context.Context, slug string, historyPoints int) (snapshots.ProductDetail, error)
-	priceRange    func(ctx context.Context, filters catalog.PriceRangeFilters) (catalog.PriceRange, error)
-	ready         func(ctx context.Context) error
+	catalog         func(ctx context.Context, filters catalog.Filters) ([]catalog.Row, int64, error)
+	catalogOverview func(ctx context.Context) (catalog.Overview, error)
+	productDetail   func(ctx context.Context, slug string, historyPoints int) (snapshots.ProductDetail, error)
+	priceRange      func(ctx context.Context, filters catalog.PriceRangeFilters) (catalog.PriceRange, error)
+	ready           func(ctx context.Context) error
 }
 
 func (f *fakeService) Catalog(
@@ -27,6 +28,13 @@ func (f *fakeService) Catalog(
 		return f.catalog(ctx, filters)
 	}
 	return nil, 0, nil
+}
+
+func (f *fakeService) CatalogOverview(ctx context.Context) (catalog.Overview, error) {
+	if f.catalogOverview != nil {
+		return f.catalogOverview(ctx)
+	}
+	return catalog.Overview{}, nil
 }
 
 func (f *fakeService) Search(_ context.Context, _ string, _ string, _ int) ([]catalog.SuggestionRow, error) {

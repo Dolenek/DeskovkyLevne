@@ -80,6 +80,18 @@ fallback count query.
 }
 ```
 
+### `GET /api/v1/catalog/overview`
+
+Returns live unfiltered catalog counts. `total` is every canonical slug and
+`available` counts slugs available from at least one seller.
+
+```json
+{
+  "total": 22002,
+  "available": 17424
+}
+```
+
 ## Search Suggestions
 
 ### `GET /api/v1/search/suggest`

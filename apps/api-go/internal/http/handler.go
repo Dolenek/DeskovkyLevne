@@ -13,6 +13,7 @@ import (
 
 type serviceContract interface {
 	Catalog(ctx context.Context, filters catalog.Filters) ([]catalog.Row, int64, error)
+	CatalogOverview(ctx context.Context) (catalog.Overview, error)
 	Search(ctx context.Context, query string, availability string, limit int) ([]catalog.SuggestionRow, error)
 	ProductDetail(ctx context.Context, slug string, historyPoints int) (snapshots.ProductDetail, error)
 	RecentDiscounts(ctx context.Context, limit int) ([]snapshots.RecentDiscount, error)
@@ -77,6 +78,16 @@ func (h *Handler) Catalog(w http.ResponseWriter, r *http.Request) {
 		"limit":          filters.Limit,
 		"offset":         filters.Offset,
 	})
+}
+
+func (h *Handler) CatalogOverview(w http.ResponseWriter, r *http.Request) {
+	overview, err := h.service.CatalogOverview(r.Context())
+	if err != nil {
+		writeServiceError(w, r, err)
+		return
+	}
+	setPublicCache(w, 60, 120)
+	writeJSON(w, http.StatusOK, overview)
 }
 
 func (h *Handler) SearchSuggest(w http.ResponseWriter, r *http.Request) {

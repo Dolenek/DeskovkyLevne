@@ -36,6 +36,12 @@ curl --silent --show-error --fail "${API_URL}/health" >/dev/null
 curl --silent --show-error --fail "${API_URL}/ready" >/dev/null
 curl --silent --show-error --fail "${API_URL}/version" >/dev/null
 curl --silent --show-error --fail "${API_URL}/api/v1/catalog?limit=1" >/dev/null
+overview_payload="$(curl --silent --show-error --fail \
+  "${API_URL}/api/v1/catalog/overview")"
+if [[ "${overview_payload}" != *'"available"'* ]]; then
+  echo "Catalog overview smoke check is missing available count"
+  exit 1
+fi
 curl --silent --show-error --fail "${API_URL}/api/v1/discounts/recent?limit=1" >/dev/null
 search_payload="$(curl --silent --show-error --fail \
   "${API_URL}/api/v1/search/suggest?q=ca&limit=1")"
