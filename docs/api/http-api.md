@@ -1,44 +1,75 @@
 # HTTP API Contract
 
-Base path: `/api/v1`
+Application endpoints use the `/api/v1` base path. Operational endpoints are
+served from the root.
 
-## Health
+## Operational Endpoints
+
 ### `GET /health`
-- Returns service health.
 
-Response:
+Liveness probe. It reports that the HTTP process is running and does not query
+external dependencies.
+
 ```json
 { "status": "ok" }
 ```
 
+### `GET /ready`
+
+Readiness probe. It verifies that PostgreSQL accepts a connection. A failure
+returns `503` with code `not_ready`.
+
+```json
+{ "status": "ready" }
+```
+
+### `GET /version`
+
+Returns deployment identity embedded at build time.
+
+```json
+{
+  "version": "v1.2.3",
+  "commit": "abc123def456",
+  "built_at": "2026-07-11T20:00:00Z"
+}
+```
+
+## Validation Rules
+
+Invalid integers, prices, enum values, ranges, and unsupported filter options
+return `400 validation_error`. Page sizes above the configured maximum are
+capped. Prices must be finite and non-negative, and `min_price` must not exceed
+`max_price`.
+
+Supported values:
+
+- `availability`: `available`, `preorder`
+- `categories`: `strategicka`, `rodinna`, `fantasy`, `kooperativni`, `ekonomicka`
+- `players`: `1-2`, `2-4`, `4-plus`
+- `playtime`: `under-30`, `30-60`, `60-plus`
+- `age`: `6`, `8`, `10`, `12`
+- `price_movement`: `decreased`
+
 ## Catalog
+
 ### `GET /api/v1/catalog`
-Returns paginated catalog rows from `catalog_slug_state`.
 
-Query params:
-- `limit` (optional, int): default `20`, capped by backend `API_MAX_PAGE_SIZE`.
-- `offset` (optional, int): default `0`.
-- `availability` (optional, string): supports `available` or `preorder`; other values behave as no availability filter.
-- `min_price` (optional, float).
-- `max_price` (optional, float).
-- `categories` (optional, comma-separated string): OR-match against the tag fields mapped below.
-- `players` (optional, comma-separated string): supported values are `1-2`, `2-4`, `4-plus`.
-- `playtime` (optional, comma-separated string): supported values are `under-30`, `30-60`, `60-plus`.
-- `age` (optional, comma-separated int): supported UI values are `6`, `8`, `10`, `12`; matches products with `min_age <= value`.
-- `price_movement` (optional, string): `decreased` returns products with `price_movement = decreased` or `latest_price < list_price_with_vat`.
-- `q` (optional, string): token search against normalized product name,
-  approved alias terms, and `product_code`. Special characters are treated as
-  token separators, and all query tokens must match in any order.
-- `random_seed` (optional, int): returns a deterministic pseudo-random order for the filtered result set. Use for small random product selections; normal catalog browsing omits it and keeps name sorting.
+Returns canonical rows from `catalog_slug_state`.
 
-Category slugs map to catalog tags:
-- `strategicka` -> `game_type_tags` contains `Strategická`
-- `rodinna` -> `game_type_tags` contains `Rodinná`
-- `fantasy` -> `genre_tags`, `category_tags`, or `game_type_tags` contains `Fantasy`
-- `kooperativni` -> `game_type_tags` contains `Kooperativní` or `mechanic_tags` contains `Cooperative Game`
-- `ekonomicka` -> `genre_tags` contains `Ekonomické`
+Query parameters:
 
-Response shape:
+- `limit`: default `20`, capped by `API_MAX_PAGE_SIZE`
+- `offset`: default `0`, maximum `1000000`
+- `availability`, `categories`, `players`, `playtime`, `age`, `price_movement`
+- `min_price`, `max_price`
+- `q`: token search against canonical search text and product code
+- `random_seed`: deterministic pseudo-random ordering for small selections
+
+Normal ordering is stable by product name and canonical slug. The exact total
+is calculated with the page query; an out-of-range non-zero offset uses a
+fallback count query.
+
 ```json
 {
   "rows": [],
@@ -50,131 +81,121 @@ Response shape:
 ```
 
 ## Search Suggestions
+
 ### `GET /api/v1/search/suggest`
-Returns lightweight search suggestions from canonical slug rows.
 
-Query params:
-- `q` (required for results): if length `< 2`, returns empty list. Special
-  characters are treated as token separators, and all query tokens must match
-  normalized product name, approved alias terms, or `product_code` in any order.
-- `availability` (optional): same semantics as catalog.
-- `limit` (optional, int): default `60`, capped by backend max page size.
+`q` values shorter than two characters return an empty list. Queries longer
+than 120 characters are rejected. Search tokens are punctuation-insensitive,
+diacritic-insensitive, and must all match in any order.
 
-Response row fields:
-- `product_code`
-- `product_name`
-- `product_name_normalized`
-- `product_name_search`
-- `currency_code`
-- `availability_label`
-- `latest_price`
-- `hero_image_url`
-- `gallery_image_urls`
-- `seller_count`
-- `category_tags`
+Optional parameters:
 
-## Product Snapshots
+- `availability`
+- `limit`: default `60`, capped by `API_MAX_PAGE_SIZE`
+
+Each row includes canonical slug, product name/code, current price, currency,
+availability, images, `seller_count`, and category tags.
+
+```json
+{ "rows": [] }
+```
+
+## Product Detail
+
 ### `GET /api/v1/products/{slug}`
-Returns seller-day history rows for a canonical slug or an approved alias slug.
-Price points come from `catalog_daily_price_history`; current seller metadata
-such as name, image, availability label, and source URL comes from
-`catalog_slug_seller_state`.
 
-Path params:
-- `slug` (required): lowercased by server before query, then resolved through
-  `canonical_product_slug(...)`.
+Resolves canonical and approved alias slugs. An unknown slug returns
+`404 not_found`.
 
-Query params:
-- `history_points` (optional, int): limits response to the latest N seller-day
-  points for the slug; backend cap is `5000`. `0` or omitted returns full
-  history.
+`history_points` limits the latest seller-day points **per seller**. It defaults
+to `0` (full history) and is capped at `5000`. Limiting each seller separately
+ensures that one seller cannot displace another from the chart.
 
-History row fields include the normal product snapshot fields plus:
-- `price_date`: checked calendar date used by charts.
-- `snapshot_count`: successful check count for that seller and date.
-- `scraped_at`: last successful check timestamp for that seller and date.
+Seller presentation metadata is returned once. Compact history points are
+nested beneath that seller:
 
-For alias lookups, row `product_name_normalized` is the resolved canonical slug.
-
-Error behavior:
-- empty slug returns `400` with code `validation_error`.
-
-Response shape:
 ```json
 {
-  "rows": []
-}
-```
-
-## Recent Snapshots
-### `GET /api/v1/snapshots/recent`
-Returns latest snapshots for discount/recency features.
-
-Query params:
-- `limit` (optional, int): default `2000`, capped at `10000`.
-
-Rows are sorted by `scraped_at desc, id desc`.
-
-Response shape:
-```json
-{
-  "rows": []
-}
-```
-
-## Category Metadata
-### `GET /api/v1/meta/categories`
-Returns category list with counts.
-
-Query params:
-- `availability` (optional): supports `available` or `preorder`; other values behave as no availability filter.
-
-Response shape:
-```json
-{
-  "rows": [
-    { "category": "Strategy", "count": 123 }
+  "product_name_normalized": "canonical-slug",
+  "sellers": [
+    {
+      "seller": "tlamagames",
+      "product_code": "ABC123",
+      "product_name": "Example game",
+      "currency_code": "CZK",
+      "availability_label": "Skladem",
+      "stock_status_label": null,
+      "latest_price": 799,
+      "previous_price": 899,
+      "first_price": 999,
+      "list_price_with_vat": 999,
+      "source_url": "https://example.test/product",
+      "latest_scraped_at": "2026-07-11 15:26:17+02",
+      "hero_image_url": "https://example.test/image.jpg",
+      "gallery_image_urls": [],
+      "short_description": "...",
+      "supplementary_parameters": [],
+      "metadata": {},
+      "history": [
+        {
+          "price_date": "2026-07-11",
+          "price_with_vat": 799,
+          "list_price_with_vat": 999,
+          "currency_code": "CZK",
+          "scraped_at": "2026-07-11 15:26:17+02",
+          "snapshot_count": 1
+        }
+      ]
+    }
   ]
 }
 ```
 
-## Filter Options Metadata
+Sellers are ordered with `tlamagames` and `tlamagase` first. History remains
+separate for every seller and is never merged into a synthetic series.
+
+## Recent Discounts
+
+### `GET /api/v1/discounts/recent`
+
+Returns a compact seller-level discount feed from `catalog_slug_seller_state`.
+Prices are compared only within the same seller. A row is eligible when the
+latest price is below its previous different price or below the list price.
+
+- `limit`: default `10`, capped at `100`
+
+```json
+{
+  "rows": [
+    {
+      "product_name_normalized": "canonical-slug",
+      "seller": "tlamagames",
+      "product_code": "ABC123",
+      "product_name": "Example game",
+      "currency_code": "CZK",
+      "current_price": 799,
+      "reference_price": 899,
+      "source_url": "https://example.test/product",
+      "changed_at": "2026-07-11 15:26:17+02"
+    }
+  ]
+}
+```
+
+## Filter Metadata
+
 ### `GET /api/v1/meta/filter-options`
-Returns stable option values and labels for catalog filter UI.
 
-Response shape:
-```json
-{
-  "categories": [{ "value": "strategicka", "label": "Strategická" }],
-  "player_ranges": [{ "value": "2-4", "label": "2-4" }],
-  "playtime_ranges": [{ "value": "30-60", "label": "30-60 min" }],
-  "age_ratings": [{ "value": "8", "label": "8+" }],
-  "availability": [
-    { "value": "available", "label": "Skladem" },
-    { "value": "preorder", "label": "Předobjednávka" }
-  ],
-  "price_movement": [{ "value": "decreased", "label": "Ve slevě" }]
-}
-```
+Returns the supported filter values and display labels. This curated endpoint
+is the sole category-option source; raw category-tag counts are not exposed.
 
-## Price Range Metadata
 ### `GET /api/v1/meta/price-range`
-Returns latest-price bounds used by filters.
 
-Query params:
-- `availability` (optional): supports `available` or `preorder`; other values behave as no availability filter.
-- `categories`, `players`, `playtime`, `age`, `price_movement`: same semantics as catalog; price params are ignored for bounds.
+Returns `min_price` and `max_price` for the active supported filters. Explicit
+price parameters are ignored because the endpoint calculates those bounds.
 
-Response shape:
-```json
-{
-  "min_price": 199.0,
-  "max_price": 1899.0
-}
-```
+## Errors
 
-## Error Envelope
-Error responses return:
 ```json
 {
   "error": "human readable message",
@@ -184,22 +205,18 @@ Error responses return:
 ```
 
 Current codes:
+
 - `validation_error`
+- `not_found`
+- `not_ready`
 - `timeout`
 - `request_canceled`
 - `internal_error`
 
-## Caching Notes (Server-side)
-All endpoint cache TTLs are configurable through environment variables:
-- `API_CACHE_TTL_CATALOG`
-- `API_CACHE_TTL_SEARCH`
-- `API_CACHE_TTL_PRODUCT`
-- `API_CACHE_TTL_RECENT`
-- `API_CACHE_TTL_CATEGORIES`
-- `API_CACHE_TTL_PRICE_RANGE`
+## Caching and Transport
 
-Cache namespace is controlled by `API_CACHE_NAMESPACE`.
-
-## Timeout Behavior
-- Route-level timeouts are enforced in middleware.
-- Timeout responses return `504` with `{"error":"request timed out","code":"timeout"}`.
+Successful public read responses include `Cache-Control` with endpoint-specific
+freshness and stale-while-revalidate values. Server-side Redis keys use the
+`api-v2` namespace by default. Concurrent misses are coalesced without tying the
+shared load to the first caller's cancellation. JSON responses support gzip
+compression when requested by the client.

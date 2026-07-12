@@ -2,7 +2,9 @@ package snapshots
 
 import (
 	"context"
+	"errors"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -14,163 +16,151 @@ func NewRepository(db *pgxpool.Pool) *Repository {
 	return &Repository{db: db}
 }
 
-func (r *Repository) BySlug(ctx context.Context, slug string, historyPoints int) ([]Row, error) {
-	query, args := buildBySlugQuery(slug, historyPoints)
-	rows, err := r.db.Query(ctx, query, args...)
+func (repository *Repository) BySlug(
+	ctx context.Context,
+	slug string,
+	historyPoints int,
+) (ProductDetail, error) {
+	detail, err := repository.fetchSellerMetadata(ctx, slug)
+	if err != nil {
+		return ProductDetail{}, err
+	}
+	if len(detail.Sellers) == 0 {
+		return ProductDetail{}, ErrProductNotFound
+	}
+	if err := repository.attachPriceHistory(ctx, &detail, slug, historyPoints); err != nil {
+		return ProductDetail{}, err
+	}
+	return detail, nil
+}
+
+func (repository *Repository) RecentDiscounts(
+	ctx context.Context,
+	limit int,
+) ([]RecentDiscount, error) {
+	rows, err := repository.db.Query(ctx, recentDiscountsQuery, limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	return collect(rows)
-}
 
-func (r *Repository) Recent(ctx context.Context, limit int) ([]Row, error) {
-	query := `
-with latest_ids as (
-  select id
-  from public.product_price_snapshots
-  order by scraped_at desc, id desc
-  limit $1
-)
-select
-  p.id,
-  p.product_code,
-  p.product_name_original,
-  p.product_name_normalized,
-  p.price_with_vat::double precision,
-  p.list_price_with_vat::double precision,
-  p.currency_code,
-  p.source_url,
-  p.scraped_at::text,
-  null::text as price_date,
-  null::integer as snapshot_count,
-  p.availability_label,
-  p.stock_status_label,
-  p.hero_image_url,
-  coalesce(p.gallery_image_urls, '{}'::text[]),
-  p.short_description,
-  coalesce(p.supplementary_parameters, '[]'::jsonb),
-  coalesce(p.metadata, '{}'::jsonb),
-  p.seller
-from latest_ids l
-join public.product_price_snapshots p on p.id = l.id
-order by p.scraped_at desc, p.id desc;`
-	rows, err := r.db.Query(ctx, query, limit)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	return collect(rows)
-}
-
-func collect(rows pgxRows) ([]Row, error) {
-	results := make([]Row, 0, 512)
+	discounts := make([]RecentDiscount, 0, limit)
 	for rows.Next() {
-		item, err := scanSnapshotRow(rows)
-		if err != nil {
+		var discount RecentDiscount
+		if err := rows.Scan(
+			&discount.ProductNameNormalized,
+			&discount.Seller,
+			&discount.ProductCode,
+			&discount.ProductName,
+			&discount.CurrencyCode,
+			&discount.CurrentPrice,
+			&discount.ReferencePrice,
+			&discount.SourceURL,
+			&discount.ChangedAt,
+		); err != nil {
 			return nil, err
 		}
-		results = append(results, item)
+		discounts = append(discounts, discount)
 	}
-	return results, rows.Err()
+	return discounts, rows.Err()
 }
 
-func scanSnapshotRow(rows pgxRows) (Row, error) {
-	var item Row
-	err := rows.Scan(
-		&item.ID,
-		&item.ProductCode,
-		&item.ProductNameOriginal,
-		&item.ProductNameNormalized,
-		&item.PriceWithVat,
-		&item.ListPriceWithVat,
-		&item.CurrencyCode,
-		&item.SourceURL,
-		&item.ScrapedAt,
-		&item.PriceDate,
-		&item.SnapshotCount,
-		&item.AvailabilityLabel,
-		&item.StockStatusLabel,
-		&item.HeroImageURL,
-		&item.GalleryImageURLs,
-		&item.ShortDescription,
-		&item.SupplementaryParameters,
-		&item.Metadata,
-		&item.Seller,
+func (repository *Repository) Ping(ctx context.Context) error {
+	return repository.db.Ping(ctx)
+}
+
+func (repository *Repository) fetchSellerMetadata(
+	ctx context.Context,
+	slug string,
+) (ProductDetail, error) {
+	rows, err := repository.db.Query(ctx, sellerMetadataQuery, slug)
+	if err != nil {
+		return ProductDetail{}, err
+	}
+	defer rows.Close()
+
+	detail := ProductDetail{Sellers: make([]Seller, 0, 8)}
+	for rows.Next() {
+		var canonicalSlug string
+		var seller Seller
+		if err := scanSeller(rows, &canonicalSlug, &seller); err != nil {
+			return ProductDetail{}, err
+		}
+		detail.ProductNameNormalized = canonicalSlug
+		detail.Sellers = append(detail.Sellers, seller)
+	}
+	return detail, rows.Err()
+}
+
+func scanSeller(rows pgx.Rows, canonicalSlug *string, seller *Seller) error {
+	return rows.Scan(
+		canonicalSlug,
+		&seller.Seller,
+		&seller.ProductCode,
+		&seller.ProductName,
+		&seller.CurrencyCode,
+		&seller.AvailabilityLabel,
+		&seller.StockStatusLabel,
+		&seller.LatestPrice,
+		&seller.PreviousPrice,
+		&seller.FirstPrice,
+		&seller.ListPriceWithVat,
+		&seller.SourceURL,
+		&seller.LatestScrapedAt,
+		&seller.HeroImageURL,
+		&seller.GalleryImageURLs,
+		&seller.ShortDescription,
+		&seller.SupplementaryParameters,
+		&seller.Metadata,
 	)
-	return item, err
 }
 
-func buildBySlugQuery(slug string, historyPoints int) (string, []any) {
-	selectClause := `
-select
-  row_number() over (order by h.price_date asc, h.seller asc)::bigint as id,
-  s.product_code,
-  s.product_name,
-  h.canonical_product_id,
-  h.closing_price::double precision,
-  h.list_price_with_vat::double precision,
-  h.currency_code,
-  s.source_url,
-  h.last_scraped_at::text,
-  h.price_date::text,
-  h.snapshot_count,
-  s.availability_label,
-  s.stock_status_label,
-  s.hero_image_url,
-  coalesce(s.gallery_image_urls, '{}'::text[]),
-  s.short_description,
-  coalesce(s.supplementary_parameters, '[]'::jsonb),
-  coalesce(s.metadata, '{}'::jsonb),
-  h.seller`
-
-	if historyPoints <= 0 {
-		query := `
-with requested_product as (
-  select public.canonical_product_slug(null, null, $1) as canonical_product_id
-)
-` + selectClause + `
-from public.catalog_daily_price_history h
-join requested_product requested
-  on requested.canonical_product_id = h.canonical_product_id
-join public.catalog_slug_seller_state s
-  on s.seller = h.seller
-  and public.canonical_product_slug(
-    s.seller,
-    s.product_code,
-    s.product_name_normalized
-  ) = h.canonical_product_id
-order by h.price_date asc, h.seller asc;`
-		return query, []any{slug}
+func (repository *Repository) attachPriceHistory(
+	ctx context.Context,
+	detail *ProductDetail,
+	slug string,
+	historyPoints int,
+) error {
+	rows, err := repository.db.Query(ctx, priceHistoryQuery, slug, historyPoints)
+	if err != nil {
+		return err
 	}
+	defer rows.Close()
 
-	query := `
-with requested_product as (
-  select public.canonical_product_slug(null, null, $1) as canonical_product_id
-),
-recent_history as (
-  select h.*
-  from public.catalog_daily_price_history h
-  join requested_product requested
-    on requested.canonical_product_id = h.canonical_product_id
-  order by h.price_date desc, h.seller desc
-  limit $2
-)
-` + selectClause + `
-from recent_history h
-join public.catalog_slug_seller_state s
-  on s.seller = h.seller
-  and public.canonical_product_slug(
-    s.seller,
-    s.product_code,
-    s.product_name_normalized
-  ) = h.canonical_product_id
-order by h.price_date asc, h.seller asc;`
-	return query, []any{slug, historyPoints}
+	sellerIndexes := indexSellers(detail.Sellers)
+	for rows.Next() {
+		var sellerID string
+		var point PricePoint
+		if err := rows.Scan(
+			&sellerID,
+			&point.PriceDate,
+			&point.PriceWithVat,
+			&point.ListPriceWithVat,
+			&point.CurrencyCode,
+			&point.ScrapedAt,
+			&point.SnapshotCount,
+		); err != nil {
+			return err
+		}
+		if sellerIndex, exists := sellerIndexes[sellerID]; exists {
+			detail.Sellers[sellerIndex].History = append(
+				detail.Sellers[sellerIndex].History,
+				point,
+			)
+		}
+	}
+	return rows.Err()
 }
 
-type pgxRows interface {
-	Next() bool
-	Scan(dest ...any) error
-	Err() error
+func indexSellers(sellers []Seller) map[string]int {
+	indexes := make(map[string]int, len(sellers))
+	for index := range sellers {
+		sellers[index].History = make([]PricePoint, 0, 128)
+		indexes[sellers[index].Seller] = index
+	}
+	return indexes
+}
+
+func IsProductNotFound(err error) bool {
+	return errors.Is(err, ErrProductNotFound)
 }

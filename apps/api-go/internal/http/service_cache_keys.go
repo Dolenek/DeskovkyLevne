@@ -3,6 +3,7 @@ package http
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 
 	"tlamasite/apps/api-go/internal/catalog"
@@ -72,5 +73,13 @@ func floatPtrKey(value *float64) string {
 	if value == nil {
 		return "nil"
 	}
-	return fmt.Sprintf("%.4f", *value)
+	return strconv.FormatFloat(*value, 'g', -1, 64)
+}
+
+func productCacheKey(slug string, historyPoints int) string {
+	return fmt.Sprintf(
+		"product:%s:points-per-seller=%d",
+		strings.ToLower(strings.TrimSpace(slug)),
+		historyPoints,
+	)
 }

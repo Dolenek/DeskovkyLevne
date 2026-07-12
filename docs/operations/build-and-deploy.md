@@ -53,7 +53,19 @@ Required runtime env:
 The deployment helper uses the Docker Compose plugin when available and falls
 back to `docker-compose` v1 on hosts that do not have the plugin installed. The
 compose stack starts Redis with a healthcheck before the API container so Redis
-cache is available at API startup.
+cache is available at API startup. The API container healthcheck calls `/ready`
+and therefore also detects loss of PostgreSQL connectivity.
+
+The helper embeds `API_VERSION`, `API_COMMIT`, and `API_BUILT_AT` as Go linker
+values. Defaults come from the checked-out Git revision and the UTC build time.
+After deployment, verify:
+
+```bash
+curl --fail http://localhost:${API_GO_PORT:-18080}/health
+curl --fail http://localhost:${API_GO_PORT:-18080}/ready
+curl --fail http://localhost:${API_GO_PORT:-18080}/version
+curl --fail 'http://localhost:'${API_GO_PORT:-18080}'/api/v1/catalog?limit=1'
+```
 
 ## Production Reverse Proxy
 The production nginx site serves `dist/` and proxies `/api/` to the Go API on
@@ -64,7 +76,6 @@ requests. This keeps stale browser bundles or malfunctioning clients from
 saturating the API process.
 
 ## SQL Operations Used in Deployment/Cutover
-- Recent endpoint index migration: `infra/db/migrations/20260218_recent_snapshots_index.sql`
 - Index cleanup migration: `infra/db/migrations/20260221_phase1_index_cleanup.sql`
 - Partitioned snapshots prepare: `infra/db/migrations/20260222_partitioned_snapshots_prepare.sql`
 - Incremental state tables/function: `infra/db/migrations/20260223_incremental_catalog_state.sql`

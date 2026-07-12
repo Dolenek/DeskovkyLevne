@@ -28,19 +28,19 @@ type Config struct {
 	DBSimpleProtocol  bool
 
 	HealthTimeout     time.Duration
+	ReadyTimeout      time.Duration
 	CatalogTimeout    time.Duration
 	SearchTimeout     time.Duration
 	ProductTimeout    time.Duration
-	RecentTimeout     time.Duration
-	CategoriesTimeout time.Duration
+	DiscountsTimeout  time.Duration
+	MetadataTimeout   time.Duration
 	PriceRangeTimeout time.Duration
 
 	CacheNamespace     string
 	CacheTTLCatalog    time.Duration
 	CacheTTLSearch     time.Duration
 	CacheTTLProduct    time.Duration
-	CacheTTLRecent     time.Duration
-	CacheTTLCategories time.Duration
+	CacheTTLDiscounts  time.Duration
 	CacheTTLPriceRange time.Duration
 }
 
@@ -68,19 +68,19 @@ func Load() (Config, error) {
 		DBSimpleProtocol:  readBool("API_DB_SIMPLE_PROTOCOL", true),
 
 		HealthTimeout:     readDuration("API_TIMEOUT_HEALTH", 2*time.Second),
+		ReadyTimeout:      readDuration("API_TIMEOUT_READY", 2*time.Second),
 		CatalogTimeout:    readDuration("API_TIMEOUT_CATALOG", 6*time.Second),
 		SearchTimeout:     readDuration("API_TIMEOUT_SEARCH", 3*time.Second),
 		ProductTimeout:    readDuration("API_TIMEOUT_PRODUCT", 6*time.Second),
-		RecentTimeout:     readDuration("API_TIMEOUT_RECENT", 12*time.Second),
-		CategoriesTimeout: readDuration("API_TIMEOUT_CATEGORIES", 4*time.Second),
+		DiscountsTimeout:  readDuration("API_TIMEOUT_DISCOUNTS", 4*time.Second),
+		MetadataTimeout:   readDuration("API_TIMEOUT_METADATA", 4*time.Second),
 		PriceRangeTimeout: readDuration("API_TIMEOUT_PRICE_RANGE", 4*time.Second),
 
-		CacheNamespace:     getenv("API_CACHE_NAMESPACE", "api-v1"),
+		CacheNamespace:     getenv("API_CACHE_NAMESPACE", "api-v2"),
 		CacheTTLCatalog:    readDuration("API_CACHE_TTL_CATALOG", 120*time.Second),
 		CacheTTLSearch:     readDuration("API_CACHE_TTL_SEARCH", 60*time.Second),
 		CacheTTLProduct:    readDuration("API_CACHE_TTL_PRODUCT", 300*time.Second),
-		CacheTTLRecent:     readDuration("API_CACHE_TTL_RECENT", 120*time.Second),
-		CacheTTLCategories: readDuration("API_CACHE_TTL_CATEGORIES", 600*time.Second),
+		CacheTTLDiscounts:  readDuration("API_CACHE_TTL_DISCOUNTS", 60*time.Second),
 		CacheTTLPriceRange: readDuration("API_CACHE_TTL_PRICE_RANGE", 180*time.Second),
 	}
 	if cfg.DatabaseURL == "" {
@@ -99,7 +99,7 @@ func Load() (Config, error) {
 		cfg.DBMinConns = cfg.DBMaxConns
 	}
 	if cfg.CacheNamespace == "" {
-		cfg.CacheNamespace = "api-v1"
+		cfg.CacheNamespace = "api-v2"
 	}
 	if cfg.CatalogSummaryRelation == "" {
 		cfg.CatalogSummaryRelation = "public.catalog_slug_state"

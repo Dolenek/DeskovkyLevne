@@ -37,15 +37,14 @@ SEO canonical link with the resolved canonical slug.
 - Core API usage:
   - Catalog/filter: `/api/v1/catalog`
   - Search suggestions: `/api/v1/search/suggest`
-  - Product detail seller-day history: `/api/v1/products/:slug`
-  - Recent snapshots: `/api/v1/snapshots/recent`
-  - Categories metadata: `/api/v1/meta/categories`
+  - Compact product detail and seller-day history: `/api/v1/products/:slug`
+  - Seller-aware recent discounts: `/api/v1/discounts/recent`
   - Filter options metadata: `/api/v1/meta/filter-options`
   - Price-range metadata: `/api/v1/meta/price-range`
 
 ## Runtime Tuning Environment Variables
 - `VITE_API_SEARCH_LIMIT` (fallback: `VITE_SUPABASE_SEARCH_LIMIT`)
-- `VITE_API_RECENT_LOOKBACK` (fallback: `VITE_RECENT_DISCOUNT_LOOKBACK`)
+- `VITE_API_RECENT_DISCOUNT_LIMIT` (default `10`, capped at `100`)
 - `VITE_API_PRODUCT_HISTORY_POINTS`
 - `VITE_API_FILTER_CODES` (fallback: `VITE_SUPABASE_FILTER_CODES`)
 - `VITE_API_RETRY_ATTEMPTS`
@@ -97,6 +96,10 @@ SEO canonical link with the resolved canonical slug.
   visible values, supplementary parameters, and a data summary.
 - Product detail chart points prefer API `price_date` and fall back to
   `scraped_at` for raw snapshot-shaped rows.
+- Product detail expands the compact seller-nested API response for the existing
+  product-series builder. API 404 responses render the not-found state.
+- Recent discounts are already paired per seller by the API; the browser does
+  not infer price changes from adjacent global snapshots.
 - Product detail renders one mock product with multi-seller price history when
   the product API cannot be reached because the browser reports `Failed to fetch`
   or the API/proxy returns a transient 5xx failure.

@@ -18,7 +18,8 @@
 - Product detail history points represent seller-day checks from daily history,
   including days where price did not change.
 - No seller history merging into a single synthetic line.
-- History bounding controls (for example API `history_points`) may reduce returned rows but must not merge sellers.
+- History bounding controls (for example API `history_points`) apply per seller
+  so one seller cannot displace another, and must never merge sellers.
 - Seller-offer presentation must not invent values that are not in the read
   model. Shipping prices, shop ratings, and price-watch state require explicit
   backend data before they can appear as factual UI fields.
@@ -52,5 +53,9 @@
   and joins seller metadata from `catalog_slug_seller_state`.
 - Product detail accepts canonical slugs and approved alias slugs. Responses use
   the canonical slug in `product_name_normalized`.
+- Product detail transports seller metadata once and nests that seller's compact
+  daily history underneath it. An unknown canonical or alias slug returns 404.
+- Recent discounts are seller-level projections from `catalog_slug_seller_state`;
+  reference and current prices must belong to the same seller.
 - Legacy materialized views `catalog_slug_summary` and `catalog_slug_seller_summary` may exist, but they are not the default runtime catalog source.
 - Any schema or query change must preserve these invariants.

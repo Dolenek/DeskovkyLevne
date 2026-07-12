@@ -131,7 +131,7 @@ export const ProductDetailPage = ({
         <div className="mx-auto flex max-w-7xl flex-col gap-8">
           {loading ? <ProductDetailSkeleton /> : null}
           {error ? <ErrorState message={error} retryLabel={t("retry")} onRetry={reload} /> : null}
-          {!loading && !error && !product ? <EmptyState message={t("detailNotFoundDescription", { code: productSlug })} /> : null}
+			{!loading && !error && !product ? <EmptyState message={t("detailNotFoundDescription", { slug: productSlug })} /> : null}
           {product ? (
             <>
               <section className="grid min-w-0 items-start gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">

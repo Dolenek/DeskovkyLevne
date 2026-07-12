@@ -1,6 +1,5 @@
 import type {
-  CategoryCountRow,
-  PriceRangeResponse,
+	PriceRangeResponse,
   ProductSearchResult,
 } from "../../types/product";
 import type { AvailabilityFilter } from "../../types/filters";
@@ -11,7 +10,6 @@ import { filterRowsByCode, normalizeSearchTerm, sanitizeSearchTerm } from "./hel
 import type {
   CatalogFilterOptions,
   CatalogResponse,
-  CategoriesResponse,
   FilterOptionsResponse,
   FilteredCatalogResult,
   SearchResponse,
@@ -88,19 +86,6 @@ export const fetchFilteredCatalogIndex = async (
     rows: filterRowsByCode(payload.rows),
     total: payload.total ?? payload.total_estimate ?? 0,
   };
-};
-
-export const fetchCategoryCounts = async (
-  availabilityFilter: AvailabilityFilter = "all",
-  signal?: AbortSignal
-): Promise<CategoryCountRow[]> => {
-  const payload = await fetchApi<CategoriesResponse>(
-    buildApiUrl("/meta/categories", {
-      availability: availabilityFilter === "all" ? null : availabilityFilter,
-    }),
-    { signal }
-  );
-  return payload.rows;
 };
 
 export const fetchFilterOptions = async (

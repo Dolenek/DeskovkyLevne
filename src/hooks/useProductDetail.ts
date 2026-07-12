@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { buildMockProductRows } from "../mocks/mockProductRows";
-import { fetchProductSnapshotsBySlug } from "../services/api/snapshotApi";
+import { fetchProductDetailBySlug } from "../services/api/snapshotApi";
 import type { ProductSeries } from "../types/product";
 import { isApiFallbackFailure } from "../utils/networkErrors";
 import { useProductPricing } from "./useProductPricing";
@@ -22,7 +22,7 @@ export const useProductDetail = (
     }
     return async () => {
       try {
-        return await fetchProductSnapshotsBySlug(trimmed);
+		return await fetchProductDetailBySlug(trimmed);
       } catch (error) {
         if (isApiFallbackFailure(error)) {
           return buildMockProductRows(trimmed);

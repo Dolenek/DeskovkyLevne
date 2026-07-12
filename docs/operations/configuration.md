@@ -31,9 +31,8 @@ for product preview prices, offers, and fallback images.
 
 ### Optional frontend runtime tuning
 - `VITE_API_SEARCH_LIMIT` (fallback: `VITE_SUPABASE_SEARCH_LIMIT`, default `60`)
-- `VITE_API_RECENT_LOOKBACK` (fallback: `VITE_RECENT_DISCOUNT_LOOKBACK`, default `2000`)
+- `VITE_API_RECENT_DISCOUNT_LIMIT` (default `10`, capped at `100`)
 - `VITE_API_PRODUCT_HISTORY_POINTS` (default `0`, disabled; max enforced by backend `5000`)
-- `VITE_RECENT_DISCOUNT_RESULTS` (default `10`)
 - `VITE_API_FILTER_CODES` (fallback: `VITE_SUPABASE_FILTER_CODES`, comma-separated allowlist)
 - `VITE_API_RETRY_ATTEMPTS` (default `2`)
 - `VITE_API_RETRY_DELAY_MS` (default `250`)
@@ -74,11 +73,12 @@ for product preview prices, offers, and fallback images.
 
 ### Route Timeouts
 - `API_TIMEOUT_HEALTH` (default `2s`)
+- `API_TIMEOUT_READY` (default `2s`)
 - `API_TIMEOUT_CATALOG` (default `6s`)
 - `API_TIMEOUT_SEARCH` (default `3s`)
 - `API_TIMEOUT_PRODUCT` (default `6s`)
-- `API_TIMEOUT_RECENT` (default `12s`)
-- `API_TIMEOUT_CATEGORIES` (default `4s`)
+- `API_TIMEOUT_DISCOUNTS` (default `4s`)
+- `API_TIMEOUT_METADATA` (default `4s`)
 - `API_TIMEOUT_PRICE_RANGE` (default `4s`)
 
 ### Redis (optional)
@@ -91,12 +91,11 @@ Redis healthcheck passes. If the API runs without `REDIS_ADDR`, cache-backed
 endpoints continue to work directly against PostgreSQL.
 
 ### API Cache Controls
-- `API_CACHE_NAMESPACE` (default `api-v1`)
+- `API_CACHE_NAMESPACE` (default `api-v2`)
 - `API_CACHE_TTL_CATALOG` (default `120s`)
 - `API_CACHE_TTL_SEARCH` (default `60s`)
 - `API_CACHE_TTL_PRODUCT` (default `300s`)
-- `API_CACHE_TTL_RECENT` (default `120s`)
-- `API_CACHE_TTL_CATEGORIES` (default `600s`)
+- `API_CACHE_TTL_DISCOUNTS` (default `60s`)
 - `API_CACHE_TTL_PRICE_RANGE` (default `180s`)
 
 ## Source Files

@@ -1,4 +1,5 @@
 import { expect, test } from "playwright/test";
+import { productDetailResponseFromRows } from "./apiMocks";
 
 const productRows = [
   {
@@ -101,7 +102,7 @@ test("product detail shows a skeleton while product data is pending", async ({ p
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify({ rows: productRows }),
+        body: JSON.stringify(productDetailResponseFromRows(productRows)),
       });
       return;
     }
@@ -125,7 +126,7 @@ test("product detail removes misleading UI and normalizes seller data", async ({
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify({ rows: productRows }),
+        body: JSON.stringify(productDetailResponseFromRows(productRows)),
       });
       return;
     }

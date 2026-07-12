@@ -12,42 +12,36 @@ func assertQueryContains(t *testing.T, query string, expected string) {
 	}
 }
 
-func TestBuildBySlugQueryWithoutHistoryLimit(t *testing.T) {
-	query, args := buildBySlugQuery("alpha-game", 0)
-	if len(args) != 1 {
-		t.Fatalf("expected 1 arg, got %d", len(args))
-	}
-	if args[0] != "alpha-game" {
-		t.Fatalf("unexpected slug arg: %#v", args[0])
-	}
-	if strings.Contains(query, "limit $2") {
-		t.Fatalf("unexpected limit clause in unbounded query")
-	}
-	assertQueryContains(t, query, "public.catalog_daily_price_history")
-	assertQueryContains(t, query, "public.catalog_slug_seller_state")
-	assertQueryContains(t, query, "with requested_product as")
-	assertQueryContains(t, query, "h.canonical_product_id")
-	assertQueryContains(t, query, "public.canonical_product_slug")
-	assertQueryContains(t, query, "h.price_date::text")
-	assertQueryContains(t, query, "h.snapshot_count")
-	assertQueryContains(t, query, "h.closing_price::double precision")
-	assertQueryContains(t, query, "requested.canonical_product_id = h.canonical_product_id")
+func TestSellerMetadataQueryUsesCanonicalSlugAndSellerPriority(t *testing.T) {
+	assertQueryContains(t, sellerMetadataQuery, "public.canonical_product_slug")
+	assertQueryContains(t, sellerMetadataQuery, "public.catalog_slug_seller_state")
+	assertQueryContains(t, sellerMetadataQuery, "seller_state.product_name_normalized")
+	assertQueryContains(t, sellerMetadataQuery, "'tlamagames', 'tlamagase'")
 }
 
-func TestBuildBySlugQueryWithHistoryLimit(t *testing.T) {
-	query, args := buildBySlugQuery("alpha-game", 120)
-	if len(args) != 2 {
-		t.Fatalf("expected 2 args, got %d", len(args))
+func TestPriceHistoryQueryLimitsEachSellerIndependently(t *testing.T) {
+	assertQueryContains(t, priceHistoryQuery, "public.catalog_daily_price_history")
+	assertQueryContains(t, priceHistoryQuery, "partition by history.seller")
+	assertQueryContains(t, priceHistoryQuery, "seller_row_number <= $2")
+	assertQueryContains(t, priceHistoryQuery, "order by seller asc, price_date asc")
+}
+
+func TestRecentDiscountsQueryKeepsSellerGranularity(t *testing.T) {
+	assertQueryContains(t, recentDiscountsQuery, "product_name_normalized")
+	assertQueryContains(t, recentDiscountsQuery, "seller")
+	assertQueryContains(t, recentDiscountsQuery, "latest_price < previous_price")
+	assertQueryContains(t, recentDiscountsQuery, "latest_price < list_price_with_vat")
+}
+
+func TestIndexSellersInitializesHistory(t *testing.T) {
+	sellers := []Seller{{Seller: "alpha"}, {Seller: "beta"}}
+	indexes := indexSellers(sellers)
+	if indexes["alpha"] != 0 || indexes["beta"] != 1 {
+		t.Fatalf("unexpected indexes: %#v", indexes)
 	}
-	if args[1] != 120 {
-		t.Fatalf("unexpected history limit arg: %#v", args[1])
+	for _, seller := range sellers {
+		if seller.History == nil {
+			t.Fatalf("history was not initialized for %q", seller.Seller)
+		}
 	}
-	if !strings.Contains(query, "limit $2") {
-		t.Fatalf("expected limit clause in bounded query")
-	}
-	assertQueryContains(t, query, "recent_history as")
-	assertQueryContains(t, query, "from public.catalog_daily_price_history")
-	assertQueryContains(t, query, "with requested_product as")
-	assertQueryContains(t, query, "order by h.price_date desc, h.seller desc")
-	assertQueryContains(t, query, "join public.catalog_slug_seller_state")
 }

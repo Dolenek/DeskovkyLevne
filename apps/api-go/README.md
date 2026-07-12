@@ -9,11 +9,13 @@ Canonical API and operations docs are in:
 
 ## Endpoints
 - `GET /health`
+- `GET /ready`
+- `GET /version`
 - `GET /api/v1/catalog`
 - `GET /api/v1/search/suggest`
 - `GET /api/v1/products/{slug}`
-- `GET /api/v1/snapshots/recent`
-- `GET /api/v1/meta/categories`
+- `GET /api/v1/discounts/recent`
+- `GET /api/v1/meta/filter-options`
 - `GET /api/v1/meta/price-range`
 
 ## Environment

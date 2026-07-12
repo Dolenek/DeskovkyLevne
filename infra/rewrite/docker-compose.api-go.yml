@@ -1,10 +1,12 @@
-version: "3.9"
-
 services:
   api-go:
     build:
       context: ../../apps/api-go
       dockerfile: Dockerfile
+      args:
+        API_VERSION: "${API_VERSION:-development}"
+        API_COMMIT: "${API_COMMIT:-unknown}"
+        API_BUILT_AT: "${API_BUILT_AT:-unknown}"
     container_name: tlamasite-api-go
     restart: unless-stopped
     mem_limit: "${API_GO_MEMORY_LIMIT:-768m}"
@@ -22,17 +24,31 @@ services:
       API_DB_MAX_CONN_LIFETIME: "${API_DB_MAX_CONN_LIFETIME:-2h}"
       API_DB_SIMPLE_PROTOCOL: "${API_DB_SIMPLE_PROTOCOL:-true}"
       API_TIMEOUT_HEALTH: "${API_TIMEOUT_HEALTH:-2s}"
+      API_TIMEOUT_READY: "${API_TIMEOUT_READY:-2s}"
       API_TIMEOUT_CATALOG: "${API_TIMEOUT_CATALOG:-6s}"
       API_TIMEOUT_SEARCH: "${API_TIMEOUT_SEARCH:-3s}"
       API_TIMEOUT_PRODUCT: "${API_TIMEOUT_PRODUCT:-6s}"
-      API_TIMEOUT_RECENT: "${API_TIMEOUT_RECENT:-12s}"
-      API_TIMEOUT_CATEGORIES: "${API_TIMEOUT_CATEGORIES:-4s}"
+      API_TIMEOUT_DISCOUNTS: "${API_TIMEOUT_DISCOUNTS:-4s}"
+      API_TIMEOUT_METADATA: "${API_TIMEOUT_METADATA:-4s}"
+      API_TIMEOUT_PRICE_RANGE: "${API_TIMEOUT_PRICE_RANGE:-4s}"
+      API_CACHE_NAMESPACE: "${API_CACHE_NAMESPACE:-api-v2}"
+      API_CACHE_TTL_CATALOG: "${API_CACHE_TTL_CATALOG:-120s}"
+      API_CACHE_TTL_SEARCH: "${API_CACHE_TTL_SEARCH:-60s}"
+      API_CACHE_TTL_PRODUCT: "${API_CACHE_TTL_PRODUCT:-300s}"
+      API_CACHE_TTL_DISCOUNTS: "${API_CACHE_TTL_DISCOUNTS:-60s}"
+      API_CACHE_TTL_PRICE_RANGE: "${API_CACHE_TTL_PRICE_RANGE:-180s}"
       REDIS_ADDR: "redis:6379"
       REDIS_PASSWORD: "${REDIS_PASSWORD:-}"
       REDIS_DB: "0"
     depends_on:
       redis:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--output-document=-", "http://127.0.0.1:8080/ready"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
 
   redis:
     image: redis:7.4-alpine

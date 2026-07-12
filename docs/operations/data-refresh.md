@@ -59,8 +59,9 @@ refresh materialized view concurrently public.catalog_slug_summary;
 ## Verification
 - Confirm latest timestamps in `catalog_slug_state.latest_scraped_at`.
 - Spot-check `catalog_daily_price_history.price_date` for a recently checked slug.
-- Spot-check `GET /api/v1/products/{slug}` and verify rows include
-  `price_date` and `snapshot_count`.
+- Spot-check `GET /api/v1/products/{slug}` and verify every seller has its own
+  `history` array containing `price_date` and `snapshot_count`.
 - For approved aliases, spot-check the alias slug and canonical slug. Both
   should return the same seller set, and returned `product_name_normalized`
   should be the canonical slug.
+- Confirm `GET /ready` returns `200` after refresh operations complete.

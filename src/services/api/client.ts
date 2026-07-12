@@ -4,7 +4,7 @@ export interface ApiRequestOptions {
   signal?: AbortSignal;
 }
 
-class ApiRequestError extends Error {
+export class ApiRequestError extends Error {
   readonly status: number;
 
   constructor(status: number) {

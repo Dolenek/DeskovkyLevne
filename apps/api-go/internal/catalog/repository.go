@@ -2,13 +2,10 @@ package catalog
 
 import (
 	"context"
-	"fmt"
 	"regexp"
 	"strings"
-	"unicode"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"golang.org/x/text/unicode/norm"
 )
 
 type Repository struct {
@@ -23,7 +20,6 @@ type RepositoryOptions struct {
 const defaultSummaryRelation = "public.catalog_slug_state"
 
 var relationNamePattern = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*)?$`)
-var searchTokenSeparatorPattern = regexp.MustCompile(`[^a-z0-9]+`)
 
 func NewRepository(db *pgxpool.Pool, options ...RepositoryOptions) *Repository {
 	config := RepositoryOptions{SummaryRelation: defaultSummaryRelation}
@@ -45,14 +41,15 @@ func (r *Repository) Fetch(ctx context.Context, filters Filters) ([]Row, int64, 
 	}
 	defer rows.Close()
 
-	results, err := collectRows(rows)
+	results, total, err := collectRows(rows)
 	if err != nil {
 		return nil, 0, err
 	}
-	countSQL := "select count(*) from " + r.summaryRelation + whereSQL
-	var total int64
-	if err := r.db.QueryRow(ctx, countSQL, args...).Scan(&total); err != nil {
-		return nil, 0, err
+	if len(results) == 0 && filters.Offset > 0 {
+		countSQL := "select count(*) from " + r.summaryRelation + whereSQL
+		if err := r.db.QueryRow(ctx, countSQL, args...).Scan(&total); err != nil {
+			return nil, 0, err
+		}
 	}
 	return results, total, nil
 }
@@ -86,44 +83,6 @@ func (r *Repository) Search(
 	}
 	defer rows.Close()
 	return collectSuggestionRows(rows)
-}
-
-func (r *Repository) FetchCategoryCounts(
-	ctx context.Context,
-	filters CategoryFilters,
-) ([]CategoryCount, error) {
-	whereSQL, args := buildWhere(Filters{
-		Availability:   filters.Availability,
-		Categories:     filters.Categories,
-		PlayerRanges:   filters.PlayerRanges,
-		PlaytimeRanges: filters.PlaytimeRanges,
-		AgeRatings:     filters.AgeRatings,
-		PriceMovement:  filters.PriceMovement,
-	})
-	query := `
-select tag as category, count(*)::bigint as count
-from (
-  select unnest(category_tags) as tag
-  from ` + r.summaryRelation + whereSQL + `
-) expanded
-group by tag
-order by count desc, category asc;
-`
-	rows, err := r.db.Query(ctx, query, args...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	results := make([]CategoryCount, 0, 256)
-	for rows.Next() {
-		var entry CategoryCount
-		if err := rows.Scan(&entry.Category, &entry.Count); err != nil {
-			return nil, err
-		}
-		results = append(results, entry)
-	}
-	return results, rows.Err()
 }
 
 func (r *Repository) FetchPriceRange(
@@ -163,237 +122,4 @@ func normalizeRelationName(value string) string {
 		return defaultSummaryRelation
 	}
 	return normalized
-}
-
-func buildRowsQuery(
-	relation string,
-	whereSQL string,
-	args []any,
-	filters Filters,
-) (string, []any) {
-	rowArgs := append([]any{}, args...)
-	orderSQL := "product_name asc"
-	if filters.RandomSeed != nil {
-		rowArgs = append(rowArgs, *filters.RandomSeed)
-		orderSQL = fmt.Sprintf(
-			"md5(coalesce(product_name_normalized, product_name, product_code, '') || ':' || $%d::text) asc",
-			len(rowArgs),
-		)
-	}
-	limitPlaceholder := fmt.Sprintf("$%d", len(args)+1)
-	offsetPlaceholder := fmt.Sprintf("$%d", len(args)+2)
-	if filters.RandomSeed != nil {
-		limitPlaceholder = fmt.Sprintf("$%d", len(rowArgs)+1)
-		offsetPlaceholder = fmt.Sprintf("$%d", len(rowArgs)+2)
-	}
-	query := `
-select
-  product_code,
-  product_name,
-  product_name_normalized,
-  product_name_search,
-  currency_code,
-  availability_label,
-  stock_status_label,
-  latest_price::double precision,
-  previous_price::double precision,
-  first_price::double precision,
-  list_price_with_vat::double precision,
-  source_url,
-  latest_scraped_at::text,
-  hero_image_url,
-  coalesce(gallery_image_urls, '{}'::text[]),
-  short_description,
-  coalesce(supplementary_parameters, '[]'::jsonb),
-  coalesce(metadata, '{}'::jsonb),
-  coalesce(price_points, '[]'::jsonb),
-  coalesce(category_tags, '{}'::text[])
-from ` + relation + whereSQL + `
-order by ` + orderSQL + `
-limit ` + limitPlaceholder + ` offset ` + offsetPlaceholder + `;`
-
-	rowArgs = append(rowArgs, filters.Limit, filters.Offset)
-	return query, rowArgs
-}
-
-func buildSearchQuery(
-	relation string,
-	whereSQL string,
-	args []any,
-	limit int,
-) (string, []any) {
-	limitPlaceholder := fmt.Sprintf("$%d", len(args)+1)
-	query := `
-select
-  product_code,
-  product_name,
-  product_name_normalized,
-  product_name_search,
-  currency_code,
-  availability_label,
-  latest_price::double precision,
-  hero_image_url,
-  coalesce(gallery_image_urls, '{}'::text[]),
-  greatest(1, (
-    select count(distinct seller_state.seller)::integer
-    from public.catalog_slug_seller_state seller_state
-    where seller_state.product_name_normalized = catalog_summary.product_name_normalized
-  )) as seller_count,
-  coalesce(category_tags, '{}'::text[])
-from ` + relation + ` catalog_summary` + whereSQL + `
-order by product_name asc
-limit ` + limitPlaceholder + `;`
-
-	queryArgs := append([]any{}, args...)
-	queryArgs = append(queryArgs, limit)
-	return query, queryArgs
-}
-
-func buildWhere(filters Filters) (string, []any) {
-	clauses := make([]string, 0, 6)
-	args := make([]any, 0, 8)
-	availability := strings.ToLower(strings.TrimSpace(filters.Availability))
-	if availability == "available" {
-		clauses = append(clauses, "is_available = true")
-	}
-	if availability == "preorder" {
-		clauses = append(clauses, "is_preorder = true")
-	}
-	if filters.MinPrice != nil {
-		args = append(args, *filters.MinPrice)
-		clauses = append(clauses, fmt.Sprintf("latest_price >= $%d", len(args)))
-	}
-	if filters.MaxPrice != nil {
-		args = append(args, *filters.MaxPrice)
-		clauses = append(clauses, fmt.Sprintf("latest_price <= $%d", len(args)))
-	}
-	if len(filters.Categories) > 0 {
-		if categoryClause := buildCategoryClause(&args, filters.Categories); categoryClause != "" {
-			clauses = append(clauses, categoryClause)
-		}
-	}
-	if len(filters.PlayerRanges) > 0 {
-		if playerClause := buildPlayerClause(filters.PlayerRanges); playerClause != "" {
-			clauses = append(clauses, playerClause)
-		}
-	}
-	if len(filters.PlaytimeRanges) > 0 {
-		if playtimeClause := buildPlaytimeClause(filters.PlaytimeRanges); playtimeClause != "" {
-			clauses = append(clauses, playtimeClause)
-		}
-	}
-	if len(filters.AgeRatings) > 0 {
-		if ageClause := buildAgeClause(&args, filters.AgeRatings); ageClause != "" {
-			clauses = append(clauses, ageClause)
-		}
-	}
-	if strings.EqualFold(strings.TrimSpace(filters.PriceMovement), "decreased") {
-		clauses = append(
-			clauses,
-			"(price_movement = 'decreased' or latest_price < list_price_with_vat)",
-		)
-	}
-	if searchClause := buildSearchClause(&args, filters.Query); searchClause != "" {
-		clauses = append(clauses, searchClause)
-	}
-	if len(clauses) == 0 {
-		return "", args
-	}
-	return " where " + strings.Join(clauses, " and "), args
-}
-
-func normalizeSearchQuery(value string) string {
-	cleaned := strings.TrimSpace(stripDiacritics(value))
-	cleaned = searchTokenSeparatorPattern.ReplaceAllString(strings.ToLower(cleaned), " ")
-	return strings.ToLower(strings.Join(strings.Fields(cleaned), " "))
-}
-
-func stripDiacritics(value string) string {
-	var builder strings.Builder
-	for _, character := range norm.NFD.String(value) {
-		if !unicode.Is(unicode.Mn, character) {
-			builder.WriteRune(character)
-		}
-	}
-	return builder.String()
-}
-
-func buildSearchClause(args *[]any, query string) string {
-	tokens := strings.Fields(normalizeSearchQuery(query))
-	if len(tokens) == 0 {
-		return ""
-	}
-	clauses := make([]string, 0, len(tokens))
-	for _, token := range tokens {
-		*args = append(*args, "%"+token+"%")
-		current := len(*args)
-		clauses = append(
-			clauses,
-			fmt.Sprintf("(product_name_search ilike $%d or product_code ilike $%d)", current, current),
-		)
-	}
-	return "(" + strings.Join(clauses, " and ") + ")"
-}
-
-func collectRows(rows pgxRows) ([]Row, error) {
-	results := make([]Row, 0, 128)
-	for rows.Next() {
-		var row Row
-		if err := rows.Scan(
-			&row.ProductCode,
-			&row.ProductName,
-			&row.ProductNameNormalized,
-			&row.ProductNameSearch,
-			&row.CurrencyCode,
-			&row.AvailabilityLabel,
-			&row.StockStatusLabel,
-			&row.LatestPrice,
-			&row.PreviousPrice,
-			&row.FirstPrice,
-			&row.ListPriceWithVat,
-			&row.SourceURL,
-			&row.LatestScrapedAt,
-			&row.HeroImageURL,
-			&row.GalleryImageURLs,
-			&row.ShortDescription,
-			&row.SupplementaryParameters,
-			&row.Metadata,
-			&row.PricePoints,
-			&row.CategoryTags,
-		); err != nil {
-			return nil, err
-		}
-		results = append(results, row)
-	}
-	return results, rows.Err()
-}
-
-func collectSuggestionRows(rows pgxRows) ([]SuggestionRow, error) {
-	results := make([]SuggestionRow, 0, 64)
-	for rows.Next() {
-		var row SuggestionRow
-		if err := rows.Scan(
-			&row.ProductCode,
-			&row.ProductName,
-			&row.ProductNameNormalized,
-			&row.ProductNameSearch,
-			&row.CurrencyCode,
-			&row.AvailabilityLabel,
-			&row.LatestPrice,
-			&row.HeroImageURL,
-			&row.GalleryImageURLs,
-			&row.SellerCount,
-			&row.CategoryTags,
-		); err != nil {
-			return nil, err
-		}
-		results = append(results, row)
-	}
-	return results, rows.Err()
-}
-
-type pgxRows interface {
-	Next() bool
-	Scan(dest ...any) error
-	Err() error
 }

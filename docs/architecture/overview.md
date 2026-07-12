@@ -20,10 +20,16 @@
 ## Runtime Data Flow
 1. Browser requests catalog/search/detail data from Go API.
 2. API resolves product aliases with `canonical_product_slug(...)` and reads
-   Postgres state tables, daily history, and the partitioned snapshot table.
+   Postgres state tables and seller-day history. Runtime endpoints do not expose
+   raw snapshot rows.
 3. API applies route-level request deadlines and DB context cancellation.
-4. API optionally serves cached responses from Redis with singleflight cache-miss coalescing, cache-hit/miss logging, and a configurable cache namespace.
-5. Frontend renders slug-keyed pages, explicit not-found routes, and multi-seller history.
+4. API optionally serves cached responses from Redis with cancellation-safe
+   singleflight cache-miss coalescing, cache diagnostics, and a versioned cache
+   namespace.
+5. Product detail responses nest compact history below seller metadata; the
+   frontend expands this transport shape into independent seller chart series.
+6. Recent discounts come from seller-level state and never compare prices
+   between sellers.
 
 ## Build-Time Data Flow
 1. `scripts/generate-sitemap.mjs` generates `public/sitemap.xml`.
@@ -39,9 +45,11 @@ Build-time slug source is `catalog_slug_state`. If Supabase credentials are miss
 - Multi-seller history remains parallel, never merged into one synthetic series.
 - Seller-priority content selection: prefer `tlamagames`/`tlamagase`, then fallback.
 - Go API is the canonical runtime read interface; direct client reads from raw snapshot tables are operationally deprecated and gated by explicit cutover SQL.
-- Product detail history uses seller-day checks and can be bounded with
-  `history_points` without changing slug identity semantics.
+- Product detail history uses seller-day checks and `history_points` bounds each
+  seller independently without changing slug identity semantics.
 - Catalog/search/meta read relation defaults to `public.catalog_slug_state` and can be switched with `API_CATALOG_SUMMARY_RELATION` for operational fallback.
 - Alias candidates are generated from conservative evidence such as same
   seller/product-code duplicate slugs and small shared-EAN groups, but candidates
   require review before public catalog identity changes.
+- `/health` is process liveness, `/ready` checks PostgreSQL, and `/version`
+  identifies the deployed build.

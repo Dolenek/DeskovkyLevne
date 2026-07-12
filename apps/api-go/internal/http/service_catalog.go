@@ -62,33 +62,6 @@ func (s *Service) Search(
 	return payload.Rows, nil
 }
 
-func (s *Service) CategoryCounts(
-	ctx context.Context,
-	availability string,
-) ([]catalog.CategoryCount, error) {
-	cacheKey := "categories:" + normalizeAvailability(availability)
-	payload, err := fetchCached[categoryRowsResponse](
-		ctx,
-		s,
-		"categories",
-		cacheKey,
-		s.cacheTTL.Categories,
-		func(innerCtx context.Context) (categoryRowsResponse, error) {
-			rows, fetchErr := s.catalogRepo.FetchCategoryCounts(innerCtx, catalog.CategoryFilters{
-				Availability: availability,
-			})
-			if fetchErr != nil {
-				return categoryRowsResponse{}, fetchErr
-			}
-			return categoryRowsResponse{Rows: rows}, nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	return payload.Rows, nil
-}
-
 func (s *Service) PriceRange(
 	ctx context.Context,
 	filters catalog.PriceRangeFilters,

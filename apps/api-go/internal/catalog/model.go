@@ -40,20 +40,6 @@ type Filters struct {
 	RandomSeed     *int64
 }
 
-type CategoryCount struct {
-	Category string `json:"category"`
-	Count    int64  `json:"count"`
-}
-
-type CategoryFilters struct {
-	Availability   string
-	Categories     []string
-	PlayerRanges   []string
-	PlaytimeRanges []string
-	AgeRatings     []int
-	PriceMovement  string
-}
-
 type PriceRangeFilters struct {
 	Availability   string
 	Categories     []string

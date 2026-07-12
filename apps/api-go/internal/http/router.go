@@ -12,11 +12,12 @@ import (
 
 type RouteTimeouts struct {
 	Health     time.Duration
+	Ready      time.Duration
 	Catalog    time.Duration
 	Search     time.Duration
 	Product    time.Duration
-	Recent     time.Duration
-	Categories time.Duration
+	Discounts  time.Duration
+	Metadata   time.Duration
 	PriceRange time.Duration
 }
 
@@ -26,6 +27,7 @@ func NewRouter(handler *Handler, allowedOrigin string, timeouts RouteTimeouts) h
 	router.Use(middleware.RequestID)
 	router.Use(middleware.Recoverer)
 	router.Use(requestLogger)
+	router.Use(middleware.Compress(5, "application/json"))
 	router.Use(cors.Handler(cors.Options{
 		AllowedOrigins: []string{allowedOrigin},
 		AllowedMethods: []string{
@@ -37,14 +39,15 @@ func NewRouter(handler *Handler, allowedOrigin string, timeouts RouteTimeouts) h
 		MaxAge:         300,
 	}))
 	withRouteTimeout(router, timeouts.Health, "/health", handler.Health)
+	withRouteTimeout(router, timeouts.Ready, "/ready", handler.Ready)
+	withRouteTimeout(router, timeouts.Health, "/version", handler.Version)
 	router.Route("/api/v1", func(r chi.Router) {
 		withRouteTimeout(r, timeouts.Catalog, "/catalog", handler.Catalog)
 		withRouteTimeout(r, timeouts.Search, "/search/suggest", handler.SearchSuggest)
-		withRouteTimeout(r, timeouts.Product, "/products/{slug}", handler.ProductSnapshots)
-		withRouteTimeout(r, timeouts.Recent, "/snapshots/recent", handler.RecentSnapshots)
-		withRouteTimeout(r, timeouts.Categories, "/meta/categories", handler.Categories)
+		withRouteTimeout(r, timeouts.Product, "/products/{slug}", handler.ProductDetail)
+		withRouteTimeout(r, timeouts.Discounts, "/discounts/recent", handler.RecentDiscounts)
 		withRouteTimeout(r, timeouts.PriceRange, "/meta/price-range", handler.PriceRange)
-		withRouteTimeout(r, timeouts.Categories, "/meta/filter-options", handler.FilterOptions)
+		withRouteTimeout(r, timeouts.Metadata, "/meta/filter-options", handler.FilterOptions)
 	})
 	return router
 }

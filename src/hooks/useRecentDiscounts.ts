@@ -1,12 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
-import { fetchRecentSnapshots } from "../services/api/snapshotApi";
-import { RECENT_LOOKBACK_LIMIT } from "../services/api/config";
+import { fetchRecentDiscounts } from "../services/api/snapshotApi";
+import { RECENT_DISCOUNT_LIMIT } from "../services/api/config";
 import type { DiscountEntry } from "../types/product";
-import { detectRecentDiscounts } from "../utils/discounts";
-
-const RECENT_RESULT_LIMIT = Number(
-  import.meta.env.VITE_RECENT_DISCOUNT_RESULTS ?? "10"
-);
 
 interface UseRecentDiscountsState {
   items: DiscountEntry[];
@@ -23,9 +18,8 @@ export const useRecentDiscounts = (): UseRecentDiscountsState => {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const snapshots = await fetchRecentSnapshots(RECENT_LOOKBACK_LIMIT);
-      const detected = detectRecentDiscounts(snapshots, RECENT_RESULT_LIMIT);
-      setItems(detected);
+		const discounts = await fetchRecentDiscounts(RECENT_DISCOUNT_LIMIT);
+		setItems(discounts);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");

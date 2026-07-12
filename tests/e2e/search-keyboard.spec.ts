@@ -1,4 +1,5 @@
 import { expect, test } from "playwright/test";
+import { productDetailResponseFromRows } from "./apiMocks";
 import type { Page, Route } from "playwright/test";
 
 const alphaRow = {
@@ -107,9 +108,12 @@ const mockKeyboardSearchApi = async (page: Page) => {
     }
     if (url.pathname.startsWith("/api/v1/products/")) {
       const slug = url.pathname.split("/").at(-1);
-      await fulfillJson(route, {
-        rows: searchRows.filter((row) => row.product_name_normalized === slug),
-      });
+	  await fulfillJson(
+		route,
+		productDetailResponseFromRows(
+		  searchRows.filter((row) => row.product_name_normalized === slug)
+		)
+	  );
       return;
     }
     await fulfillJson(route, { rows: [] });

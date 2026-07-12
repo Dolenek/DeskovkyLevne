@@ -6,54 +6,73 @@ import (
 )
 
 func TestParseProductHistoryPoints(t *testing.T) {
-	values := url.Values{}
-	values.Set("history_points", "250")
-	if got := parseProductHistoryPoints(values); got != 250 {
-		t.Fatalf("expected 250, got %d", got)
+	values := url.Values{"history_points": []string{"250"}}
+	got, err := parseProductHistoryPoints(values)
+	if err != nil || got != 250 {
+		t.Fatalf("expected 250, got %d, err=%v", got, err)
 	}
 }
 
 func TestParseProductHistoryPointsCap(t *testing.T) {
-	values := url.Values{}
-	values.Set("history_points", "999999")
-	if got := parseProductHistoryPoints(values); got != maxHistoryPoints {
-		t.Fatalf("expected cap %d, got %d", maxHistoryPoints, got)
+	values := url.Values{"history_points": []string{"999999"}}
+	got, err := parseProductHistoryPoints(values)
+	if err != nil || got != maxHistoryPoints {
+		t.Fatalf("expected cap %d, got %d, err=%v", maxHistoryPoints, got, err)
 	}
 }
 
-func TestParseListDeduplicatesValues(t *testing.T) {
-	got := parseList("2-4, 4-plus,2-4,,")
+func TestParseListNormalizesAndDeduplicates(t *testing.T) {
+	got := parseList("2-4, 4-PLUS,2-4,,")
 	if len(got) != 2 || got[0] != "2-4" || got[1] != "4-plus" {
 		t.Fatalf("unexpected values: %#v", got)
 	}
 }
 
-func TestParseListKeepsRequestedFilterTokens(t *testing.T) {
-	got := parseList("strategicka,fantasy,30-60,available,decreased")
-	want := []string{"strategicka", "fantasy", "30-60", "available", "decreased"}
-	if len(got) != len(want) {
-		t.Fatalf("expected %d values, got %#v", len(want), got)
+func TestCatalogValidationRejectsInvalidValues(t *testing.T) {
+	cases := []url.Values{
+		{"limit": []string{"invalid"}},
+		{"offset": []string{"-1"}},
+		{"availability": []string{"unknown"}},
+		{"players": []string{"unknown"}},
+		{"age": []string{"7"}},
+		{"min_price": []string{"NaN"}},
+		{"min_price": []string{"500"}, "max_price": []string{"100"}},
+		{"random_seed": []string{"invalid"}},
 	}
-	for index, value := range want {
-		if got[index] != value {
-			t.Fatalf("expected %q at index %d, got %#v", value, index, got)
+	for _, values := range cases {
+		if _, err := parseCatalogFilters(values, 200); err == nil {
+			t.Fatalf("expected validation error for %#v", values)
 		}
 	}
 }
 
-func TestParseAgesDeduplicatesValidNumbers(t *testing.T) {
-	got := parseAges("6,8,6,nope")
-	if len(got) != 2 || got[0] != 6 || got[1] != 8 {
-		t.Fatalf("unexpected ages: %#v", got)
+func TestCatalogValidationParsesSupportedValues(t *testing.T) {
+	values := url.Values{
+		"availability":   []string{"available"},
+		"categories":     []string{"strategicka,fantasy"},
+		"players":        []string{"2-4"},
+		"playtime":       []string{"30-60"},
+		"age":            []string{"8,10"},
+		"price_movement": []string{"decreased"},
+		"limit":          []string{"24"},
+		"offset":         []string{"48"},
+		"random_seed":    []string{"987"},
+	}
+	filters, err := parseCatalogFilters(values, 200)
+	if err != nil {
+		t.Fatalf("unexpected validation error: %v", err)
+	}
+	if filters.Limit != 24 || filters.Offset != 48 || filters.RandomSeed == nil {
+		t.Fatalf("unexpected filters: %#v", filters)
 	}
 }
 
-func TestParseInt64Ptr(t *testing.T) {
-	got := parseInt64Ptr("12345")
-	if got == nil || *got != 12345 {
-		t.Fatalf("expected 12345, got %#v", got)
+func TestValidateSearchQueryRejectsExcessiveLength(t *testing.T) {
+	query := make([]byte, maxSearchLength+1)
+	for index := range query {
+		query[index] = 'a'
 	}
-	if parseInt64Ptr("nope") != nil {
-		t.Fatalf("expected invalid seed to parse as nil")
+	if _, err := validateSearchQuery(string(query)); err == nil {
+		t.Fatal("expected long search query to fail")
 	}
 }

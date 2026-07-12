@@ -14,8 +14,7 @@ type CacheTTLConfig struct {
 	Catalog    time.Duration
 	Search     time.Duration
 	Product    time.Duration
-	Recent     time.Duration
-	Categories time.Duration
+	Discounts  time.Duration
 	PriceRange time.Duration
 }
 
@@ -51,13 +50,12 @@ func NewService(
 
 func normalizeServiceOptions(options ServiceOptions) ServiceOptions {
 	defaults := ServiceOptions{
-		CacheNamespace: "api-v1",
+		CacheNamespace: "api-v2",
 		CacheTTL: CacheTTLConfig{
 			Catalog:    120 * time.Second,
 			Search:     60 * time.Second,
 			Product:    300 * time.Second,
-			Recent:     120 * time.Second,
-			Categories: 600 * time.Second,
+			Discounts:  60 * time.Second,
 			PriceRange: 180 * time.Second,
 		},
 	}
@@ -75,11 +73,8 @@ func normalizeServiceOptions(options ServiceOptions) ServiceOptions {
 	if normalized.CacheTTL.Product <= 0 {
 		normalized.CacheTTL.Product = defaults.CacheTTL.Product
 	}
-	if normalized.CacheTTL.Recent <= 0 {
-		normalized.CacheTTL.Recent = defaults.CacheTTL.Recent
-	}
-	if normalized.CacheTTL.Categories <= 0 {
-		normalized.CacheTTL.Categories = defaults.CacheTTL.Categories
+	if normalized.CacheTTL.Discounts <= 0 {
+		normalized.CacheTTL.Discounts = defaults.CacheTTL.Discounts
 	}
 	if normalized.CacheTTL.PriceRange <= 0 {
 		normalized.CacheTTL.PriceRange = defaults.CacheTTL.PriceRange
@@ -96,14 +91,14 @@ type suggestionRowsResponse struct {
 	Rows []catalog.SuggestionRow `json:"rows"`
 }
 
-type snapshotRowsResponse struct {
-	Rows []snapshots.Row `json:"rows"`
-}
-
-type categoryRowsResponse struct {
-	Rows []catalog.CategoryCount `json:"rows"`
+type productDetailCacheResponse struct {
+	Detail snapshots.ProductDetail `json:"detail"`
 }
 
 type priceRangeResponse struct {
 	Row catalog.PriceRange `json:"row"`
+}
+
+type discountRowsResponse struct {
+	Rows []snapshots.RecentDiscount `json:"rows"`
 }

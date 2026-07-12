@@ -8,6 +8,7 @@ const apiDir = resolve(rootDir, "apps/api-go");
 const apiEnvPath = resolve(apiDir, ".env");
 const apiTarget = process.env.VITE_API_PROXY_TARGET || "http://localhost:8080";
 const isWindows = process.platform === "win32";
+const frontendArguments = process.argv.slice(2);
 
 const loadApiEnv = () => {
   if (!existsSync(apiEnvPath)) {
@@ -78,7 +79,7 @@ if (apiEnv) {
   }));
 }
 
-children.push(spawnProcess("vite", "npm", ["run", "dev:frontend"], {
+children.push(spawnProcess("vite", "npm", ["run", "dev:frontend", "--", ...frontendArguments], {
   cwd: rootDir,
   env: {
     ...process.env,

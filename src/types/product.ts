@@ -143,18 +143,14 @@ export interface SupplementaryParameter {
 export type ProductFetcher = () => Promise<ProductRow[]>;
 
 export interface DiscountEntry {
-  productSlug: string;
-  productName: string;
+	productSlug: string;
+	seller: string;
+	productName: string;
   currency?: string | null;
   url?: string | null;
   previousPrice: number;
   currentPrice: number;
   changedAt: string;
-}
-
-export interface CategoryCountRow {
-  category: string;
-  count: number;
 }
 
 export interface PriceRangeResponse {

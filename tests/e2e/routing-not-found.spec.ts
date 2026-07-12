@@ -1,5 +1,5 @@
 import { expect, test } from "playwright/test";
-import { mockSearchPageApi } from "./apiMocks";
+import { mockSearchPageApi, productDetailResponseFromRows } from "./apiMocks";
 
 const detailRow = {
   id: 1,
@@ -48,7 +48,7 @@ test("product detail route remains slug based under deskove-hry", async ({ page 
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify({ rows: [detailRow] }),
+        body: JSON.stringify(productDetailResponseFromRows([detailRow])),
       });
       return;
     }
@@ -81,4 +81,23 @@ test("unknown routes render explicit not-found page", async ({ page }) => {
   await page.goto("/this-route-does-not-exist");
   await expect(page.getByText(/Page not found|Stránka nenalezena/)).toBeVisible();
   await expect(page.getByRole("button")).toBeVisible();
+});
+
+test("unknown product API response renders product not-found state", async ({ page }) => {
+	await page.route("**/api/v1/**", async (route) => {
+		const url = new URL(route.request().url());
+		if (url.pathname === "/api/v1/products/missing-game") {
+			await route.fulfill({
+				status: 404,
+				contentType: "application/json",
+				body: JSON.stringify({ error: "product not found", code: "not_found" }),
+			});
+			return;
+		}
+		await route.fulfill({ status: 200, contentType: "application/json", body: "{\"rows\":[]}" });
+	});
+
+	await page.goto("/deskove-hry/missing-game");
+	await expect(page.getByText(/missing-game/)).toBeVisible();
+	await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", "noindex,nofollow");
 });

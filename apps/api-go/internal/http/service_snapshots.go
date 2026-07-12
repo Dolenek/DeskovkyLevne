@@ -3,54 +3,53 @@ package http
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"tlamasite/apps/api-go/internal/snapshots"
 )
 
-func (s *Service) ProductSnapshots(
+func (s *Service) ProductDetail(
 	ctx context.Context,
 	slug string,
 	historyPoints int,
-) ([]snapshots.Row, error) {
+) (snapshots.ProductDetail, error) {
 	cacheKey := productCacheKey(slug, historyPoints)
-	payload, err := fetchCached[snapshotRowsResponse](
+	payload, err := fetchCached[productDetailCacheResponse](
 		ctx,
 		s,
 		"product",
 		cacheKey,
 		s.cacheTTL.Product,
-		func(innerCtx context.Context) (snapshotRowsResponse, error) {
-			rows, fetchErr := s.snapshotRepo.BySlug(innerCtx, slug, historyPoints)
+		func(innerCtx context.Context) (productDetailCacheResponse, error) {
+			detail, fetchErr := s.snapshotRepo.BySlug(innerCtx, slug, historyPoints)
 			if fetchErr != nil {
-				return snapshotRowsResponse{}, fetchErr
+				return productDetailCacheResponse{}, fetchErr
 			}
-			return snapshotRowsResponse{Rows: rows}, nil
+			return productDetailCacheResponse{Detail: detail}, nil
 		},
 	)
 	if err != nil {
-		return nil, err
+		return snapshots.ProductDetail{}, err
 	}
-	return payload.Rows, nil
+	return payload.Detail, nil
 }
 
-func (s *Service) RecentSnapshots(
+func (s *Service) RecentDiscounts(
 	ctx context.Context,
 	limit int,
-) ([]snapshots.Row, error) {
-	cacheKey := fmt.Sprintf("recent:%d", limit)
-	payload, err := fetchCached[snapshotRowsResponse](
+) ([]snapshots.RecentDiscount, error) {
+	cacheKey := fmt.Sprintf("discounts:%d", limit)
+	payload, err := fetchCached[discountRowsResponse](
 		ctx,
 		s,
-		"recent",
+		"discounts",
 		cacheKey,
-		s.cacheTTL.Recent,
-		func(innerCtx context.Context) (snapshotRowsResponse, error) {
-			rows, fetchErr := s.snapshotRepo.Recent(innerCtx, limit)
+		s.cacheTTL.Discounts,
+		func(innerCtx context.Context) (discountRowsResponse, error) {
+			rows, fetchErr := s.snapshotRepo.RecentDiscounts(innerCtx, limit)
 			if fetchErr != nil {
-				return snapshotRowsResponse{}, fetchErr
+				return discountRowsResponse{}, fetchErr
 			}
-			return snapshotRowsResponse{Rows: rows}, nil
+			return discountRowsResponse{Rows: rows}, nil
 		},
 	)
 	if err != nil {
@@ -59,6 +58,6 @@ func (s *Service) RecentSnapshots(
 	return payload.Rows, nil
 }
 
-func productCacheKey(slug string, historyPoints int) string {
-	return fmt.Sprintf("product:%s:points=%d", strings.ToLower(strings.TrimSpace(slug)), historyPoints)
+func (s *Service) Ready(ctx context.Context) error {
+	return s.snapshotRepo.Ping(ctx)
 }

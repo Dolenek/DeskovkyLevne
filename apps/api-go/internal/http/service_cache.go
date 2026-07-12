@@ -8,6 +8,8 @@ import (
 	"time"
 )
 
+const singleflightLoadTimeout = 15 * time.Second
+
 func fetchCached[T any](
 	ctx context.Context,
 	service *Service,
@@ -34,18 +36,28 @@ func fetchWithinSingleflight[T any](
 	load func(context.Context) (T, error),
 ) (T, error) {
 	singleflightKey := fmt.Sprintf("%s:%s", groupPrefix, cacheKey)
-	sharedValue, err, shared := service.requests.Do(singleflightKey, func() (any, error) {
-		return loadOrReadCache(ctx, service, cacheKey, ttl, load)
+	resultChannel := service.requests.DoChan(singleflightKey, func() (any, error) {
+		loadContext, cancel := context.WithTimeout(
+			context.WithoutCancel(ctx),
+			singleflightLoadTimeout,
+		)
+		defer cancel()
+		return loadOrReadCache(loadContext, service, cacheKey, ttl, load)
 	})
-	if err != nil {
+	select {
+	case <-ctx.Done():
 		var zeroValue T
-		return zeroValue, err
+		return zeroValue, ctx.Err()
+	case result := <-resultChannel:
+		if result.Err != nil {
+			var zeroValue T
+			return zeroValue, result.Err
+		}
+		if result.Shared {
+			log.Printf("component=singleflight key=%s shared=true", singleflightKey)
+		}
+		return asCachedValue[T](result.Val, cacheKey)
 	}
-
-	if shared {
-		log.Printf("component=singleflight key=%s shared=true", singleflightKey)
-	}
-	return asCachedValue[T](sharedValue, cacheKey)
 }
 
 func loadOrReadCache[T any](
@@ -89,12 +101,21 @@ func readCache[T any](ctx context.Context, service *Service, key string) (T, boo
 	}
 
 	payload, hit, err := service.cacheClient.Get(ctx, service.namespacedCacheKey(key))
-	if err != nil || !hit {
+	if err != nil {
+		log.Printf("component=cache key=%s operation=get result=error error=%q", key, err)
+		return zeroValue, false
+	}
+	if !hit {
 		return zeroValue, false
 	}
 
 	var target T
 	if unmarshalErr := json.Unmarshal([]byte(payload), &target); unmarshalErr != nil {
+		log.Printf(
+			"component=cache key=%s operation=unmarshal result=error error=%q",
+			key,
+			unmarshalErr,
+		)
 		return zeroValue, false
 	}
 	return target, true
@@ -107,9 +128,12 @@ func (s *Service) writeCache(ctx context.Context, key string, value any, ttl tim
 
 	payload, err := json.Marshal(value)
 	if err != nil {
+		log.Printf("component=cache key=%s operation=marshal result=error error=%q", key, err)
 		return
 	}
-	_ = s.cacheClient.Set(ctx, s.namespacedCacheKey(key), string(payload), ttl)
+	if err := s.cacheClient.Set(ctx, s.namespacedCacheKey(key), string(payload), ttl); err != nil {
+		log.Printf("component=cache key=%s operation=set result=error error=%q", key, err)
+	}
 }
 
 func (s *Service) namespacedCacheKey(key string) string {

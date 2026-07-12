@@ -3,6 +3,9 @@ const readNumber = (rawValue: string | undefined, fallback: number): number => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
+const readInteger = (rawValue: string | undefined, fallback: number): number =>
+  Math.trunc(readNumber(rawValue, fallback));
+
 const parseCodeAllowlist = (rawValue?: string) =>
   rawValue
     ? String(rawValue)
@@ -18,8 +21,8 @@ export const API_BASE_URL = (
 export const API_PREFIX = `${API_BASE_URL}/api/v1`;
 
 export const API_RETRY_ATTEMPTS = Math.max(
-  1,
-  readNumber(import.meta.env.VITE_API_RETRY_ATTEMPTS, 2)
+	1,
+	readInteger(import.meta.env.VITE_API_RETRY_ATTEMPTS, 2)
 );
 
 export const API_RETRY_DELAY_MS = Math.max(
@@ -32,19 +35,18 @@ export const FILTER_CODES = parseCodeAllowlist(
     import.meta.env.VITE_SUPABASE_FILTER_CODES
 );
 
-export const SEARCH_LIMIT = readNumber(
-  import.meta.env.VITE_API_SEARCH_LIMIT ??
-    import.meta.env.VITE_SUPABASE_SEARCH_LIMIT,
-  60
-);
+export const SEARCH_LIMIT = Math.max(1, readInteger(
+	import.meta.env.VITE_API_SEARCH_LIMIT ??
+		import.meta.env.VITE_SUPABASE_SEARCH_LIMIT,
+	60
+));
 
-export const RECENT_LOOKBACK_LIMIT = readNumber(
-  import.meta.env.VITE_API_RECENT_LOOKBACK ??
-    import.meta.env.VITE_RECENT_DISCOUNT_LOOKBACK,
-  2000
+export const RECENT_DISCOUNT_LIMIT = Math.min(
+  100,
+	Math.max(1, readInteger(import.meta.env.VITE_API_RECENT_DISCOUNT_LIMIT, 10))
 );
 
 export const PRODUCT_HISTORY_POINTS = Math.max(
   0,
-  readNumber(import.meta.env.VITE_API_PRODUCT_HISTORY_POINTS, 0)
+	readInteger(import.meta.env.VITE_API_PRODUCT_HISTORY_POINTS, 0)
 );

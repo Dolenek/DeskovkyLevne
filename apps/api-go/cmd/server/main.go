@@ -17,6 +17,12 @@ import (
 	"tlamasite/apps/api-go/internal/snapshots"
 )
 
+var (
+	version = "development"
+	commit  = "unknown"
+	builtAt = "unknown"
+)
+
 func main() {
 	if err := run(); err != nil {
 		log.Fatalf("server failed: %v", err)
@@ -62,22 +68,26 @@ func run() error {
 				Catalog:    cfg.CacheTTLCatalog,
 				Search:     cfg.CacheTTLSearch,
 				Product:    cfg.CacheTTLProduct,
-				Recent:     cfg.CacheTTLRecent,
-				Categories: cfg.CacheTTLCategories,
+				Discounts:  cfg.CacheTTLDiscounts,
 				PriceRange: cfg.CacheTTLPriceRange,
 			},
 		},
 	)
-	handler := api.NewHandler(service, cfg.MaxPageSize)
+	handler := api.NewHandler(service, cfg.MaxPageSize, api.BuildInfo{
+		Version: version,
+		Commit:  commit,
+		BuiltAt: builtAt,
+	})
 	server := &http.Server{
 		Addr: cfg.ServerAddress,
 		Handler: api.NewRouter(handler, cfg.FrontendOrigin, api.RouteTimeouts{
 			Health:     cfg.HealthTimeout,
+			Ready:      cfg.ReadyTimeout,
 			Catalog:    cfg.CatalogTimeout,
 			Search:     cfg.SearchTimeout,
 			Product:    cfg.ProductTimeout,
-			Recent:     cfg.RecentTimeout,
-			Categories: cfg.CategoriesTimeout,
+			Discounts:  cfg.DiscountsTimeout,
+			Metadata:   cfg.MetadataTimeout,
 			PriceRange: cfg.PriceRangeTimeout,
 		}),
 		ReadTimeout:  cfg.ReadTimeout,
