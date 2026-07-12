@@ -84,7 +84,8 @@ SEO canonical link with the resolved canonical slug.
 - Landing pages render a search hero with one random available product on each
   visit and random available product cards from one seed-ordered catalog
   request. The tracked-games metric reads `/api/v1/catalog/overview` and shows
-  both every canonical slug and the subset available from at least one seller.
+  the total canonical slug count. The available subset remains API-only and is
+  not displayed on the landing page.
 - Filtered catalog sends price range, availability, discounted state, player-count buckets, playtime buckets, age buckets, and canonical category slugs to the API for server-side filtering.
 - Filter options and price bounds are fetched from metadata endpoints, not a full in-browser catalog preload.
 - Catalog and search overlay render one mock product when API requests cannot

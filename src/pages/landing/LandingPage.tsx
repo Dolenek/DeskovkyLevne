@@ -164,11 +164,7 @@ export const LandingPage = ({
                 <StatPill
                   icon="spark"
                   value={catalogOverview?.total.toLocaleString(localeTag) ?? "—"}
-                  label={catalogOverview
-                    ? t("landingCatalogOverview", {
-                        available: catalogOverview.available.toLocaleString(localeTag),
-                      })
-                    : t("landingTrackedGames")}
+                  label={t("landingTrackedGames")}
                 />
                 <StatPill icon="store" value="15" label={t("landingShopCount")} />
                 <StatPill icon="refresh" value="99 %" label={t("landingDailyUpdates")} />
