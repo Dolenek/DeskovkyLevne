@@ -183,3 +183,16 @@ test("escape closes suggestions and slash is ignored inside search input", async
   await expect(page.getByRole("button", { name: /Alpha Game/ })).toHaveCount(0);
   await expect(searchInput).toHaveValue("game");
 });
+
+test("selecting a suggestion on product detail keeps the new product route", async ({ page }) => {
+  await mockKeyboardSearchApi(page);
+  await page.goto("/deskove-hry/alpha-game");
+  await expect(page.getByRole("heading", { name: "Alpha Game" })).toBeVisible();
+
+  const searchInput = page.getByRole("banner").getByRole("textbox");
+  await searchInput.fill("beta");
+  await page.getByRole("button", { name: /Beta Game/ }).click();
+
+  await expect(page).toHaveURL(/\/deskove-hry\/beta-game$/);
+  await expect(page.getByRole("heading", { name: "Beta Game" })).toBeVisible();
+});

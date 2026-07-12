@@ -25,6 +25,7 @@ const App = () => {
   if (route.kind === "detail") {
     return (
       <ProductDetailPage
+        key={route.slug}
         productSlug={route.slug}
         onNavigateToProduct={(slug) => navigate(buildProductDetailPath(slug))}
         onNavigateHome={() => navigate("/")}
