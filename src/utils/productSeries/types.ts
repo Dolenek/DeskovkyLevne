@@ -8,6 +8,10 @@ export interface SellerDraft {
   currency?: string | null;
   url?: string | null;
   listPrice: number | null;
+  latestPrice: number | null;
+  previousPrice: number | null;
+  firstPrice: number | null;
+  latestScrapedAt: string | null;
   heroImage?: string | null;
   availabilityLabel?: string | null;
   availabilityRecordedAt: number | null;

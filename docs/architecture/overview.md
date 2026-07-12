@@ -44,6 +44,10 @@ Build-time slug source is `catalog_slug_state`. If Supabase credentials are miss
   reviewed canonical slug; raw snapshots are not rewritten.
 - Multi-seller history remains parallel, never merged into one synthetic series.
 - Seller-priority content selection: prefer `tlamagames`/`tlamagase`, then fallback.
+- A read-model trigger enforces presentation priority independently for names,
+  hero images, galleries, descriptions, and supplementary parameters.
+- Canonical slug resolution only attempts seller/code matching when both keys
+  are present; slug-only lookups use the alias slug index directly.
 - Go API is the canonical runtime read interface; direct client reads from raw snapshot tables are operationally deprecated and gated by explicit cutover SQL.
 - Product detail history uses seller-day checks and `history_points` bounds each
   seller independently without changing slug identity semantics.

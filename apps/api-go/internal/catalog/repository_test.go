@@ -145,6 +145,17 @@ func TestBuildWhereUsesAllSearchTokensAgainstNameAndCode(t *testing.T) {
 	}
 }
 
+func TestBuildWhereFiltersProductCodesBeforePagination(t *testing.T) {
+	whereSQL, args := buildWhere(Filters{ProductCodes: []string{"A-1", "B-2"}})
+	if !strings.Contains(whereSQL, "product_code = any($1::text[])") {
+		t.Fatalf("expected product code filter in %s", whereSQL)
+	}
+	codes, ok := args[0].([]string)
+	if !ok || len(codes) != 2 || codes[0] != "A-1" || codes[1] != "B-2" {
+		t.Fatalf("unexpected code args: %#v", args)
+	}
+}
+
 func TestBuildRowsQueryUsesSeededRandomOrder(t *testing.T) {
 	seed := int64(123)
 	query, args := buildRowsQuery(
@@ -167,6 +178,12 @@ func TestBuildRowsQueryUsesSeededRandomOrder(t *testing.T) {
 	}
 	if len(args) != 3 || args[0] != seed || args[1] != 12 || args[2] != 0 {
 		t.Fatalf("unexpected args: %#v", args)
+	}
+}
+
+func TestCatalogRowsIncludeSellerCount(t *testing.T) {
+	if !strings.Contains(catalogRowsSelect, "coalesce(seller_count, 1)") {
+		t.Fatal("catalog rows must expose the read-model seller count")
 	}
 }
 

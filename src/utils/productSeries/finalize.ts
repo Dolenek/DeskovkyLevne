@@ -11,10 +11,13 @@ const deduplicatePoints = (points: ProductSeries["points"]) =>
 
 const finalizeSeller = (draft: SellerDraft): ProductSeries["sellers"][number] => {
   const points = deduplicatePoints(draft.points);
-  const firstPrice = points[0]?.price ?? null;
-  const latestPrice = points[points.length - 1]?.price ?? null;
-  const previousPrice = points.length > 1 ? points[points.length - 2]?.price ?? null : null;
-  const latestScrapedAt = points[points.length - 1]?.rawDate ?? null;
+  const firstPrice = draft.firstPrice ?? points[0]?.price ?? null;
+  const latestPrice = draft.latestPrice ?? points[points.length - 1]?.price ?? null;
+  const previousPrice =
+    draft.previousPrice ??
+    (points.length > 1 ? points[points.length - 2]?.price ?? null : null);
+  const latestScrapedAt =
+    draft.latestScrapedAt ?? points[points.length - 1]?.rawDate ?? null;
 
   return {
     seller: draft.sellerId,
@@ -97,5 +100,6 @@ export const finalizeProductDraft = (
     latestScrapedAt: primarySeller.latestScrapedAt,
     sellers,
     primarySeller: primarySeller.seller,
+    sellerCount: sellers.length,
   };
 };

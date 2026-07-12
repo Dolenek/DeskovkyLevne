@@ -37,7 +37,13 @@ func (f *fakeService) CatalogOverview(ctx context.Context) (catalog.Overview, er
 	return catalog.Overview{}, nil
 }
 
-func (f *fakeService) Search(_ context.Context, _ string, _ string, _ int) ([]catalog.SuggestionRow, error) {
+func (f *fakeService) Search(
+	_ context.Context,
+	_ string,
+	_ string,
+	_ []string,
+	_ int,
+) ([]catalog.SuggestionRow, error) {
 	return nil, nil
 }
 

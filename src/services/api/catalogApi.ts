@@ -5,8 +5,8 @@ import type {
 import type { AvailabilityFilter } from "../../types/filters";
 import { buildSearchResultFromCatalogRow } from "../../utils/catalogTransforms";
 import { buildApiUrl, fetchApi } from "./client";
-import { SEARCH_LIMIT } from "./config";
-import { filterRowsByCode, normalizeSearchTerm, sanitizeSearchTerm } from "./helpers";
+import { FILTER_CODES, SEARCH_LIMIT } from "./config";
+import { normalizeSearchTerm, sanitizeSearchTerm } from "./helpers";
 import type {
   CatalogFilterOptions,
   CatalogOverviewResponse,
@@ -29,6 +29,7 @@ const serializeCatalogFilters = (filters: CatalogFilterOptions) => {
     playtime: playtimeRanges || null,
     age: ageRatings || null,
     price_movement: filters.priceMovement ?? null,
+    product_codes: FILTER_CODES.length > 0 ? FILTER_CODES.join(",") : null,
   };
 };
 
@@ -53,10 +54,11 @@ export const searchCatalogIndexByName = async (
       q: normalizedTerm,
       limit,
       availability: availabilityFilter === "all" ? null : availabilityFilter,
+      product_codes: FILTER_CODES.length > 0 ? FILTER_CODES.join(",") : null,
     }),
     { signal }
   );
-  return filterRowsByCode(payload.rows).map((row) =>
+  return payload.rows.map((row) =>
     buildSearchResultFromCatalogRow(row)
   );
 };
@@ -84,7 +86,7 @@ export const fetchFilteredCatalogIndex = async (
   );
 
   return {
-    rows: filterRowsByCode(payload.rows),
+    rows: payload.rows,
     total: payload.total ?? payload.total_estimate ?? 0,
   };
 };

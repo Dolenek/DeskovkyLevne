@@ -85,6 +85,10 @@ export const LandingPage = ({
       FEATURED_PAGE_SIZE
     );
   }, [heroProduct?.slug, randomCatalogSeries]);
+  const trackedGameCount =
+    catalogOverview && Number.isFinite(catalogOverview.total)
+      ? catalogOverview.total.toLocaleString(localeTag)
+      : "—";
   const structuredData = useMemo(() => {
     const items = randomFeaturedSeries.map((series, index) => ({
       "@type": "ListItem",
@@ -156,14 +160,21 @@ export const LandingPage = ({
                   placeholder={t("landingSearchPlaceholder")}
                   className="min-w-0 flex-1 px-3 py-3 text-sm font-semibold outline-none placeholder:text-muted"
                 />
-                <button className="rounded-lg bg-primary px-5 py-3 text-sm font-extrabold text-white">
+                <button
+                  type="button"
+                  onClick={() => {
+                    searchInputRef.current?.focus();
+                    searchState.setSearchActive(true);
+                  }}
+                  className="rounded-lg bg-primary px-5 py-3 text-sm font-extrabold text-white"
+                >
                   {t("searchButton")}
                 </button>
               </div>
               <div className="mt-8 grid gap-5 sm:grid-cols-3">
                 <StatPill
                   icon="spark"
-                  value={catalogOverview?.total.toLocaleString(localeTag) ?? "—"}
+                  value={trackedGameCount}
                   label={t("landingTrackedGames")}
                 />
                 <StatPill icon="store" value="15" label={t("landingShopCount")} />

@@ -36,6 +36,8 @@ test("filter metadata comes from API and reset clears active filters", async ({ 
   await expect.poll(() => filterOptionUrls.length).toBeGreaterThan(0);
   await expect(page.locator('input[type="range"]').first()).toHaveAttribute("max", "1999");
   await expect(page.getByText("Nejvýhodnější ceny")).toHaveCount(0);
+  await expect(page.getByText("od 3 e-shopů")).toBeVisible();
+  await expect(page.locator("main svg.lucide-star")).toHaveCount(0);
   await page.getByRole("button", { name: /Strategick/ }).first().click();
   await expect(page.locator("span").filter({ hasText: "Strategická" })).toBeVisible();
   await expect.poll(() => priceRangeUrls.some((url) => url.includes("categories=strategicka"))).toBe(true);

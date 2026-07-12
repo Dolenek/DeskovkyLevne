@@ -6,7 +6,6 @@ import { formatAvailabilityLabel } from "../utils/availability";
 import { formatPrice } from "../utils/numberFormat";
 import { getSeriesDiscountPercent } from "../utils/priceStats";
 import { SkeletonImage } from "./skeleton";
-import { Icon } from "./ui/Icon";
 
 interface ProductTileProps {
   series: ProductSeries;
@@ -23,13 +22,10 @@ const shouldUseClientNavigation = (event: MouseEvent<HTMLAnchorElement>) =>
   !event.altKey &&
   !event.shiftKey;
 
-const getPointCount = (series: ProductSeries) =>
-  series.points.length || series.sellers.reduce((sum, seller) => sum + seller.points.length, 0);
-
 export const ProductTile = ({ series, locale, t, onNavigate }: ProductTileProps) => {
   const href = `/deskove-hry/${encodeURIComponent(series.slug)}`;
   const discount = getSeriesDiscountPercent(series);
-  const pointCount = getPointCount(series);
+  const sellerCount = series.sellerCount ?? series.sellers.length;
 
   return (
     <a
@@ -55,9 +51,6 @@ export const ProductTile = ({ series, locale, t, onNavigate }: ProductTileProps)
             {series.label.charAt(0)}
           </div>
         )}
-        <span className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white text-navy shadow">
-          <Icon name="heart" className="h-4 w-4" />
-        </span>
       </div>
       <div className="mt-4 flex flex-1 flex-col">
         <h3 className="line-clamp-2 min-h-[2.5rem] text-base font-extrabold leading-5 text-navy">
@@ -67,12 +60,6 @@ export const ProductTile = ({ series, locale, t, onNavigate }: ProductTileProps)
           {series.categoryTags.slice(0, 1).join(", ") ||
             formatAvailabilityLabel(series.availabilityLabel, locale, t("fallbackBoardGame"))}
         </p>
-        <div className="mt-3 flex items-center gap-1 text-xs font-bold text-muted">
-          {Array.from({ length: 5 }, (_, index) => (
-            <Icon key={index} name="star" className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-          ))}
-          <span className="ml-1">({Math.max(pointCount, series.sellers.length * 173)})</span>
-        </div>
         <div className="mt-3 flex items-center gap-3">
           <span className="text-2xl font-extrabold text-primary">
             {formatPrice(series.latestPrice, series.currency ?? undefined, locale) ?? "--"}
@@ -84,7 +71,7 @@ export const ProductTile = ({ series, locale, t, onNavigate }: ProductTileProps)
           ) : null}
         </div>
         <span className="mt-1 text-sm font-semibold text-muted">
-          {t("productTileSellerCount", { count: series.sellers.length })}
+          {t("productTileSellerCount", { count: sellerCount })}
         </span>
         <span className="mt-4 inline-flex items-center justify-center rounded-lg border border-primary px-4 py-2 text-sm font-extrabold text-primary transition group-hover:bg-primary group-hover:text-white">
           {t("productTileDetail")}

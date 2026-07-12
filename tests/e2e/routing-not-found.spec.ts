@@ -29,6 +29,12 @@ test("root renders landing page and catalog lives at deskove-hry", async ({ page
   await expect(page.getByRole("heading", { name: "Objevte nové deskové hry" })).toBeVisible();
   await expect(page.getByRole("banner").getByRole("link", { name: "Katalog" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Kontakt" })).toHaveCount(0);
+  await expect(page.getByText("12,345")).toBeVisible();
+  const landingSearch = page.getByPlaceholder("Zadejte název deskové hry...");
+  await landingSearch.fill("alpha");
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "Vyhledat" }).click();
+  await expect(landingSearch).toBeFocused();
 
   await page.getByRole("button", { name: "English" }).click();
   await expect(page.getByRole("heading", { name: "How it works" })).toBeVisible();
@@ -39,6 +45,36 @@ test("root renders landing page and catalog lives at deskove-hry", async ({ page
   await expect(page.getByText(/Showing/)).toBeVisible();
   await expect(page.getByRole("banner").getByRole("link", { name: "Catalog" })).toBeVisible();
   await expect(page.getByRole("button", { name: /Filters \(\d+\)/ })).toBeVisible();
+});
+
+test("a stale detail response cannot replace the current product", async ({ page }) => {
+  await page.route("**/api/v1/products/**", async (route) => {
+    const slug = new URL(route.request().url()).pathname.split("/").at(-1);
+    if (slug === "alpha-game") {
+      await new Promise((resolve) => setTimeout(resolve, 800));
+    }
+    const productName = slug === "beta-game" ? "Beta Game" : "Alpha Game";
+    const row = {
+      ...detailRow,
+      product_name_original: productName,
+      product_name_normalized: slug,
+    };
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(productDetailResponseFromRows([row])),
+    }).catch(() => undefined);
+  });
+
+  await page.goto("/deskove-hry/alpha-game");
+  await page.evaluate(() => {
+    window.history.pushState({}, "", "/deskove-hry/beta-game");
+    window.dispatchEvent(new PopStateEvent("popstate"));
+  });
+  await expect(page.getByRole("heading", { name: "Beta Game" })).toBeVisible();
+  await page.waitForTimeout(900);
+  await expect(page).toHaveURL(/\/deskove-hry\/beta-game$/);
+  await expect(page.getByRole("heading", { name: "Alpha Game" })).toHaveCount(0);
 });
 
 test("product detail route remains slug based under deskove-hry", async ({ page }) => {

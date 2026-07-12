@@ -18,6 +18,12 @@ export const toOptionalText = (value: string | null | undefined): string | null 
 };
 
 export const toNumericPrice = (price: unknown): number | null => {
+  if (price === null || price === undefined) {
+    return null;
+  }
+  if (typeof price === "string" && price.trim().length === 0) {
+    return null;
+  }
   const numeric = typeof price === "number" ? price : Number(price);
   return Number.isFinite(numeric) ? Number(numeric.toFixed(2)) : null;
 };

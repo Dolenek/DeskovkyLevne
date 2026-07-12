@@ -20,30 +20,33 @@ func catalogCacheKey(filters catalog.Filters) string {
 		fmt.Sprintf("playtime:%s", sortedJoin(filters.PlaytimeRanges)),
 		fmt.Sprintf("ages:%s", intJoin(filters.AgeRatings)),
 		fmt.Sprintf("movement:%s", strings.ToLower(strings.TrimSpace(filters.PriceMovement))),
+		fmt.Sprintf("codes:%s", encodedJoin(filters.ProductCodes)),
 		fmt.Sprintf("l:%d", filters.Limit),
 		fmt.Sprintf("o:%d", filters.Offset),
 	}
 	return "catalog:" + strings.Join(parts, ";")
 }
 
-func searchCacheKey(query string, availability string, limit int) string {
+func searchCacheKey(query string, availability string, productCodes []string, limit int) string {
 	return fmt.Sprintf(
-		"suggest:%s:%s:%d",
+		"suggest:%s:%s:codes=%s:%d",
 		strings.ToLower(strings.TrimSpace(query)),
 		normalizeAvailability(availability),
+		encodedJoin(productCodes),
 		limit,
 	)
 }
 
 func priceRangeCacheKey(filters catalog.PriceRangeFilters) string {
 	return fmt.Sprintf(
-		"price-range:%s:cats=%s:players=%s:playtime=%s:ages=%s:movement=%s",
+		"price-range:%s:cats=%s:players=%s:playtime=%s:ages=%s:movement=%s:codes=%s",
 		normalizeAvailability(filters.Availability),
 		sortedJoin(filters.Categories),
 		sortedJoin(filters.PlayerRanges),
 		sortedJoin(filters.PlaytimeRanges),
 		intJoin(filters.AgeRatings),
 		strings.ToLower(strings.TrimSpace(filters.PriceMovement)),
+		encodedJoin(filters.ProductCodes),
 	)
 }
 
@@ -51,6 +54,16 @@ func sortedJoin(values []string) string {
 	normalized := append([]string(nil), values...)
 	sort.Strings(normalized)
 	return strings.Join(normalized, "|")
+}
+
+func encodedJoin(values []string) string {
+	normalized := append([]string(nil), values...)
+	sort.Strings(normalized)
+	encoded := make([]string, 0, len(normalized))
+	for _, value := range normalized {
+		encoded = append(encoded, fmt.Sprintf("%d:%s", len(value), value))
+	}
+	return strings.Join(encoded, "|")
 }
 
 func intJoin(values []int) string {

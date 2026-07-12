@@ -85,4 +85,6 @@ saturating the API process.
 - Reviewed alias seed data: `infra/db/migrations/20260227_seed_canonical_product_aliases.sql`
 - Alias-aware daily history refresh: `infra/db/migrations/20260228_canonical_daily_history_refresh.sql`
 - Alias-aware catalog state refresh: `infra/db/migrations/20260229_canonical_catalog_state_refresh.sql`
+- Safe alias lookup and presentation fallback:
+  `infra/db/migrations/20260301_safe_alias_and_presentation_fallback.sql`
 - Non-blocking aggregate refresh: `infra/rewrite/sql/refresh-catalog-aggregates-concurrently.sql`

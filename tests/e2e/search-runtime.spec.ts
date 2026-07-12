@@ -140,3 +140,29 @@ test("catalog renders a mock product when API returns 500", async ({ page }) => 
   await expect(page.getByText("API request failed (500)")).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Ukázková hra cenové historie" })).toBeVisible();
 });
+
+test("catalog does not turn a missing price into zero", async ({ page }) => {
+  await mockSearchPageApi(page);
+  await page.route("**/api/v1/catalog**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        rows: [{
+          ...catalogRow,
+          product_name: "Unknown Price Game",
+          product_name_normalized: "unknown-price-game",
+          latest_price: null,
+          previous_price: null,
+          first_price: null,
+          list_price_with_vat: null,
+        }],
+        total: 1,
+      }),
+    });
+  });
+
+  await page.goto("/deskove-hry");
+  await expect(page.getByRole("heading", { name: "Unknown Price Game" })).toBeVisible();
+  await expect(page.getByText(/0,00\s*Kč/)).toHaveCount(0);
+});

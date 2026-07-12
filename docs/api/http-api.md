@@ -37,7 +37,8 @@ Returns deployment identity embedded at build time.
 
 ## Validation Rules
 
-Invalid integers, prices, enum values, ranges, and unsupported filter options
+Invalid integers, prices, enum values, ranges, overlong queries, product-code
+allowlists, and unsupported filter options
 return `400 validation_error`. Page sizes above the configured maximum are
 capped. Prices must be finite and non-negative, and `min_price` must not exceed
 `max_price`.
@@ -64,11 +65,15 @@ Query parameters:
 - `availability`, `categories`, `players`, `playtime`, `age`, `price_movement`
 - `min_price`, `max_price`
 - `q`: token search against canonical search text and product code
+- `product_codes`: optional comma-separated allowlist, capped at 200 values
+  and 120 characters per value; filtering happens before totals and pagination
 - `random_seed`: deterministic pseudo-random ordering for small selections
 
 Normal ordering is stable by product name and canonical slug. The exact total
 is calculated with the page query; an out-of-range non-zero offset uses a
 fallback count query.
+Catalog `q` uses the same 120-character limit as search suggestions.
+Catalog rows include `seller_count` from the canonical read model.
 
 ```json
 {
@@ -104,6 +109,7 @@ Optional parameters:
 
 - `availability`
 - `limit`: default `60`, capped by `API_MAX_PAGE_SIZE`
+- `product_codes`: optional validated allowlist with the catalog limits
 
 Each row includes canonical slug, product name/code, current price, currency,
 availability, images, `seller_count`, and category tags.

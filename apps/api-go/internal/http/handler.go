@@ -14,7 +14,7 @@ import (
 type serviceContract interface {
 	Catalog(ctx context.Context, filters catalog.Filters) ([]catalog.Row, int64, error)
 	CatalogOverview(ctx context.Context) (catalog.Overview, error)
-	Search(ctx context.Context, query string, availability string, limit int) ([]catalog.SuggestionRow, error)
+	Search(ctx context.Context, query string, availability string, productCodes []string, limit int) ([]catalog.SuggestionRow, error)
 	ProductDetail(ctx context.Context, slug string, historyPoints int) (snapshots.ProductDetail, error)
 	RecentDiscounts(ctx context.Context, limit int) ([]snapshots.RecentDiscount, error)
 	PriceRange(ctx context.Context, filters catalog.PriceRangeFilters) (catalog.PriceRange, error)
@@ -106,12 +106,17 @@ func (h *Handler) SearchSuggest(w http.ResponseWriter, r *http.Request) {
 		writeValidationError(w, r, validationErr)
 		return
 	}
+	productCodes, validationErr := parseProductCodes(values.Get("product_codes"))
+	if validationErr != nil {
+		writeValidationError(w, r, validationErr)
+		return
+	}
 	limit, validationErr := parseBoundedInt(values, "limit", 60, h.maxPageSize)
 	if validationErr != nil {
 		writeValidationError(w, r, validationErr)
 		return
 	}
-	rows, err := h.service.Search(r.Context(), query, availability, limit)
+	rows, err := h.service.Search(r.Context(), query, availability, productCodes, limit)
 	if err != nil {
 		writeServiceError(w, r, err)
 		return

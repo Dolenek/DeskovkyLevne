@@ -16,6 +16,8 @@ const (
 	maxDiscountResults = 100
 	maxSearchLength    = 120
 	maxCatalogOffset   = 1_000_000
+	maxProductCodes    = 200
+	maxProductCodeSize = 120
 )
 
 var supportedCategories = stringSet("strategicka", "rodinna", "fantasy", "kooperativni", "ekonomicka")
@@ -65,7 +67,17 @@ func parseCatalogFilters(
 	if err != nil {
 		return catalog.Filters{}, err
 	}
-	return buildCatalogFilters(common, minPrice, maxPrice, limit, offset, randomSeed, values), nil
+	query, err := validateSearchQuery(values.Get("q"))
+	if err != nil {
+		return catalog.Filters{}, err
+	}
+	productCodes, err := parseProductCodes(values.Get("product_codes"))
+	if err != nil {
+		return catalog.Filters{}, err
+	}
+	return buildCatalogFilters(
+		common, minPrice, maxPrice, limit, offset, randomSeed, query, productCodes,
+	), nil
 }
 
 func buildCatalogFilters(
@@ -75,13 +87,14 @@ func buildCatalogFilters(
 	limit int,
 	offset int,
 	randomSeed *int64,
-	values url.Values,
+	query string,
+	productCodes []string,
 ) catalog.Filters {
 	return catalog.Filters{
 		Availability: common.availability, MinPrice: minPrice, MaxPrice: maxPrice,
 		Categories: common.categories, PlayerRanges: common.playerRanges,
 		PlaytimeRanges: common.playtimeRanges, AgeRatings: common.ageRatings,
-		PriceMovement: common.priceMovement, Query: strings.TrimSpace(values.Get("q")),
+		PriceMovement: common.priceMovement, Query: query, ProductCodes: productCodes,
 		Limit: limit, Offset: offset, RandomSeed: randomSeed,
 	}
 }
@@ -91,11 +104,41 @@ func parsePriceRangeFilters(values url.Values) (catalog.PriceRangeFilters, error
 	if err != nil {
 		return catalog.PriceRangeFilters{}, err
 	}
+	productCodes, err := parseProductCodes(values.Get("product_codes"))
+	if err != nil {
+		return catalog.PriceRangeFilters{}, err
+	}
 	return catalog.PriceRangeFilters{
 		Availability: common.availability, Categories: common.categories,
 		PlayerRanges: common.playerRanges, PlaytimeRanges: common.playtimeRanges,
 		AgeRatings: common.ageRatings, PriceMovement: common.priceMovement,
+		ProductCodes: productCodes,
 	}, nil
+}
+
+func parseProductCodes(raw string) ([]string, error) {
+	if strings.TrimSpace(raw) == "" {
+		return nil, nil
+	}
+	seen := make(map[string]struct{})
+	result := make([]string, 0)
+	for _, candidate := range strings.Split(raw, ",") {
+		code := strings.TrimSpace(candidate)
+		if code == "" {
+			continue
+		}
+		if utf8.RuneCountInString(code) > maxProductCodeSize {
+			return nil, fmt.Errorf("product code must not exceed %d characters", maxProductCodeSize)
+		}
+		if _, exists := seen[code]; !exists {
+			seen[code] = struct{}{}
+			result = append(result, code)
+		}
+		if len(result) > maxProductCodes {
+			return nil, fmt.Errorf("product_codes must not contain more than %d values", maxProductCodes)
+		}
+	}
+	return result, nil
 }
 
 func parseCommonFilters(values url.Values) (commonFilters, error) {

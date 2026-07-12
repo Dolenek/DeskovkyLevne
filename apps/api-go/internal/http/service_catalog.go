@@ -52,9 +52,10 @@ func (s *Service) Search(
 	ctx context.Context,
 	query string,
 	availability string,
+	productCodes []string,
 	limit int,
 ) ([]catalog.SuggestionRow, error) {
-	cacheKey := searchCacheKey(query, availability, limit)
+	cacheKey := searchCacheKey(query, availability, productCodes, limit)
 	payload, err := fetchCached[suggestionRowsResponse](
 		ctx,
 		s,
@@ -62,7 +63,9 @@ func (s *Service) Search(
 		cacheKey,
 		s.cacheTTL.Search,
 		func(innerCtx context.Context) (suggestionRowsResponse, error) {
-			rows, fetchErr := s.catalogRepo.Search(innerCtx, query, availability, limit)
+			rows, fetchErr := s.catalogRepo.Search(
+				innerCtx, query, availability, productCodes, limit,
+			)
 			if fetchErr != nil {
 				return suggestionRowsResponse{}, fetchErr
 			}

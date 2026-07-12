@@ -23,6 +23,7 @@ type Row struct {
 	Metadata                json.RawMessage `json:"metadata"`
 	PricePoints             json.RawMessage `json:"price_points"`
 	CategoryTags            []string        `json:"category_tags,omitempty"`
+	SellerCount             *int            `json:"seller_count,omitempty"`
 }
 
 type Filters struct {
@@ -34,6 +35,7 @@ type Filters struct {
 	PlaytimeRanges []string
 	AgeRatings     []int
 	PriceMovement  string
+	ProductCodes   []string
 	Query          string
 	Limit          int
 	Offset         int
@@ -47,6 +49,7 @@ type PriceRangeFilters struct {
 	PlaytimeRanges []string
 	AgeRatings     []int
 	PriceMovement  string
+	ProductCodes   []string
 }
 
 type PriceRange struct {

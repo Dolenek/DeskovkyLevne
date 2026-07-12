@@ -19,8 +19,9 @@ export const baseCatalogRow = {
   short_description: null,
   supplementary_parameters: [],
             metadata: {},
-            price_points: [],
-            category_tags: ["Strategická"],
+  price_points: [],
+  category_tags: ["Strategická"],
+  seller_count: 3,
 };
 
 const fulfillJson = async (route: Route, body: unknown) =>
@@ -95,6 +96,10 @@ export const mockSearchPageApi = async (page: Page) => {
         limit: 10,
         offset: 0,
       });
+      return;
+    }
+    if (url.pathname === "/api/v1/catalog/overview") {
+      await fulfillJson(route, { total: 12_345, available: 10_000 });
       return;
     }
     if (url.pathname === "/api/v1/meta/filter-options") {

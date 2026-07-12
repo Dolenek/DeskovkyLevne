@@ -28,6 +28,8 @@
 - For hero image, description, and similar display text:
   1. Prefer `tlamagames` and `tlamagase`
   2. Fallback to another seller only when preferred data is missing
+- Catalog presentation fallback is applied independently per field, so one
+  missing TLAMA value does not suppress usable content from another seller.
 
 ## Search and Filtering Semantics
 - Catalog and suggestion search are slug-centered but can match name and code.
@@ -55,6 +57,8 @@
   the canonical slug in `product_name_normalized`.
 - Product detail transports seller metadata once and nests that seller's compact
   daily history underneath it. An unknown canonical or alias slug returns 404.
+- Seller-level `latest_price`, `previous_price`, `first_price`, and current
+  list price remain authoritative even when chart history is bounded.
 - Recent discounts are seller-level projections from `catalog_slug_seller_state`;
   reference and current prices must belong to the same seller.
 - Legacy materialized views `catalog_slug_summary` and `catalog_slug_seller_summary` may exist, but they are not the default runtime catalog source.

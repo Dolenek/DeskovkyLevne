@@ -56,3 +56,11 @@ func TestFloatCacheKeysPreserveExactFilterValue(t *testing.T) {
 		t.Fatal("distinct filter values must not share a cache key")
 	}
 }
+
+func TestEncodedJoinKeepsOpaqueProductCodeSetsDistinct(t *testing.T) {
+	combinedCode := encodedJoin([]string{"A|B"})
+	separateCodes := encodedJoin([]string{"A", "B"})
+	if combinedCode == separateCodes {
+		t.Fatal("different product-code sets must not share a cache key")
+	}
+}

@@ -154,6 +154,7 @@ export const buildSeriesFromCatalogIndexRow = (
     latestScrapedAt: sellerEntry.latestScrapedAt,
     sellers: [sellerEntry],
     primarySeller: sellerEntry.seller,
+    sellerCount: row.seller_count ?? 1,
   };
 };
 

@@ -34,6 +34,8 @@ SEO canonical link with the resolved canonical slug.
 - Runtime API calls are organized through shared client/config modules (`src/services/api/*`).
 - API requests retry for transient failures (HTTP 429/5xx and network errors).
 - Search requests are cancelable; stale in-flight requests are aborted when query/filter changes.
+- Product detail requests use the same stale-response protection; changing the
+  slug clears the previous product before canonical URL reconciliation.
 - Core API usage:
   - Catalog/filter: `/api/v1/catalog`
   - Search suggestions: `/api/v1/search/suggest`
@@ -76,6 +78,8 @@ SEO canonical link with the resolved canonical slug.
 - Catalog renders a search/filter toolbar, category chips, sticky desktop
   filter sidebar, mobile filter drawer, active filter chips, product card grid,
   and pagination controls.
+- Catalog cards use backend `seller_count` and do not render ratings,
+  review counts, or favorite controls without backend data.
 - Locale switching affects static UI labels, number/date formatting, normalized
   availability labels, and frontend-owned filter labels. Catalog data text from
   the API, including product names, category tags, seller names, supplementary
@@ -100,6 +104,10 @@ SEO canonical link with the resolved canonical slug.
   `scraped_at` for raw snapshot-shaped rows.
 - Product detail expands the compact seller-nested API response for the existing
   product-series builder. API 404 responses render the not-found state.
+- Product detail keeps seller-level current/previous/first/list prices from the
+  API authoritative while using daily history only for chart points.
+- Date-only history values are formatted as calendar dates without timezone
+  conversion.
 - Recent discounts are already paired per seller by the API; the browser does
   not infer price changes from adjacent global snapshots.
 - Product detail renders one mock product with multi-seller price history when

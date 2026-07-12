@@ -20,9 +20,9 @@ export const useProductDetail = (
     if (!trimmed) {
       return async () => [];
     }
-    return async () => {
+    return async (signal?: AbortSignal) => {
       try {
-		return await fetchProductDetailBySlug(trimmed);
+        return await fetchProductDetailBySlug(trimmed, signal);
       } catch (error) {
         if (isApiFallbackFailure(error)) {
           return buildMockProductRows(trimmed);

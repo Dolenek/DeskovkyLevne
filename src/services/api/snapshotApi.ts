@@ -20,8 +20,8 @@ const toProductRow = (
   product_name_original: seller.product_name,
   product_name_normalized: slug,
   price_with_vat: point.price_with_vat,
-  list_price_with_vat: point.list_price_with_vat,
-  currency_code: point.currency_code,
+  list_price_with_vat: seller.list_price_with_vat,
+  currency_code: seller.currency_code,
   source_url: seller.source_url,
   availability_label: seller.availability_label,
   stock_status_label: seller.stock_status_label,
@@ -34,6 +34,10 @@ const toProductRow = (
   supplementary_parameters: seller.supplementary_parameters,
   metadata: seller.metadata,
   seller: seller.seller,
+  latest_price: seller.latest_price,
+  previous_price: seller.previous_price,
+  first_price: seller.first_price,
+  latest_scraped_at: seller.latest_scraped_at,
 });
 
 const currentSellerPoint = (

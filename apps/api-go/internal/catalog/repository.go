@@ -58,6 +58,7 @@ func (r *Repository) Search(
 	ctx context.Context,
 	query string,
 	availability string,
+	productCodes []string,
 	limit int,
 ) ([]SuggestionRow, error) {
 	safeQuery := normalizeSearchQuery(query)
@@ -66,6 +67,7 @@ func (r *Repository) Search(
 	}
 	filters := Filters{
 		Availability: availability,
+		ProductCodes: productCodes,
 		Query:        safeQuery,
 		Limit:        limit,
 		Offset:       0,
@@ -96,6 +98,7 @@ func (r *Repository) FetchPriceRange(
 		PlaytimeRanges: filters.PlaytimeRanges,
 		AgeRatings:     filters.AgeRatings,
 		PriceMovement:  filters.PriceMovement,
+		ProductCodes:   filters.ProductCodes,
 	})
 	query := `
 select

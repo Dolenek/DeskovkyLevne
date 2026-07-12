@@ -56,6 +56,7 @@ select
   coalesce(metadata, '{}'::jsonb),
   coalesce(price_points, '[]'::jsonb),
   coalesce(category_tags, '{}'::text[]),
+  coalesce(seller_count, 1),
   count(*) over()::bigint as total_count
 from `
 
@@ -97,6 +98,9 @@ func buildWhere(filters Filters) (string, []any) {
 	appendAvailabilityClauses(&clauses, filters.Availability)
 	appendPriceClauses(&clauses, &args, filters.MinPrice, filters.MaxPrice)
 	appendStructuredFilterClauses(&clauses, &args, filters)
+	if codeClause := buildProductCodesClause(&args, filters.ProductCodes); codeClause != "" {
+		clauses = append(clauses, codeClause)
+	}
 	if strings.EqualFold(strings.TrimSpace(filters.PriceMovement), "decreased") {
 		clauses = append(clauses, "(price_movement = 'decreased' or latest_price < list_price_with_vat)")
 	}
@@ -107,6 +111,14 @@ func buildWhere(filters Filters) (string, []any) {
 		return "", args
 	}
 	return " where " + strings.Join(clauses, " and "), args
+}
+
+func buildProductCodesClause(args *[]any, productCodes []string) string {
+	if len(productCodes) == 0 {
+		return ""
+	}
+	*args = append(*args, productCodes)
+	return fmt.Sprintf("product_code = any($%d::text[])", len(*args))
 }
 
 func appendAvailabilityClauses(clauses *[]string, availability string) {

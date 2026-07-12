@@ -18,6 +18,10 @@ export interface ProductRow {
   supplementary_parameters?: Record<string, unknown> | unknown[] | string | null;
   metadata?: Record<string, unknown> | null;
   seller?: string | null;
+  latest_price?: number | null;
+  previous_price?: number | null;
+  first_price?: number | null;
+  latest_scraped_at?: string | null;
 }
 
 export interface ProductCatalogIndexRow {
@@ -120,6 +124,7 @@ export interface ProductSeries {
   latestScrapedAt: string | null;
   sellers: SellerSeries[];
   primarySeller: string | null;
+  sellerCount?: number | null;
 }
 
 export interface ProductSearchResult {
@@ -140,7 +145,7 @@ export interface SupplementaryParameter {
   value: string;
 }
 
-export type ProductFetcher = () => Promise<ProductRow[]>;
+export type ProductFetcher = (signal?: AbortSignal) => Promise<ProductRow[]>;
 
 export interface DiscountEntry {
 	productSlug: string;

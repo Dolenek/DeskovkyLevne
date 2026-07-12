@@ -40,6 +40,10 @@ select public.refresh_catalog_state_incremental(null);
 ```
 - Use the full catalog-state refresh after alias changes because aliases can
   remove stale raw-slug rows even when no recent snapshot changed.
+- Slug-only aliases are resolved only by `product_name_normalized`; they never
+  participate in the seller/product-code lookup branch.
+- Catalog-state writes apply field-level presentation fallback through
+  `catalog_presentation_fallback`.
 
 ## Materialized View Fallback
 - Legacy fallback views can be refreshed with a non-blocking sequence

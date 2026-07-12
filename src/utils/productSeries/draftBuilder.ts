@@ -69,6 +69,10 @@ const createSellerDraft = (
   currency: row.currency_code ?? null,
   url: row.source_url ?? null,
   listPrice: toNumericPrice(row.list_price_with_vat),
+  latestPrice: toNumericPrice(row.latest_price),
+  previousPrice: toNumericPrice(row.previous_price),
+  firstPrice: toNumericPrice(row.first_price),
+  latestScrapedAt: row.latest_scraped_at ?? null,
   heroImage: row.hero_image_url ?? null,
   availabilityLabel: row.availability_label ?? null,
   availabilityRecordedAt: toTimestamp(row.scraped_at),
@@ -155,6 +159,10 @@ const applyOptionalFields = (draft: SellerDraft, row: ProductRow) => {
   if (!draft.currency && row.currency_code) {
     draft.currency = row.currency_code;
   }
+  draft.latestPrice ??= toNumericPrice(row.latest_price);
+  draft.previousPrice ??= toNumericPrice(row.previous_price);
+  draft.firstPrice ??= toNumericPrice(row.first_price);
+  draft.latestScrapedAt ??= row.latest_scraped_at ?? null;
 };
 
 const ensureProductDraft = (drafts: Map<string, ProductDraft>, row: ProductRow) => {

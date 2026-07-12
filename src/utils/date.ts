@@ -17,9 +17,28 @@ const getFormatter = (locale: LocaleKey) => {
   return formatterCache.get(locale)!;
 };
 
+const DATE_ONLY_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+const parseDateOnly = (value: string): Date | null => {
+  const match = value.match(DATE_ONLY_PATTERN);
+  if (!match) return null;
+  const [, yearText, monthText, dayText] = match;
+  const year = Number(yearText);
+  const month = Number(monthText);
+  const day = Number(dayText);
+  const parsed = new Date(year, month - 1, day);
+  if (
+    parsed.getFullYear() !== year ||
+    parsed.getMonth() !== month - 1 ||
+    parsed.getDate() !== day
+  ) return null;
+  return parsed;
+};
+
 export const formatDateLabel = (value: string, locale: LocaleKey): string => {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
+  const isDateOnly = DATE_ONLY_PATTERN.test(value);
+  const date = isDateOnly ? parseDateOnly(value) : new Date(value);
+  if (!date || Number.isNaN(date.getTime())) {
     return "--";
   }
 
@@ -27,6 +46,9 @@ export const formatDateLabel = (value: string, locale: LocaleKey): string => {
 };
 
 export const toDateKey = (value: string): string => {
+  if (DATE_ONLY_PATTERN.test(value)) {
+    return value;
+  }
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
     return value;

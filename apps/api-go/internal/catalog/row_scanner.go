@@ -35,6 +35,7 @@ func scanCatalogRow(rows pgxRows, row *Row, total *int64) error {
 		&row.Metadata,
 		&row.PricePoints,
 		&row.CategoryTags,
+		&row.SellerCount,
 		total,
 	)
 }

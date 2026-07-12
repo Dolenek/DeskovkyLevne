@@ -2,6 +2,7 @@ package http
 
 import (
 	"net/url"
+	"strings"
 	"testing"
 )
 
@@ -38,11 +39,26 @@ func TestCatalogValidationRejectsInvalidValues(t *testing.T) {
 		{"min_price": []string{"NaN"}},
 		{"min_price": []string{"500"}, "max_price": []string{"100"}},
 		{"random_seed": []string{"invalid"}},
+		{"q": []string{strings.Repeat("a", maxSearchLength+1)}},
+		{"product_codes": []string{strings.Repeat("x", maxProductCodeSize+1)}},
 	}
 	for _, values := range cases {
 		if _, err := parseCatalogFilters(values, 200); err == nil {
 			t.Fatalf("expected validation error for %#v", values)
 		}
+	}
+}
+
+func TestCatalogValidationParsesProductCodeAllowlist(t *testing.T) {
+	filters, err := parseCatalogFilters(
+		url.Values{"product_codes": []string{"A-1, B-2,A-1"}},
+		200,
+	)
+	if err != nil {
+		t.Fatalf("unexpected validation error: %v", err)
+	}
+	if len(filters.ProductCodes) != 2 || filters.ProductCodes[1] != "B-2" {
+		t.Fatalf("unexpected product codes: %#v", filters.ProductCodes)
 	}
 }
 
