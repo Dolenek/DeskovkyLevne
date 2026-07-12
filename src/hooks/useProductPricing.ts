@@ -10,14 +10,28 @@ interface UseProductPricingResult {
   lastUpdatedAt: string | null;
 }
 
+interface ProductSeriesRequestState {
+  series: ProductSeries[];
+  loading: boolean;
+  error: string | null;
+}
+
+const hideSeriesFromPreviousLoader = (
+  loaderChanged: boolean,
+  requestState: ProductSeriesRequestState
+): ProductSeriesRequestState =>
+  loaderChanged ? { series: [], loading: true, error: null } : requestState;
+
 const useProductSeriesLoader = (loader: ProductFetcher) => {
   const [series, setSeries] = useState<ProductSeries[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const activeRequestId = useRef(0);
   const activeController = useRef<AbortController | null>(null);
+  const activeRequestLoader = useRef(loader);
 
   const reload = useCallback(async () => {
+    activeRequestLoader.current = loader;
     activeController.current?.abort();
     const controller = new AbortController();
     const requestId = activeRequestId.current + 1;
@@ -43,7 +57,14 @@ const useProductSeriesLoader = (loader: ProductFetcher) => {
     return () => activeController.current?.abort();
   }, [reload]);
 
-  return { series, loading, error, reload };
+  return {
+    ...hideSeriesFromPreviousLoader(activeRequestLoader.current !== loader, {
+      series,
+      loading,
+      error,
+    }),
+    reload,
+  };
 };
 
 export const useProductPricing = (
@@ -60,4 +81,3 @@ export const useProductPricing = (
 
   return { ...requestState, lastUpdatedAt };
 };
-

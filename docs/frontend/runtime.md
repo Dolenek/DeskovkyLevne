@@ -70,8 +70,8 @@ SEO canonical link with the resolved canonical slug.
 - The `/` key focuses the header search from non-editable page content. While
   suggestions are open, arrow keys move the highlighted suggestion, `Enter`
   opens it, and `Escape` closes the overlay without clearing the query.
-- Selecting a search suggestion from a product detail starts a fresh detail
-  lifecycle for the selected slug, so stale product data cannot restore the
+- Selecting a search suggestion from a product detail immediately invalidates
+  data loaded for the previous slug, so stale product data cannot restore the
   previous product route while the new request is loading.
 - Search overlay keeps a larger deduplicated suggestion candidate pool, ranks
   available products before unavailable or unknown-availability products, and

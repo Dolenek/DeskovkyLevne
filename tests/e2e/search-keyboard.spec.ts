@@ -74,7 +74,10 @@ const fulfillJson = async (route: Route, body: unknown) =>
     body: JSON.stringify(body),
   });
 
-const mockKeyboardSearchApi = async (page: Page) => {
+const mockKeyboardSearchApi = async (
+  page: Page,
+  beforeProductResponse?: (slug: string) => Promise<void>
+) => {
   await page.route("**/api/v1/**", async (route) => {
     const url = new URL(route.request().url());
     if (url.pathname === "/api/v1/catalog") {
@@ -108,12 +111,17 @@ const mockKeyboardSearchApi = async (page: Page) => {
     }
     if (url.pathname.startsWith("/api/v1/products/")) {
       const slug = url.pathname.split("/").at(-1);
-	  await fulfillJson(
-		route,
-		productDetailResponseFromRows(
-		  searchRows.filter((row) => row.product_name_normalized === slug)
-		)
-	  );
+      if (!slug) {
+        await fulfillJson(route, { rows: [] });
+        return;
+      }
+      await beforeProductResponse?.(slug);
+      await fulfillJson(
+        route,
+        productDetailResponseFromRows(
+          searchRows.filter((row) => row.product_name_normalized === slug)
+        )
+      );
       return;
     }
     await fulfillJson(route, { rows: [] });
@@ -185,7 +193,13 @@ test("escape closes suggestions and slash is ignored inside search input", async
 });
 
 test("selecting a suggestion on product detail keeps the new product route", async ({ page }) => {
-  await mockKeyboardSearchApi(page);
+  let releaseBetaResponse: () => void = () => undefined;
+  const betaResponsePending = new Promise<void>((resolve) => {
+    releaseBetaResponse = resolve;
+  });
+  await mockKeyboardSearchApi(page, async (slug) => {
+    if (slug === "beta-game") await betaResponsePending;
+  });
   await page.goto("/deskove-hry/alpha-game");
   await expect(page.getByRole("heading", { name: "Alpha Game" })).toBeVisible();
 
@@ -194,5 +208,7 @@ test("selecting a suggestion on product detail keeps the new product route", asy
   await page.getByRole("button", { name: /Beta Game/ }).click();
 
   await expect(page).toHaveURL(/\/deskove-hry\/beta-game$/);
+  await expect(page.getByRole("heading", { name: "Alpha Game" })).toHaveCount(0);
+  releaseBetaResponse();
   await expect(page.getByRole("heading", { name: "Beta Game" })).toBeVisible();
 });
