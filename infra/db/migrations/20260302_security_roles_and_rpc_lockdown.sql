@@ -117,10 +117,17 @@ to tlamasite_api;
 grant execute on function public.canonical_product_slug(text, text, text)
 to tlamasite_api;
 
-grant select on table
-  public.product_price_snapshots,
-  public.product_price_snapshots_partitioned
+grant select on table public.product_price_snapshots
 to tlamasite_maintenance;
+
+-- Older installations may still retain the pre-cutover snapshot table.
+do $$
+begin
+  if to_regclass('public.product_price_snapshots_partitioned') is not null then
+    execute 'grant select on table public.product_price_snapshots_partitioned '
+      || 'to tlamasite_maintenance';
+  end if;
+end $$;
 grant select, insert, update, delete on table
   public.catalog_slug_state,
   public.catalog_slug_seller_state,
