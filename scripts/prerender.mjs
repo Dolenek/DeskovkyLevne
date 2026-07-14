@@ -5,6 +5,10 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createClient } from "@supabase/supabase-js";
 import { chromium } from "playwright";
+import {
+  DEFAULT_SITE_URL,
+  rewritePrerenderOrigin,
+} from "./prerender-origin.mjs";
 import { generateProductPreviewPages } from "./prerender-product-previews.mjs";
 
 const SUPABASE_URL =
@@ -12,7 +16,7 @@ const SUPABASE_URL =
   process.env.SUPABASE_URL ??
   process.env.DATABASE_URL;
 const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY;
-const SITE_URL = (process.env.VITE_SITE_URL || "https://www.deskovkylevne.com")
+const SITE_URL = (process.env.VITE_SITE_URL || DEFAULT_SITE_URL)
   .replace(/\/$/, "");
 const PORT = Number(process.env.VITE_PRERENDER_PORT ?? "4173");
 const HAS_SUPABASE_CREDENTIALS = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
@@ -91,16 +95,21 @@ const prerenderStaticRoutes = async () => {
   const server = await serveDist();
   const browser = await chromium.launch({ headless: true, args: ["--no-sandbox"] });
   const page = await browser.newPage();
+  const prerenderOrigin = `http://localhost:${PORT}`;
 
   try {
     for (const routePath of ["/", "/levne-deskovky", "/deskove-hry"]) {
-      const url = `http://localhost:${PORT}${routePath}`;
+      const url = `${prerenderOrigin}${routePath}`;
       await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 });
       await page.waitForFunction(() => {
         const robots = document.querySelector('meta[name="robots"]');
         return robots?.getAttribute("content") === "index,follow";
       }, { timeout: 60000 });
-      const html = await page.content();
+      const html = rewritePrerenderOrigin(
+        await page.content(),
+        prerenderOrigin,
+        SITE_URL
+      );
       await writeHtmlForRoute(routePath, html);
       console.log(`Prerendered ${routePath}`);
     }

@@ -22,6 +22,9 @@ Canonical API and operations docs are in:
 Use `.env.example` and set:
 - `DATABASE_URL`
 - `FRONTEND_ORIGIN`
+- Database role (`API_DATABASE_ROLE`, default `tlamasite_api`)
+- Trusted proxy CIDRs and header limits (`API_TRUSTED_PROXY_CIDRS`,
+  `API_READ_HEADER_TIMEOUT`, `API_MAX_HEADER_BYTES`)
 - Optional read-model source (`API_CATALOG_SUMMARY_RELATION`)
 - Optional DB pool/runtime tuning (`API_DB_*`, `API_TIMEOUT_*`)
 - Optional Redis (`REDIS_ADDR`, `REDIS_PASSWORD`, `REDIS_DB`)

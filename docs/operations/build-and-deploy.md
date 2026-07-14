@@ -41,14 +41,30 @@ The browser prerender pass covers `/`, `/levne-deskovky`, and `/deskove-hry`.
 Product route HTML is generated directly from the built SPA shell with
 product-specific SEO tags for every slug from the build-time read model.
 
+Before static HTML is written, absolute URLs that use the local prerender
+origin are rewritten to `VITE_SITE_URL`, or to
+`https://www.deskovkylevne.com` when the variable is unset. Canonical, Open
+Graph, and JSON-LD URLs therefore never retain the local prerender host;
+relative asset URLs are unchanged. Product preview prices accept only finite,
+non-negative numeric values. Missing or invalid prices are omitted, while a
+numeric zero remains valid.
+
 ## Backend Deployment (Go API)
 - Service code: `apps/api-go`
 - Compose stack: `infra/rewrite/docker-compose.api-go.yml`
 - Deployment helper: `infra/rewrite/deploy-api-go.sh`
-- Default published port: `${API_GO_PORT:-18080}`
+- Container baseline: Go `1.26.5` on Alpine `3.24`, with Alpine `3.24.1` at runtime
+- Published port: loopback-only `127.0.0.1:${API_GO_PORT:-18080}`
 
 Required runtime env:
 - `DATABASE_URL`
+- `FRONTEND_ORIGIN`
+- `REDIS_PASSWORD`
+
+Apply `infra/db/migrations/20260302_security_roles_and_rpc_lockdown.sql` before
+starting an API configured with the default `API_DATABASE_ROLE`. The login role
+from `DATABASE_URL` must be a member of `tlamasite_api`; refresh automation must
+instead be a member of `tlamasite_maintenance`.
 
 The deployment helper uses the Docker Compose plugin when available and falls
 back to `docker-compose` v1 on hosts that do not have the plugin installed. The
@@ -68,12 +84,20 @@ curl --fail 'http://localhost:'${API_GO_PORT:-18080}'/api/v1/catalog?limit=1'
 ```
 
 ## Production Reverse Proxy
-The production nginx site serves `dist/` and proxies `/api/` to the Go API on
-`${API_GO_PORT:-18080}`. The `/api/` location should apply a small request
-limit keyed by `CF-Connecting-IP` when traffic arrives through Cloudflare Tunnel,
-with a fallback to the direct remote address for local or non-Cloudflare
-requests. This keeps stale browser bundles or malfunctioning clients from
-saturating the API process.
+The canonical site configuration is `infra/rewrite/nginx/nginx.conf`. It serves
+`dist/`, proxies `/api/` to the loopback-bound Go API, limits clients to 10
+requests per second with a burst of 30, and emits the documented browser
+security headers. Keep `API_TRUSTED_PROXY_CIDRS` limited to the actual reverse
+proxy or tunnel peers; forwarded client-address headers from other peers are
+ignored.
+
+The API and Redis containers run with all capabilities dropped,
+`no-new-privileges`, read-only root filesystems, and explicit writable mounts or
+tmpfs only. Redis is password-protected in the compose stack.
+
+`infra/rewrite/test-nginx-security.sh` starts an isolated local nginx container
+and verifies the production headers plus a `429` response after the configured
+burst. The CI infrastructure security job runs this check on every change.
 
 ## SQL Operations Used in Deployment/Cutover
 - Index cleanup migration: `infra/db/migrations/20260221_phase1_index_cleanup.sql`
@@ -87,4 +111,6 @@ saturating the API process.
 - Alias-aware catalog state refresh: `infra/db/migrations/20260229_canonical_catalog_state_refresh.sql`
 - Safe alias lookup and presentation fallback:
   `infra/db/migrations/20260301_safe_alias_and_presentation_fallback.sql`
+- Database roles, RLS policies, and RPC lockdown:
+  `infra/db/migrations/20260302_security_roles_and_rpc_lockdown.sql`
 - Non-blocking aggregate refresh: `infra/rewrite/sql/refresh-catalog-aggregates-concurrently.sql`

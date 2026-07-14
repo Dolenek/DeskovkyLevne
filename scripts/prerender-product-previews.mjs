@@ -1,6 +1,11 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { injectSeoTags } from "./prerender-product-html.mjs";
+import {
+  absoluteImageUrl,
+  sanitizeExternalHttpsUrl,
+  sanitizeImageUrl,
+} from "./public-url-safety.mjs";
 
 const PAGE_SIZE = 1000;
 const SLUG_TABLE_NAME = "catalog_slug_state";
@@ -95,11 +100,11 @@ const collectProductImages = (productRow, sellerRows) => {
   const uniqueImages = new Set();
   const orderedImages = [];
   const addImage = (url) => {
-    const trimmed = typeof url === "string" ? url.trim() : "";
-    if (!trimmed) {
+    const safeUrl = sanitizeImageUrl(url);
+    if (!safeUrl) {
       return;
     }
-    const largeImageUrl = toLargeImageUrl(trimmed);
+    const largeImageUrl = toLargeImageUrl(safeUrl);
     if (!isUsableProductImage(largeImageUrl) || uniqueImages.has(largeImageUrl)) {
       return;
     }
@@ -116,9 +121,16 @@ const collectProductImages = (productRow, sellerRows) => {
   return orderedImages;
 };
 
-const toNumber = (value) => {
+export const toFinitePrice = (value) => {
+  if (
+    value === null ||
+    value === undefined ||
+    (typeof value === "string" && value.trim() === "")
+  ) {
+    return null;
+  }
   const numericValue = Number(value);
-  return Number.isFinite(numericValue) ? numericValue : null;
+  return Number.isFinite(numericValue) && numericValue >= 0 ? numericValue : null;
 };
 
 const formatPrice = (value, currency) => {
@@ -167,7 +179,7 @@ const lowestSeller = (sellerRows) =>
   sellerRows
     .map((sellerRow) => ({
       ...sellerRow,
-      comparablePrice: toNumber(sellerRow.latest_price),
+      comparablePrice: toFinitePrice(sellerRow.latest_price),
     }))
     .filter((sellerRow) => sellerRow.comparablePrice !== null)
     .sort((left, right) => left.comparablePrice - right.comparablePrice)[0] ??
@@ -190,27 +202,16 @@ const buildDescription = (label, productRow, sellerRows) => {
   );
 };
 
-const absoluteUrl = (siteUrl, value) => {
-  if (!value) {
-    return null;
-  }
-  if (/^https?:\/\//i.test(value)) {
-    return value;
-  }
-  const prefixed = value.startsWith("/") ? value : `/${value}`;
-  return `${siteUrl}${prefixed === "/" ? "" : prefixed}`;
-};
-
 const buildStructuredData = (metadata, productRow, sellerRows, siteUrl) => {
   const offers = sellerRows
     .map((sellerRow) => {
-      const price = toNumber(sellerRow.latest_price);
+      const price = toFinitePrice(sellerRow.latest_price);
       if (price === null) {
         return null;
       }
       return {
         "@type": "Offer",
-        url: sellerRow.source_url ?? metadata.canonicalUrl,
+        url: sanitizeExternalHttpsUrl(sellerRow.source_url) ?? metadata.canonicalUrl,
         priceCurrency: sellerRow.currency_code ?? productRow.currency_code ?? "CZK",
         price,
         availability: mapAvailabilityToSchema(sellerRow.availability_label),
@@ -231,7 +232,7 @@ const buildStructuredData = (metadata, productRow, sellerRows, siteUrl) => {
     sku: productRow.product_code ?? productRow.product_name_normalized,
     productID: productRow.product_name_normalized,
     url: metadata.canonicalUrl,
-    image: metadata.images.map((image) => absoluteUrl(siteUrl, image)).filter(Boolean),
+    image: metadata.images.map((image) => absoluteImageUrl(siteUrl, image)).filter(Boolean),
     category: normalizeArray(productRow.category_tags),
     offers,
     inLanguage: "cs",
@@ -250,7 +251,7 @@ const buildProductMetadata = (productRow, sellerRows, siteUrl) => {
     title: `${label} | Deskovky levně`,
     description,
     canonicalUrl,
-    imageUrl: absoluteUrl(siteUrl, images[0]),
+    imageUrl: absoluteImageUrl(siteUrl, images[0]),
     images,
   };
   return {

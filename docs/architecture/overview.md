@@ -31,6 +31,21 @@
 6. Recent discounts come from seller-level state and never compare prices
    between sellers.
 
+## Security Boundaries
+- Browser traffic reaches the Go API through the versioned nginx reverse-proxy
+  configuration. The API container port is published on loopback only.
+- Build-time Supabase access uses the anonymous key only to select
+  `catalog_slug_state` and `catalog_slug_seller_state`; anonymous and
+  authenticated Data API clients cannot execute catalog maintenance routines.
+- Every PostgreSQL connection used by the Go service switches to the NOLOGIN
+  group role `tlamasite_api`. That role can select the API read models and
+  resolve canonical slugs, but cannot read raw snapshots, write catalog state,
+  or execute refresh routines.
+- Refresh and alias-maintenance jobs switch explicitly to
+  `tlamasite_maintenance`. The role is not exposed to anonymous Data API users.
+- Forwarded client-address headers are accepted only when the direct peer is in
+  `API_TRUSTED_PROXY_CIDRS`; other requests use the socket peer address.
+
 ## Build-Time Data Flow
 1. `scripts/generate-sitemap.mjs` generates `public/sitemap.xml`.
 2. `vite build` creates SPA assets.

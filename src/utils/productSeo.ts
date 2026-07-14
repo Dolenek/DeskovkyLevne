@@ -4,7 +4,7 @@ import { formatPrice } from "./numberFormat";
 import { collectProductImageUrls, pickPrimaryProductImage } from "./productImages";
 import { getLatestComparablePrice, getLowestSeller } from "./priceStats";
 import { getSellerDisplayName } from "./sellers";
-import { buildAbsoluteUrl } from "./urls";
+import { buildAbsoluteUrl, sanitizeExternalHttpsUrl } from "./urls";
 
 const mapAvailabilityToSchema = (availability?: string | null): string | undefined => {
   if (!availability) {
@@ -132,7 +132,7 @@ const buildOfferEntry = (
   }
   return {
     "@type": "Offer",
-    url: seller.url ?? canonicalUrl,
+    url: sanitizeExternalHttpsUrl(seller.url) ?? canonicalUrl,
     priceCurrency: seller.currency ?? series.currency ?? "CZK",
     price: seller.latestPrice,
     availability: mapAvailabilityToSchema(seller.availabilityLabel),

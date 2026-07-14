@@ -14,6 +14,7 @@ import {
   extractCategoryTags,
   normalizeSupplementaryParameters,
 } from "./supplementary";
+import { sanitizeExternalHttpsUrl, sanitizeImageUrl } from "./urls";
 
 const toPointArray = (
   pricePoints: ProductCatalogIndexRow["price_points"]
@@ -76,7 +77,7 @@ const toCatalogSearchRow = (row: ProductCatalogIndexRow): CatalogSearchRow => ({
   currency_code: row.currency_code,
   availability_label: row.availability_label,
   latest_price: row.latest_price,
-  hero_image_url: row.hero_image_url,
+  hero_image_url: sanitizeImageUrl(row.hero_image_url),
   gallery_image_urls: row.gallery_image_urls,
   seller_count: row.seller_count ?? null,
   category_tags: row.category_tags,
@@ -93,9 +94,9 @@ const buildCatalogSellerEntry = (
   productCode: row.product_code ?? null,
   label,
   currency: row.currency_code ?? null,
-  url: row.source_url ?? null,
+  url: sanitizeExternalHttpsUrl(row.source_url),
   listPrice: toNumericPrice(row.list_price_with_vat),
-  heroImage: row.hero_image_url ?? null,
+  heroImage: sanitizeImageUrl(row.hero_image_url),
   availabilityLabel: row.availability_label ?? null,
   shortDescription: toOptionalText(row.short_description),
   galleryImages: normalizeGalleryArray(row.gallery_image_urls),
@@ -165,7 +166,7 @@ export const buildSearchResultFromCatalogRow = (
   label:
     row.product_name?.trim() || row.product_code?.trim() || "Neznámý produkt",
   primaryProductCode: row.product_code ?? null,
-  heroImage: row.hero_image_url ?? null,
+  heroImage: sanitizeImageUrl(row.hero_image_url),
   galleryImages: normalizeGalleryArray(row.gallery_image_urls),
   categoryTags: Array.isArray(row.category_tags)
     ? row.category_tags.filter(

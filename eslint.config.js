@@ -6,7 +6,12 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist', 'TlamaScraper/**']),
+  globalIgnores([
+    'dist',
+    'playwright-report',
+    'test-results',
+    'TlamaScraper/**',
+  ]),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [

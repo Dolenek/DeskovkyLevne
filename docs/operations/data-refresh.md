@@ -19,15 +19,19 @@ rows are advisory and do not change runtime identity until reviewed.
 ## Refresh Command (Canonical)
 - Refresh daily history first, then incremental catalog state:
 ```sql
+set role tlamasite_maintenance;
 select public.refresh_catalog_daily_price_history(now() - interval '48 hours');
 select public.refresh_catalog_state_incremental(now() - interval '48 hours');
+reset role;
 ```
 - Runtime uses `API_CATALOG_SUMMARY_RELATION=public.catalog_slug_state`.
 
 ## Alias Review Workflow
 - Refresh pending alias suggestions:
 ```sql
+set role tlamasite_maintenance;
 select public.refresh_canonical_product_alias_candidates(5000);
+reset role;
 ```
 - Review `canonical_product_alias_candidates` manually. Prefer candidates with
   `match_rule = 'same_seller_product_code'`; treat shared-EAN candidates as
@@ -35,8 +39,10 @@ select public.refresh_canonical_product_alias_candidates(5000);
 - After approving aliases into `canonical_product_aliases`, rebuild affected
   daily history and catalog state:
 ```sql
+set role tlamasite_maintenance;
 select public.rebuild_catalog_daily_price_history_for_canonical_product('canonical-slug');
 select public.refresh_catalog_state_incremental(null);
+reset role;
 ```
 - Use the full catalog-state refresh after alias changes because aliases can
   remove stale raw-slug rows even when no recent snapshot changed.
@@ -56,11 +62,15 @@ refresh materialized view concurrently public.catalog_slug_summary;
 
 ## Operational Guidance
 - Trigger refresh after each ingestion batch or on a fixed schedule.
+- Run catalog refresh and alias-maintenance SQL only after explicitly switching
+  to `tlamasite_maintenance`; anonymous Data API clients cannot execute it.
 - Serialize refresh jobs; do not overlap refresh runs.
 - If refresh fails, keep previous materialized data and retry in next cycle.
 - Do not use full rebuild helper functions for routine refresh when concurrent refresh is available.
 
 ## Verification
+- Run `infra/rewrite/sql/verify-security-privileges.sql` after deploying the
+  security migration and confirm that each expected-zero query is empty.
 - Confirm latest timestamps in `catalog_slug_state.latest_scraped_at`.
 - Spot-check `catalog_daily_price_history.price_date` for a recently checked slug.
 - Spot-check `GET /api/v1/products/{slug}` and verify every seller has its own

@@ -1,6 +1,7 @@
 import type { Translator } from "../../types/i18n";
 import type { ProductSeries } from "../../types/product";
 import { formatPrice } from "../../utils/numberFormat";
+import { getLatestComparablePrice, getLowestSeller } from "../../utils/priceStats";
 import { Icon } from "../ui/Icon";
 
 interface ProductHeroProps {
@@ -10,8 +11,12 @@ interface ProductHeroProps {
   t: Translator;
 }
 
-export const ProductHero = ({ series, locale, offersSectionId, t }: ProductHeroProps) => (
-  <section className="flex h-full min-w-0 flex-col">
+export const ProductHero = ({ series, locale, offersSectionId, t }: ProductHeroProps) => {
+  const lowestSeller = getLowestSeller(series);
+  const lowestPrice = lowestSeller ? getLatestComparablePrice(lowestSeller) : null;
+  const lowestPriceCurrency = lowestSeller?.currency ?? series.currency ?? undefined;
+
+  return <section className="flex h-full min-w-0 flex-col">
     <p className="text-sm font-bold text-muted">{t("detailBreadcrumb", { value: series.label })}</p>
     <h1 className="mt-5 break-words text-4xl font-black leading-tight text-navy [overflow-wrap:anywhere]">
       {series.label}
@@ -33,7 +38,7 @@ export const ProductHero = ({ series, locale, offersSectionId, t }: ProductHeroP
     <div className="mt-6 rounded-lg border border-emerald-200 bg-emerald-50 p-5">
       <p className="text-sm font-bold text-muted">{t("detailBestCurrentPrice")}</p>
       <p className="text-4xl font-black text-primary">
-        {formatPrice(series.latestPrice, series.currency ?? undefined, locale)}
+        {formatPrice(lowestPrice, lowestPriceCurrency, locale)}
       </p>
     </div>
     <div className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -45,5 +50,5 @@ export const ProductHero = ({ series, locale, offersSectionId, t }: ProductHeroP
         {t("detailViewOffers")}
       </a>
     </div>
-  </section>
-);
+  </section>;
+};

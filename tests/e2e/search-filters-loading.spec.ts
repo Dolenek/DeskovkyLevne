@@ -1,5 +1,5 @@
 import { expect, test } from "playwright/test";
-import { baseCatalogRow as catalogRow } from "./apiMocks";
+import { baseCatalogRow as catalogRow, mockSearchPageApi } from "./apiMocks";
 
 test("filter metadata comes from API and reset clears active filters", async ({ page }) => {
   const filterOptionUrls: string[] = [];
@@ -90,4 +90,42 @@ test("catalog and search overlay show skeletons while API responses are pending"
   await expect(page.getByRole("status", { name: "Nacitani vysledku vyhledavani" })).toBeVisible();
   releaseSearchResponse();
   await expect(page.getByRole("button", { name: /Alpha Game/ })).toBeVisible();
+});
+
+test("manual price filters normalize negative and reversed bounds", async ({ page }) => {
+  const catalogUrls: string[] = [];
+  await mockSearchPageApi(page);
+  await page.route("**/api/v1/catalog**", async (route) => {
+    catalogUrls.push(route.request().url());
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ rows: [catalogRow], total: 1, total_estimate: 1 }),
+    });
+  });
+
+  await page.goto("/deskove-hry");
+  const priceInputs = page.locator('input[type="number"]');
+  await priceInputs.nth(0).fill("-25");
+  await priceInputs.nth(0).blur();
+  await expect(priceInputs.nth(0)).toHaveValue("0");
+
+  await priceInputs.nth(0).fill("1200");
+  await priceInputs.nth(1).fill("500");
+  await priceInputs.nth(1).blur();
+  await expect(priceInputs.nth(0)).toHaveValue("500");
+  await expect(priceInputs.nth(1)).toHaveValue("1200");
+  await expect.poll(() => catalogUrls.some((requestUrl) => {
+    const url = new URL(requestUrl);
+    return url.searchParams.get("min_price") === "500" &&
+      url.searchParams.get("max_price") === "1200";
+  })).toBe(true);
+
+  const invalidRequest = catalogUrls.some((requestUrl) => {
+    const url = new URL(requestUrl);
+    const min = Number(url.searchParams.get("min_price"));
+    const max = Number(url.searchParams.get("max_price"));
+    return min < 0 || max < 0 || min > max;
+  });
+  expect(invalidRequest).toBe(false);
 });

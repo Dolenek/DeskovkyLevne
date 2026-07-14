@@ -8,6 +8,7 @@ import type {
   ProductSellerResponse,
   RecentDiscountsResponse,
 } from "./types";
+import { sanitizeExternalHttpsUrl } from "../../utils/urls";
 
 const toProductRow = (
   slug: string,
@@ -112,7 +113,7 @@ export const fetchRecentDiscounts = async (
 			seller: row.seller,
       productName: row.product_name ?? row.product_code ?? "Neznámý produkt",
       currency: row.currency_code,
-      url: row.source_url,
+			url: sanitizeExternalHttpsUrl(row.source_url),
       previousPrice: row.reference_price,
       currentPrice: row.current_price,
       changedAt: row.changed_at,

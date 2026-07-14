@@ -1,5 +1,8 @@
 const readNumber = (rawValue: string | undefined, fallback: number): number => {
-  const parsed = Number(rawValue ?? "");
+  if (rawValue === undefined || rawValue.trim() === "") {
+    return fallback;
+  }
+  const parsed = Number(rawValue);
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 

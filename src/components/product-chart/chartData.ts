@@ -24,14 +24,6 @@ const MINIMUM_AXIS_PADDING = 25;
 const AXIS_PADDING_RATIO = 0.08;
 const ROUNDING_STEP = 10;
 
-const getLatestPointPrice = (priceMap: Map<string, number>): number | null => {
-  const latestEntry = Array.from(priceMap.entries()).sort(
-    ([leftDate], [rightDate]) => new Date(leftDate).getTime() - new Date(rightDate).getTime()
-  ).at(-1);
-
-  return latestEntry?.[1] ?? null;
-};
-
 const buildSellerConfigs = (series: ProductSeries): SellerChartConfig[] =>
   series.sellers.map((seller, index) => {
     const id = seller.seller || `seller-${index}`;
@@ -42,7 +34,7 @@ const buildSellerConfigs = (series: ProductSeries): SellerChartConfig[] =>
       label: getSellerDisplayName(id),
       color: SELLER_COLORS[index % SELLER_COLORS.length],
       currency: seller.currency ?? series.currency ?? null,
-      latestPrice: seller.latestPrice ?? getLatestPointPrice(priceMap),
+      latestPrice: seller.latestPrice,
       priceMap,
     };
   });

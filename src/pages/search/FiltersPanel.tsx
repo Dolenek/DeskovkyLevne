@@ -98,6 +98,7 @@ export interface FiltersPanelProps {
   priceRangeValues: { min: number | null; max: number | null };
   priceBounds: { min: number; max: number };
   onPriceFilterChange: (key: "min" | "max", value: string) => void;
+  onPriceFilterBlur: () => void;
   onSliderChange: (key: "min" | "max", value: number) => void;
   filterOptions: FilterOptionsResponse;
   selectedCategories: CategoryFilter[];
@@ -122,6 +123,7 @@ export const FiltersPanel = ({
   priceRangeValues,
   priceBounds,
   onPriceFilterChange,
+  onPriceFilterBlur,
   onSliderChange,
   filterOptions,
   selectedCategories,
@@ -149,8 +151,8 @@ export const FiltersPanel = ({
       </p>
       <PriceRangeSlider bounds={priceBounds} values={priceRangeValues} onSliderChange={onSliderChange} />
       <div className="grid grid-cols-2 gap-2">
-        <input type="number" value={priceFilter.min} onChange={(event) => onPriceFilterChange("min", event.target.value)} placeholder={t("fromPrice")} className="rounded-lg border border-line px-3 py-2 text-sm font-bold text-navy outline-none focus:border-primary" />
-        <input type="number" value={priceFilter.max} onChange={(event) => onPriceFilterChange("max", event.target.value)} placeholder={t("toPrice")} className="rounded-lg border border-line px-3 py-2 text-sm font-bold text-navy outline-none focus:border-primary" />
+        <input type="number" min={0} value={priceFilter.min} onChange={(event) => onPriceFilterChange("min", event.target.value)} onBlur={onPriceFilterBlur} placeholder={t("fromPrice")} className="rounded-lg border border-line px-3 py-2 text-sm font-bold text-navy outline-none focus:border-primary" />
+        <input type="number" min={0} value={priceFilter.max} onChange={(event) => onPriceFilterChange("max", event.target.value)} onBlur={onPriceFilterBlur} placeholder={t("toPrice")} className="rounded-lg border border-line px-3 py-2 text-sm font-bold text-navy outline-none focus:border-primary" />
       </div>
     </div>
 

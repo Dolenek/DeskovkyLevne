@@ -1,0 +1,62 @@
+name: Security gate
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "17 4 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm audit
+      - run: npm run security:sql
+      - run: npm run lint
+      - run: npm run test:unit
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - run: npm run test:e2e
+
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/api-go
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 1.26.5
+          cache-dependency-path: apps/api-go/go.sum
+      - run: go test -race ./...
+      - run: go vet ./...
+      - run: go run golang.org/x/vuln/cmd/govulncheck@v1.6.0 ./...
+      - run: go run github.com/securego/gosec/v2/cmd/gosec@v2.28.0 ./...
+
+  infrastructure:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgres://postgres:password@database.invalid/postgres
+      FRONTEND_ORIGIN: https://www.deskovkylevne.com
+      REDIS_PASSWORD: ci-only-not-a-production-secret
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate hardened compose configuration
+        run: |
+          rendered="$(docker compose -f infra/rewrite/docker-compose.api-go.yml config)"
+          grep --fixed-strings 'host_ip: 127.0.0.1' <<<"${rendered}"
+          grep --fixed-strings 'no-new-privileges:true' <<<"${rendered}"
+          grep --fixed-strings 'read_only: true' <<<"${rendered}"
+      - run: docker build apps/api-go
+      - name: Verify nginx headers and rate limiting
+        run: bash infra/rewrite/test-nginx-security.sh

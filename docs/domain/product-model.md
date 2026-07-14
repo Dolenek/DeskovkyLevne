@@ -31,6 +31,14 @@
 - Catalog presentation fallback is applied independently per field, so one
   missing TLAMA value does not suppress usable content from another seller.
 
+## Catalog URL Trust
+- Seller source URLs, hero images, and gallery images are untrusted catalog
+  content even when they originate from a read model.
+- Outbound offers require an absolute HTTPS URL without embedded credentials.
+- Images require either an absolute HTTPS URL or a local absolute path.
+- Rejected URLs are omitted consistently from the UI, product JSON-LD, social
+  metadata, and build-time preview HTML.
+
 ## Search and Filtering Semantics
 - Catalog and suggestion search are slug-centered but can match name and code.
 - For canonical products with approved aliases, search text includes seller

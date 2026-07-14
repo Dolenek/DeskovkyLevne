@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ImgHTMLAttributes, type SyntheticEvent } from "react";
 import { SkeletonBlock } from "./SkeletonBlock";
+import { sanitizeImageUrl } from "../../utils/urls";
 
 interface SkeletonImageProps extends ImgHTMLAttributes<HTMLImageElement> {
   skeletonClassName?: string;
@@ -18,14 +19,15 @@ export const SkeletonImage = ({
 }: SkeletonImageProps) => {
   const [imageSettled, setImageSettled] = useState(false);
   const imageRef = useRef<HTMLImageElement | null>(null);
+  const safeSource = typeof src === "string" ? sanitizeImageUrl(src) ?? undefined : undefined;
 
   useEffect(() => {
-    setImageSettled(false);
+    setImageSettled(!safeSource);
     const currentImage = imageRef.current;
-    if (currentImage?.complete) {
+    if (safeSource && currentImage?.complete) {
       setImageSettled(true);
     }
-  }, [src]);
+  }, [safeSource]);
 
   const handleImageLoad = (event: SyntheticEvent<HTMLImageElement>) => {
     setImageSettled(true);
@@ -43,7 +45,7 @@ export const SkeletonImage = ({
       <img
         {...imageProps}
         ref={imageRef}
-        src={src}
+        src={safeSource}
         onError={handleImageError}
         onLoad={handleImageLoad}
         className={combineClassNames(

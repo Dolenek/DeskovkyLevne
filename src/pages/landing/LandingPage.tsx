@@ -151,6 +151,7 @@ export const LandingPage = ({
               <div className="mt-8 flex max-w-2xl rounded-lg border border-line bg-white p-2 shadow-lg">
                 <Icon name="search" className="ml-3 mt-3 h-5 w-5 text-muted" />
                 <input
+                  ref={searchInputRef}
                   value={searchState.searchValue}
                   onChange={(event) => {
                     searchState.setSearchValue(event.target.value);

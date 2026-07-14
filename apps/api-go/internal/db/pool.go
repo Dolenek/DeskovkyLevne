@@ -9,6 +9,7 @@ import (
 )
 
 type PoolOptions struct {
+	DatabaseRole    string
 	MaxConns        int32
 	MinConns        int32
 	MaxConnIdleTime time.Duration
@@ -25,6 +26,13 @@ func NewPool(ctx context.Context, databaseURL string, options PoolOptions) (*pgx
 		// Required for PgBouncer transaction pooling compatibility.
 		cfg.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
 	}
+	if options.DatabaseRole != "" {
+		roleSQL := setRoleStatement(options.DatabaseRole)
+		cfg.AfterConnect = func(ctx context.Context, connection *pgx.Conn) error {
+			_, err := connection.Exec(ctx, roleSQL)
+			return err
+		}
+	}
 	if options.MaxConns > 0 {
 		cfg.MaxConns = options.MaxConns
 	}
@@ -38,4 +46,8 @@ func NewPool(ctx context.Context, databaseURL string, options PoolOptions) (*pgx
 		cfg.MaxConnLifetime = options.MaxConnLifetime
 	}
 	return pgxpool.NewWithConfig(ctx, cfg)
+}
+
+func setRoleStatement(roleName string) string {
+	return "set role " + pgx.Identifier{roleName}.Sanitize()
 }

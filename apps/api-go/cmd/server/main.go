@@ -3,11 +3,14 @@ package main
 import (
 	"context"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"tlamasite/apps/api-go/internal/cache"
 	"tlamasite/apps/api-go/internal/catalog"
@@ -24,6 +27,7 @@ var (
 )
 
 func main() {
+	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
 	if err := run(); err != nil {
 		log.Fatalf("server failed: %v", err)
 	}
@@ -35,14 +39,7 @@ func run() error {
 		return err
 	}
 
-	ctx := context.Background()
-	pool, err := db.NewPool(ctx, cfg.DatabaseURL, db.PoolOptions{
-		MaxConns:        cfg.DBMaxConns,
-		MinConns:        cfg.DBMinConns,
-		MaxConnIdleTime: cfg.DBMaxConnIdleTime,
-		MaxConnLifetime: cfg.DBMaxConnLifetime,
-		SimpleProtocol:  cfg.DBSimpleProtocol,
-	})
+	pool, err := openPool(context.Background(), cfg)
 	if err != nil {
 		return err
 	}
@@ -52,14 +49,29 @@ func run() error {
 	if cacheClient != nil {
 		defer cacheClient.Close()
 	}
+	return serve(buildServer(cfg, buildHandler(cfg, pool, cacheClient)))
+}
 
+func openPool(ctx context.Context, cfg config.Config) (*pgxpool.Pool, error) {
+	return db.NewPool(ctx, cfg.DatabaseURL, db.PoolOptions{
+		DatabaseRole:    cfg.DatabaseRole,
+		MaxConns:        cfg.DBMaxConns,
+		MinConns:        cfg.DBMinConns,
+		MaxConnIdleTime: cfg.DBMaxConnIdleTime,
+		MaxConnLifetime: cfg.DBMaxConnLifetime,
+		SimpleProtocol:  cfg.DBSimpleProtocol,
+	})
+}
+
+func buildHandler(
+	cfg config.Config,
+	pool *pgxpool.Pool,
+	cacheClient cache.Client,
+) *api.Handler {
 	service := api.NewService(
-		catalog.NewRepository(
-			pool,
-			catalog.RepositoryOptions{
-				SummaryRelation: cfg.CatalogSummaryRelation,
-			},
-		),
+		catalog.NewRepository(pool, catalog.RepositoryOptions{
+			SummaryRelation: cfg.CatalogSummaryRelation,
+		}),
 		snapshots.NewRepository(pool),
 		cacheClient,
 		api.ServiceOptions{
@@ -73,28 +85,32 @@ func run() error {
 			},
 		},
 	)
-	handler := api.NewHandler(service, cfg.MaxPageSize, api.BuildInfo{
+	return api.NewHandler(service, cfg.MaxPageSize, api.BuildInfo{
 		Version: version,
 		Commit:  commit,
 		BuiltAt: builtAt,
 	})
-	server := &http.Server{
+}
+
+func buildServer(cfg config.Config, handler *api.Handler) *http.Server {
+	return &http.Server{
 		Addr: cfg.ServerAddress,
-		Handler: api.NewRouter(handler, cfg.FrontendOrigin, api.RouteTimeouts{
-			Health:     cfg.HealthTimeout,
-			Ready:      cfg.ReadyTimeout,
-			Catalog:    cfg.CatalogTimeout,
-			Search:     cfg.SearchTimeout,
-			Product:    cfg.ProductTimeout,
-			Discounts:  cfg.DiscountsTimeout,
-			Metadata:   cfg.MetadataTimeout,
-			PriceRange: cfg.PriceRangeTimeout,
+		Handler: api.NewRouter(handler, api.RouterOptions{
+			AllowedOrigin:     cfg.FrontendOrigin,
+			TrustedProxyCIDRs: cfg.TrustedProxyCIDRs,
+			Timeouts: api.RouteTimeouts{
+				Health: cfg.HealthTimeout, Ready: cfg.ReadyTimeout,
+				Catalog: cfg.CatalogTimeout, Search: cfg.SearchTimeout,
+				Product: cfg.ProductTimeout, Discounts: cfg.DiscountsTimeout,
+				Metadata: cfg.MetadataTimeout, PriceRange: cfg.PriceRangeTimeout,
+			},
 		}),
-		ReadTimeout:  cfg.ReadTimeout,
-		WriteTimeout: cfg.WriteTimeout,
-		IdleTimeout:  cfg.IdleTimeout,
+		ReadTimeout:       cfg.ReadTimeout,
+		ReadHeaderTimeout: cfg.ReadHeaderTimeout,
+		WriteTimeout:      cfg.WriteTimeout,
+		IdleTimeout:       cfg.IdleTimeout,
+		MaxHeaderBytes:    cfg.MaxHeaderBytes,
 	}
-	return serve(server)
 }
 
 func connectCache(cfg config.Config) cache.Client {

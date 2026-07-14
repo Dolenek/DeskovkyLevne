@@ -20,19 +20,7 @@ import { uniqueSeriesBySlug } from "../../utils/series";
 import { sortSearchResultsByAvailability } from "../../utils/searchResults";
 import { FILTERED_PAGE_SIZE } from "./FilteredProductsSection";
 import { buildActiveFilterChips, filterSearchResultsByCategory } from "./searchPageFilters";
-
-const parsePriceInput = (value: string): number | null => {
-  if (!value.trim()) {
-    return null;
-  }
-  const numericValue = Number(value);
-  return Number.isFinite(numericValue) ? numericValue : null;
-};
-
-const buildPriceRange = (minValue: string, maxValue: string) => ({
-  min: parsePriceInput(minValue),
-  max: parsePriceInput(maxValue),
-});
+import { buildNormalizedPriceRange, toPriceFilterStrings } from "./searchPriceRange";
 
 interface SearchPageState {
   searchValue: string;
@@ -70,6 +58,7 @@ interface SearchPageState {
   setSearchActive: (active: boolean) => void;
   handleSearchChange: (value: string) => void;
   handlePriceFilterChange: (key: "min" | "max", value: string) => void;
+  handlePriceFilterBlur: () => void;
   handleSliderChange: (key: "min" | "max", numericValue: number) => void;
   handleCategoryToggle: (category: CategoryFilter) => void;
   handlePlayerRangeToggle: (range: PlayerRangeFilter) => void;
@@ -99,7 +88,7 @@ export const useSearchPageState = (
 
   const debouncedQuery = useDebouncedValue(searchValue, 400).trim();
   const priceRange = useMemo(
-    () => buildPriceRange(priceFilter.min, priceFilter.max),
+    () => buildNormalizedPriceRange(priceFilter.min, priceFilter.max),
     [priceFilter.max, priceFilter.min]
   );
 
@@ -165,6 +154,13 @@ export const useSearchPageState = (
 
   const handlePriceFilterChange = useCallback((key: "min" | "max", value: string) => {
     setPriceFilter((current) => ({ ...current, [key]: value }));
+    setPricePage(1);
+  }, []);
+
+  const handlePriceFilterBlur = useCallback(() => {
+    setPriceFilter((current) =>
+      toPriceFilterStrings(buildNormalizedPriceRange(current.min, current.max))
+    );
     setPricePage(1);
   }, []);
 
@@ -295,6 +291,7 @@ export const useSearchPageState = (
     setSearchActive,
     handleSearchChange,
     handlePriceFilterChange,
+    handlePriceFilterBlur,
     handleSliderChange,
     handleCategoryToggle,
     handlePlayerRangeToggle,

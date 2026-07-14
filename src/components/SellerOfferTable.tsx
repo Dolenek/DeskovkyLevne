@@ -6,6 +6,7 @@ import { formatPrice } from "../utils/numberFormat";
 import { getLatestComparablePrice } from "../utils/priceStats";
 import { getSellerDisplayName } from "../utils/sellers";
 import { Icon } from "./ui/Icon";
+import { sanitizeExternalHttpsUrl } from "../utils/urls";
 
 interface SellerOfferTableProps {
   series: ProductSeries;
@@ -55,7 +56,9 @@ export const SellerOfferTable = ({
         <span className="text-right">{t("sellerOfferLink")}</span>
       </div>
       <div className="divide-y divide-line">
-        {sellers.slice(0, compact ? 4 : 8).map((seller, index) => (
+        {sellers.slice(0, compact ? 4 : 8).map((seller, index) => {
+          const safeSellerUrl = sanitizeExternalHttpsUrl(seller.url);
+          return (
           <div
             key={`${seller.seller}-${seller.productCode}-${index}`}
             className={`grid gap-3 px-4 py-4 text-sm md:grid-cols-[1.25fr_0.75fr_1fr_0.85fr] md:items-center ${
@@ -81,9 +84,9 @@ export const SellerOfferTable = ({
               <span className="text-xs font-bold text-muted md:hidden">{t("sellerOfferAvailability")}</span>
             </span>
             <span className="text-right">
-              {seller.url ? (
+              {safeSellerUrl ? (
                 <a
-                  href={seller.url}
+                  href={safeSellerUrl}
                   target="_blank"
                   rel="noreferrer"
                   aria-label={t("sellerOfferOpenAria", { seller: getSellerDisplayName(seller.seller) })}
@@ -97,7 +100,8 @@ export const SellerOfferTable = ({
               )}
             </span>
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

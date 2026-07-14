@@ -128,7 +128,7 @@ create or replace function public.catalog_product_daily_history(
 language sql
 stable
 security definer
-set search_path = public, pg_temp
+set search_path = ''
 as $$
   select
     history.canonical_product_id,

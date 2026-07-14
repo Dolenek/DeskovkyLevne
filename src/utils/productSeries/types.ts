@@ -8,9 +8,9 @@ export interface SellerDraft {
   currency?: string | null;
   url?: string | null;
   listPrice: number | null;
-  latestPrice: number | null;
-  previousPrice: number | null;
-  firstPrice: number | null;
+  latestPrice: number | null | undefined;
+  previousPrice: number | null | undefined;
+  firstPrice: number | null | undefined;
   latestScrapedAt: string | null;
   heroImage?: string | null;
   availabilityLabel?: string | null;

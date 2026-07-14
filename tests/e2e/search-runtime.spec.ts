@@ -141,6 +141,31 @@ test("catalog renders a mock product when API returns 500", async ({ page }) => 
   await expect(page.getByRole("heading", { name: "Ukázková hra cenové historie" })).toBeVisible();
 });
 
+test("default API retry recovers after one transient server failure", async ({ page }) => {
+  let catalogAttempts = 0;
+  await mockSearchPageApi(page);
+  await page.route("**/api/v1/catalog**", async (route) => {
+    catalogAttempts += 1;
+    if (catalogAttempts === 1) {
+      await route.fulfill({
+        status: 500,
+        contentType: "application/json",
+        body: JSON.stringify({ error: "temporary failure" }),
+      });
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ rows: [catalogRow], total: 1, total_estimate: 1 }),
+    });
+  });
+
+  await page.goto("/deskove-hry");
+  await expect(page.getByRole("heading", { name: "Alpha Game" })).toBeVisible();
+  expect(catalogAttempts).toBe(2);
+});
+
 test("catalog does not turn a missing price into zero", async ({ page }) => {
   await mockSearchPageApi(page);
   await page.route("**/api/v1/catalog**", async (route) => {

@@ -29,7 +29,7 @@ test("root renders landing page and catalog lives at deskove-hry", async ({ page
   await expect(page.getByRole("heading", { name: "Objevte nové deskové hry" })).toBeVisible();
   await expect(page.getByRole("banner").getByRole("link", { name: "Katalog" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Kontakt" })).toHaveCount(0);
-  await expect(page.getByText("12,345")).toBeVisible();
+  await expect(page.getByText((12_345).toLocaleString("cs-CZ"))).toBeVisible();
   const landingSearch = page.getByPlaceholder("Zadejte název deskové hry...");
   await landingSearch.fill("alpha");
   await page.keyboard.press("Escape");

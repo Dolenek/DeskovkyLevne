@@ -10,7 +10,13 @@ if [[ -z "${DATABASE_URL:-}" ]]; then
 fi
 
 if [[ -z "${FRONTEND_ORIGIN:-}" ]]; then
-  FRONTEND_ORIGIN="http://localhost:5173"
+  echo "FRONTEND_ORIGIN is required"
+  exit 1
+fi
+
+if [[ -z "${REDIS_PASSWORD:-}" ]]; then
+  echo "REDIS_PASSWORD is required"
+  exit 1
 fi
 
 export API_VERSION="${API_VERSION:-$(git -C "${ROOT_DIR}" describe --always --dirty 2>/dev/null || echo development)}"

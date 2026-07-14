@@ -7,7 +7,7 @@ export const collectSellerPrices = (series: ProductSeries): number[] =>
 
 export const getLatestComparablePrice = (
   seller: SellerSeries
-): number | null => seller.latestPrice ?? seller.points.at(-1)?.price ?? null;
+): number | null => seller.latestPrice;
 
 export const getDiscountPercent = (
   current: number | null,

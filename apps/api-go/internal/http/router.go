@@ -1,8 +1,9 @@
 package http
 
 import (
-	"log"
+	"log/slog"
 	"net/http"
+	"net/netip"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -21,15 +22,21 @@ type RouteTimeouts struct {
 	PriceRange time.Duration
 }
 
-func NewRouter(handler *Handler, allowedOrigin string, timeouts RouteTimeouts) http.Handler {
+type RouterOptions struct {
+	AllowedOrigin     string
+	Timeouts          RouteTimeouts
+	TrustedProxyCIDRs []netip.Prefix
+}
+
+func NewRouter(handler *Handler, options RouterOptions) http.Handler {
 	router := chi.NewRouter()
-	router.Use(middleware.RealIP)
+	router.Use(trustedClientIP(options.TrustedProxyCIDRs))
 	router.Use(middleware.RequestID)
 	router.Use(middleware.Recoverer)
 	router.Use(requestLogger)
 	router.Use(middleware.Compress(5, "application/json"))
 	router.Use(cors.Handler(cors.Options{
-		AllowedOrigins: []string{allowedOrigin},
+		AllowedOrigins: []string{options.AllowedOrigin},
 		AllowedMethods: []string{
 			http.MethodGet,
 			http.MethodHead,
@@ -38,6 +45,7 @@ func NewRouter(handler *Handler, allowedOrigin string, timeouts RouteTimeouts) h
 		AllowedHeaders: []string{"Accept", "Content-Type", "Authorization"},
 		MaxAge:         300,
 	}))
+	timeouts := options.Timeouts
 	withRouteTimeout(router, timeouts.Health, "/health", handler.Health)
 	withRouteTimeout(router, timeouts.Ready, "/ready", handler.Ready)
 	withRouteTimeout(router, timeouts.Health, "/version", handler.Version)
@@ -66,15 +74,14 @@ func requestLogger(next http.Handler) http.Handler {
 		startedAt := time.Now()
 		writer := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
 		next.ServeHTTP(writer, r)
-		log.Printf(
-			"request_id=%s method=%s path=%s status=%d bytes=%d duration_ms=%d ip=%s",
-			middleware.GetReqID(r.Context()),
-			r.Method,
-			r.URL.Path,
-			writer.Status(),
-			writer.BytesWritten(),
-			time.Since(startedAt).Milliseconds(),
-			r.RemoteAddr,
+		slog.Info("request_completed",
+			"request_id", middleware.GetReqID(r.Context()),
+			"method", r.Method,
+			"path", r.URL.EscapedPath(),
+			"status", writer.Status(),
+			"bytes", writer.BytesWritten(),
+			"duration_ms", time.Since(startedAt).Milliseconds(),
+			"client_ip", clientIP(r),
 		)
 	})
 }

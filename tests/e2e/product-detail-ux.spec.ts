@@ -57,13 +57,13 @@ const productRows = [
     currency_code: "CZK",
     availability_label: "https://schema.org/InStock",
     stock_status_label: "Skladem",
-    price_with_vat: 539,
+    price_with_vat: 499,
     list_price_with_vat: null,
     source_url: "https://example.com/najada",
     scraped_at: "2026-06-01",
-    hero_image_url: null,
+    hero_image_url: "https://cdn.example.com/user/shop/big/najada.jpg",
     gallery_image_urls: [],
-    short_description: null,
+    short_description: "Cheaper seller copy.",
     supplementary_parameters: [],
     metadata: {},
     seller: "najada",
@@ -88,6 +88,39 @@ const productRows = [
     seller: "imago",
   },
 ];
+
+const buildHistoryPoint = (priceDate: string, price: number, listPrice: number | null) => ({
+  price_date: priceDate,
+  price_with_vat: price,
+  list_price_with_vat: listPrice,
+  currency_code: "CZK",
+  scraped_at: `${priceDate}T12:00:00Z`,
+  snapshot_count: 1,
+});
+
+const historyOnlyProductResponse = {
+  product_name_normalized: "history-only-offer",
+  sellers: [
+    {
+      seller: "tlamagames", product_code: "CURRENT", product_name: "History Only Offer",
+      currency_code: "CZK", availability_label: "Skladem", stock_status_label: "Skladem",
+      latest_price: 600, previous_price: 650, first_price: 650, list_price_with_vat: 700,
+      source_url: "https://example.com/current", latest_scraped_at: "2026-06-01T12:00:00Z",
+      hero_image_url: null, gallery_image_urls: [], short_description: null,
+      supplementary_parameters: [], metadata: {},
+      history: [buildHistoryPoint("2026-05-01", 650, 700), buildHistoryPoint("2026-06-01", 600, 700)],
+    },
+    {
+      seller: "archive-shop", product_code: "ARCHIVE", product_name: "History Only Offer",
+      currency_code: "CZK", availability_label: "Nedostupné", stock_status_label: "Nedostupné",
+      latest_price: null, previous_price: 100, first_price: 100, list_price_with_vat: null,
+      source_url: "https://example.com/archive", latest_scraped_at: "2026-05-01T12:00:00Z",
+      hero_image_url: null, gallery_image_urls: [], short_description: null,
+      supplementary_parameters: [], metadata: {},
+      history: [buildHistoryPoint("2026-05-01", 100, null)],
+    },
+  ],
+};
 
 test("product detail shows a skeleton while product data is pending", async ({ page }) => {
   let releaseProductResponse: () => void = () => undefined;
@@ -145,7 +178,7 @@ test("product detail removes misleading UI and normalizes seller data", async ({
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", "index,follow");
   await expect(page.locator('meta[name="description"]')).toHaveAttribute(
     "content",
-    /Srovnejte nabídky hry Alpha Game v 3 e-shopech\. Nejlevněji aktuálně 529,00/
+    /Srovnejte nabídky hry Alpha Game v 3 e-shopech\. Nejlevněji aktuálně 499,00/
   );
   await expect(page.locator('meta[property="og:title"]')).toHaveAttribute(
     "content",
@@ -169,6 +202,12 @@ test("product detail removes misleading UI and normalizes seller data", async ({
   });
   expect(productJsonLd.image).toContain("https://cdn.example.com/user/shop/big/alpha.jpg");
   expect(productJsonLd.offers).toHaveLength(3);
+
+  const lowestPriceCard = page.getByText("Aktuálně nejlevnější od").locator("..");
+  await expect(lowestPriceCard.getByText(/499,00/)).toBeVisible();
+  await expect(page.getByText("A compact card game.")).toHaveCount(2);
+  await expect(page.getByText("Cheaper seller copy.")).toHaveCount(0);
+  await expect(page.locator('main img[src*="najada.jpg"]')).toHaveCount(0);
 
   await expect(page.getByRole("link", { name: "Zobrazit nabídky" })).toHaveAttribute("href", "#nabidky");
   await expect(page.getByText("Hlídat cenu")).toHaveCount(0);
@@ -209,6 +248,28 @@ test("product detail removes misleading UI and normalizes seller data", async ({
   await expect(page).toHaveURL(/#nabidky$/);
 });
 
+test("missing current seller price remains absent while history stays chartable", async ({ page }) => {
+  await page.route("**/api/v1/**", async (route) => {
+    const url = new URL(route.request().url());
+    if (url.pathname === "/api/v1/products/history-only-offer") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(historyOnlyProductResponse),
+      });
+      return;
+    }
+    await route.fulfill({ status: 200, contentType: "application/json", body: "{\"rows\":[]}" });
+  });
+
+  await page.goto("/deskove-hry/history-only-offer");
+  const lowestPriceCard = page.getByText("Aktuálně nejlevnější od").locator("..");
+  await expect(lowestPriceCard.getByText(/600,00/)).toBeVisible();
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute("content", /600,00/);
+  await expect(page.locator("#nabidky").getByText("archive-shop")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /archive-shop/ })).toBeVisible();
+});
+
 test("product detail renders mock product when the API cannot be reached", async ({ page }) => {
   await page.route("**/api/v1/**", async (route) => {
     const url = new URL(route.request().url());
@@ -230,4 +291,44 @@ test("product detail renders mock product when the API cannot be reached", async
   await expect(page.getByRole("heading", { name: "Historie ceny" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Kde koupit nejlevněji" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Skrýt Tlama Games" })).toBeVisible();
+});
+
+test("product detail rejects unsafe catalog URLs", async ({ page }) => {
+  const unsafeRows = [{
+    ...productRows[0],
+    source_url: "https://user:password@example.com/offer",
+    hero_image_url: "javascript:alert(1)",
+    gallery_image_urls: [
+      "data:image/svg+xml,<svg onload=alert(1)>",
+      "https://user:password@example.com/image.jpg",
+      "/logo.png",
+      "https://cdn.example.com/safe.jpg",
+    ],
+  }];
+  await page.route("**/api/v1/**", async (route) => {
+    const url = new URL(route.request().url());
+    const body = url.pathname === "/api/v1/products/alpha-game"
+      ? productDetailResponseFromRows(unsafeRows)
+      : { rows: [] };
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(body),
+    });
+  });
+
+  await page.goto("/deskove-hry/alpha-game");
+  await expect(page.getByRole("heading", { name: "Alpha Game" })).toBeVisible();
+  await expect(page.locator('#nabidky a[target="_blank"]')).toHaveCount(0);
+  await expect(page.locator('main img[src="/logo.png"]').first()).toBeVisible();
+  await expect(
+    page.locator('main img[src="https://cdn.example.com/safe.jpg"]').first()
+  ).toBeVisible();
+
+  const jsonLd = JSON.parse(await page.locator("#seo-jsonld").textContent() ?? "{}");
+  expect(jsonLd.offers[0].url).toBe(page.url());
+  const renderedHtml = await page.content();
+  expect(renderedHtml).not.toContain("javascript:alert");
+  expect(renderedHtml).not.toContain("data:image/svg+xml");
+  expect(renderedHtml).not.toContain("user:password@");
 });

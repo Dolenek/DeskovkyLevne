@@ -12,6 +12,7 @@ import {
 } from "../productTransformPrimitives";
 import { SELLER_PRIORITY } from "./types";
 import type { ProductDraft, SellerDraft } from "./types";
+import { sanitizeExternalHttpsUrl, sanitizeImageUrl } from "../urls";
 
 const toTimestamp = (value: string | null | undefined): number | null => {
   if (!value) {
@@ -37,6 +38,11 @@ const toSeriesLabel = (row: ProductRow): string =>
   row.product_code?.trim() ||
   row.product_name_normalized?.trim() ||
   "Neznámý produkt";
+
+const toAuthoritativePrice = (
+  value: number | null | undefined
+): number | null | undefined =>
+  value === undefined ? undefined : toNumericPrice(value);
 
 export const resolveSlug = (row: ProductRow): string | null => {
   const normalizedSlug = row.product_name_normalized?.trim().toLowerCase();
@@ -67,13 +73,13 @@ const createSellerDraft = (
   productCode: row.product_code ?? null,
   label: toSeriesLabel(row),
   currency: row.currency_code ?? null,
-  url: row.source_url ?? null,
+  url: sanitizeExternalHttpsUrl(row.source_url),
   listPrice: toNumericPrice(row.list_price_with_vat),
-  latestPrice: toNumericPrice(row.latest_price),
-  previousPrice: toNumericPrice(row.previous_price),
-  firstPrice: toNumericPrice(row.first_price),
+  latestPrice: toAuthoritativePrice(row.latest_price),
+  previousPrice: toAuthoritativePrice(row.previous_price),
+  firstPrice: toAuthoritativePrice(row.first_price),
   latestScrapedAt: row.latest_scraped_at ?? null,
-  heroImage: row.hero_image_url ?? null,
+  heroImage: sanitizeImageUrl(row.hero_image_url),
   availabilityLabel: row.availability_label ?? null,
   availabilityRecordedAt: toTimestamp(row.scraped_at),
   shortDescription: toOptionalText(row.short_description),
@@ -148,20 +154,26 @@ const applyOptionalFields = (draft: SellerDraft, row: ProductRow) => {
     draft.listPrice = toNumericPrice(row.list_price_with_vat);
   }
   if (!draft.heroImage && row.hero_image_url) {
-    draft.heroImage = row.hero_image_url;
+    draft.heroImage = sanitizeImageUrl(row.hero_image_url);
   }
   if (!draft.shortDescription && row.short_description) {
     draft.shortDescription = toOptionalText(row.short_description);
   }
   if (!draft.url && row.source_url) {
-    draft.url = row.source_url;
+    draft.url = sanitizeExternalHttpsUrl(row.source_url);
   }
   if (!draft.currency && row.currency_code) {
     draft.currency = row.currency_code;
   }
-  draft.latestPrice ??= toNumericPrice(row.latest_price);
-  draft.previousPrice ??= toNumericPrice(row.previous_price);
-  draft.firstPrice ??= toNumericPrice(row.first_price);
+  if (draft.latestPrice === undefined && row.latest_price !== undefined) {
+    draft.latestPrice = toNumericPrice(row.latest_price);
+  }
+  if (draft.previousPrice === undefined && row.previous_price !== undefined) {
+    draft.previousPrice = toNumericPrice(row.previous_price);
+  }
+  if (draft.firstPrice === undefined && row.first_price !== undefined) {
+    draft.firstPrice = toNumericPrice(row.first_price);
+  }
   draft.latestScrapedAt ??= row.latest_scraped_at ?? null;
 };
 

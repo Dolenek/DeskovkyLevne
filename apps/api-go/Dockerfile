@@ -1,4 +1,4 @@
-FROM golang:1.23-alpine AS builder
+FROM golang:1.26.5-alpine3.24 AS builder
 WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
@@ -10,9 +10,9 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
   -ldflags "-X main.version=${API_VERSION} -X main.commit=${API_COMMIT} -X main.builtAt=${API_BUILT_AT}" \
   -o /out/api ./cmd/server
 
-FROM alpine:3.21
+FROM alpine:3.24.1
 WORKDIR /app
-RUN adduser -D appuser
+RUN adduser -D -H -s /sbin/nologin appuser
 COPY --from=builder /out/api /app/api
 USER appuser
 EXPOSE 8080

@@ -266,7 +266,7 @@ create or replace function public.refresh_catalog_aggregates()
 returns void
 language plpgsql
 security definer
-set search_path = public
+set search_path = ''
 as $$
 begin
   refresh materialized view public.catalog_slug_seller_summary;
@@ -274,4 +274,4 @@ begin
 end;
 $$;
 
-grant execute on function public.refresh_catalog_aggregates() to public;
+revoke execute on function public.refresh_catalog_aggregates() from public;

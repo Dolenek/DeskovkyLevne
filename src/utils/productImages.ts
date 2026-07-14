@@ -1,3 +1,5 @@
+import { sanitizeImageUrl } from "./urls";
+
 interface ProductImageSource {
   heroImage?: string | null;
   galleryImages?: string[] | null;
@@ -19,11 +21,11 @@ export const collectProductImageUrls = (source: ProductImageSource): string[] =>
   const uniqueImages = new Set<string>();
   const orderedImages: string[] = [];
   const addImage = (url: string | null | undefined) => {
-    const trimmed = url?.trim();
-    if (!trimmed) {
+    const safeUrl = sanitizeImageUrl(url);
+    if (!safeUrl) {
       return;
     }
-    const largeImageUrl = toLargeImageUrl(trimmed);
+    const largeImageUrl = toLargeImageUrl(safeUrl);
     if (!isUsableProductImage(largeImageUrl) || uniqueImages.has(largeImageUrl)) {
       return;
     }

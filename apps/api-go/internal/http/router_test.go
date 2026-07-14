@@ -7,7 +7,9 @@ import (
 )
 
 func TestRouterExposesCurrentEndpointsOnly(t *testing.T) {
-	router := NewRouter(NewHandler(&fakeService{}, 200), "*", RouteTimeouts{})
+	router := NewRouter(NewHandler(&fakeService{}, 200), RouterOptions{
+		AllowedOrigin: "*",
+	})
 	tests := []struct {
 		path           string
 		expectedStatus int

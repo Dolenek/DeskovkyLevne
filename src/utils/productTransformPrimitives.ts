@@ -1,4 +1,5 @@
 import type { ProductRow } from "../types/product";
+import { sanitizeImageUrl } from "./urls";
 
 export const slugify = (value: string): string =>
   value
@@ -35,26 +36,25 @@ export const normalizeGalleryArray = (
     return [];
   }
   if (Array.isArray(value)) {
-    return value.filter(
-      (entry): entry is string => typeof entry === "string" && entry.trim().length > 0
-    );
+    return value
+      .map((entry) => typeof entry === "string" ? sanitizeImageUrl(entry) : null)
+      .filter((entry): entry is string => Boolean(entry));
   }
   if (typeof value === "string") {
     try {
       const parsed = JSON.parse(value) as unknown;
       if (Array.isArray(parsed)) {
-        return parsed.filter(
-          (entry): entry is string =>
-            typeof entry === "string" && entry.trim().length > 0
-        );
+        return parsed
+          .map((entry) => typeof entry === "string" ? sanitizeImageUrl(entry) : null)
+          .filter((entry): entry is string => Boolean(entry));
       }
     } catch {
       // fall through to delimiter-based parsing
     }
     return value
       .split(/[\n,;]/g)
-      .map((entry) => entry.trim())
-      .filter((entry) => entry.length > 0);
+      .map((entry) => sanitizeImageUrl(entry))
+      .filter((entry): entry is string => Boolean(entry));
   }
   return [];
 };

@@ -238,3 +238,12 @@ freshness and stale-while-revalidate values. Server-side Redis keys use the
 `api-v2` namespace by default. Concurrent misses are coalesced without tying the
 shared load to the first caller's cancellation. JSON responses support gzip
 compression when requested by the client.
+
+The production nginx boundary limits API traffic to 10 requests per second per
+resolved client with a burst of 30. It adds HSTS without `preload`, a
+same-origin CSP with HTTPS-only external images, `X-Content-Type-Options`,
+`X-Frame-Options`, `Referrer-Policy`, and a restricted Permissions Policy.
+
+The API rejects oversized request headers above `API_MAX_HEADER_BYTES` and
+allows only `API_READ_HEADER_TIMEOUT` to receive them. Proxy-provided client IP
+headers are trusted only for peers listed in `API_TRUSTED_PROXY_CIDRS`.

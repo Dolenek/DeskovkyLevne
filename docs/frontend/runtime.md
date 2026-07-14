@@ -14,8 +14,9 @@ SEO canonical link with the resolved canonical slug.
 ## SEO Metadata
 - Product detail pages use product-specific browser and social metadata:
   `{product name} | Deskovky levně` title, a comparison-focused description
-  with seller count and lowest current seller price when available, canonical
-  slug URL, product `og:type`, large Twitter card, and Product JSON-LD.
+  with seller count and the lowest final current price across all sellers when
+  available, canonical slug URL, product `og:type`, large Twitter card, and
+  Product JSON-LD.
 - Product social images use the same first-image rules as the visible gallery:
   prefer the hero image, then gallery images, normalize `/related/` image URLs
   to `/big/`, deduplicate, and skip placeholder or thumbnail-only assets such
@@ -94,6 +95,9 @@ SEO canonical link with the resolved canonical slug.
   the total canonical slug count. The available subset remains API-only and is
   not displayed on the landing page.
 - Filtered catalog sends price range, availability, discounted state, player-count buckets, playtime buckets, age buckets, and canonical category slugs to the API for server-side filtering.
+- Manual price bounds are normalized to non-negative values before API calls.
+  Reversed bounds are ordered from lower to higher, and the normalized values
+  are written back to both inputs when either input loses focus.
 - Filter options and price bounds are fetched from metadata endpoints, not a full in-browser catalog preload.
 - Catalog and search overlay render one mock product when API requests cannot
   be reached because the browser reports `Failed to fetch` or the API/proxy
@@ -108,7 +112,10 @@ SEO canonical link with the resolved canonical slug.
 - Product detail expands the compact seller-nested API response for the existing
   product-series builder. API 404 responses render the not-found state.
 - Product detail keeps seller-level current/previous/first/list prices from the
-  API authoritative while using daily history only for chart points.
+  API authoritative while using daily history only for chart points. An
+  explicit missing current price is never replaced by history; history is used
+  as a compatibility fallback only when the legacy snapshot shape omits the
+  current-price field entirely.
 - Date-only history values are formatted as calendar dates without timezone
   conversion.
 - Recent discounts are already paired per seller by the API; the browser does
@@ -121,11 +128,20 @@ SEO canonical link with the resolved canonical slug.
 - Seller-offer rows show only API-backed values: seller, price, normalized
   availability, and outbound shop link. Shipping prices and seller ratings are
   not simulated in the frontend.
+- The detail hero, SEO description, and offer ordering use the lowest current
+  seller price. Sellers without a current price are excluded from current
+  offers but remain available as history-chart series.
 - Product galleries deduplicate normalized image URLs and skip placeholder or
   thumbnail-only images such as `blank.gif` and `150x150` assets.
+- Catalog URLs are untrusted input. Seller links are rendered only for absolute,
+  credential-free HTTPS URLs. Images are accepted only from HTTPS URLs or local
+  absolute paths. The same rules apply to visible UI, JSON-LD, social metadata,
+  and build-time product previews.
 
 ## Seller Content Rule in UI
-- Prefer `tlamagames`/`tlamagase` content fields where available.
+- Prefer `tlamagames`/`tlamagase` names, images, descriptions, and other
+  presentation fields where available. This priority does not affect current
+  price selection or offer ordering.
 - Fallback to other seller data when preferred fields are missing.
 - Availability labels are presentation-normalized in the frontend when source
   data contains schema.org values or simple encoded entities.
