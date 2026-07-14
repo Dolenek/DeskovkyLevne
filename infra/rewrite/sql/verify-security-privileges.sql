@@ -57,11 +57,12 @@ from (values
   ('public.canonical_products'),
   ('public.canonical_product_alias_candidates')
 ) as forbidden(forbidden_relation)
-where has_table_privilege(
-  'tlamasite_api',
-  forbidden_relation,
-  'SELECT,INSERT,UPDATE,DELETE'
-);
+where to_regclass(forbidden_relation) is not null
+  and has_table_privilege(
+    'tlamasite_api',
+    to_regclass(forbidden_relation),
+    'SELECT,INSERT,UPDATE,DELETE'
+  );
 
 select tablename
 from pg_tables
