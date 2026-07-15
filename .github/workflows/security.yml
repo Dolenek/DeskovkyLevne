@@ -57,6 +57,7 @@ jobs:
           grep --fixed-strings 'host_ip: 127.0.0.1' <<<"${rendered}"
           grep --fixed-strings 'no-new-privileges:true' <<<"${rendered}"
           grep --fixed-strings 'read_only: true' <<<"${rendered}"
+          grep --fixed-strings 'user: 999:1000' <<<"${rendered}"
       - run: docker build apps/api-go
       - name: Verify nginx headers and rate limiting
         run: bash infra/rewrite/test-nginx-security.sh

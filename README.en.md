@@ -1,45 +1,49 @@
-<div align="center">
-  <img src="public/logo.png" alt="" width="72" />
-  <h1>Deskovky Levně</h1>
-  <p><strong>A board-game price comparison app with per-store price history.</strong></p>
+# Deskovky Levně
 
-  <p>
-    <a href="https://www.deskovkylevne.com/"><img alt="Live demo" src="https://img.shields.io/badge/live-deskovkylevne.com-16a34a?style=flat-square"></a>
-    <a href="https://react.dev/"><img alt="React and TypeScript" src="https://img.shields.io/badge/frontend-React%20%2B%20TypeScript-2563eb?style=flat-square"></a>
-    <a href="apps/api-go/README.md"><img alt="Go API" src="https://img.shields.io/badge/backend-Go%20API-0f766e?style=flat-square"></a>
-    <a href="docs/README.md"><img alt="Documentation" src="https://img.shields.io/badge/docs-current%20architecture-334155?style=flat-square"></a>
-  </p>
+A board-game price comparison app with per-store price history.
 
-  <p>
-    <a href="https://www.deskovkylevne.com/">Live demo</a> |
-    <a href="README.md">České README</a> |
-    <a href="docs/README.md">Documentation</a>
-  </p>
+[Live website](https://www.deskovkylevne.com/) | [Documentation](docs/README.md) | [Česky](README.md)
 
-  <img src="public/assets/readme-home.PNG" alt="Deskovky Levně homepage screenshot" width="900" />
-</div>
+## Screenshot
 
-## Why this project is interesting
+<p align="center">
+  <img src="public/assets/readme-home.PNG" alt="Deskovky Levně home page" width="900" />
+</p>
 
-- Solves a real product problem: aggregates prices, availability, and historical
-  data from multiple Czech board-game retailers.
-- Uses a slug-first domain model, so public routes are not coupled to individual
-  sellers' internal product codes.
-- Keeps price history separate per seller and never flattens it into one
-  synthetic chart line.
-- Separates the React frontend, Go read API, Postgres read models, and optional
-  Redis cache for a fast runtime layer.
-- Covers production details: SEO metadata, sitemap generation, prerendering,
-  explicit not-found routes, API client retries, and documented deployment.
+## About
 
-## Features
+Deskovky Levně aggregates prices, availability, and historical data from Czech
+board-game retailers. Its public catalog unifies products under canonical slugs
+while preserving offers and price history separately for every store. This makes
+it possible to compare current prices and their actual development without
+merging different sellers into one synthetic series.
 
-- Board-game search by name, aliases, and seller product codes.
-- Catalog filtering by price, availability, categories, player count, playtime,
-  age rating, and discounts.
-- Product detail pages with hero gallery, seller offers, and price-history chart.
-- Multi-seller price history where every store remains a separate time series.
-- Czech and English UI localization.
+The project is built as a production-oriented full-stack application with a
+separate frontend, read API, database read models, optional caching, and an SEO
+build pipeline.
+
+## Key features
+
+- Board-game search by name, alias, or retailer product code.
+- Catalog filtering by price, availability, discount, category, player count,
+  playtime, and minimum age.
+- Product detail pages with a gallery, current retailer offers, and price
+  statistics.
+- Price history with an independent time series for every available seller.
+- Czech and English user interfaces.
+- SEO metadata, sitemap generation, and prerendered HTML for public routes.
+
+## How it works
+
+1. Imported snapshots store prices, availability, and related facts separately
+   for each retailer.
+2. A database refresh maps products to canonical slugs and produces incremental
+   read models for the catalog and per-seller daily history.
+3. The Go API reads the prepared models from PostgreSQL and can cache responses
+   in Redis. Public product routes use slugs rather than internal product codes.
+4. The React application uses the API to render the catalog, search, product
+   details, retailer offers, and parallel price series. The build also generates
+   a sitemap and static SEO previews.
 
 ## Architecture
 
@@ -51,71 +55,96 @@ flowchart LR
   Postgres --> ReadModels[Slug-based catalog and history read models]
 ```
 
-- The frontend is a React + Vite + TypeScript SPA.
-- The Go backend exposes `/api/v1/*` endpoints for catalog, search, product
-  detail, filter metadata, and recent snapshots.
-- Runtime catalog reads primarily from `catalog_slug_state`; seller-level data
-  and history remain separated in seller read models.
-- The build pipeline generates the sitemap, builds the Vite bundle, and
-  prerenders static HTML for stronger SEO.
+- **Frontend:** React, TypeScript, and Vite in `src/`.
+- **Backend:** Go service in `apps/api-go`, exposing `/api/v1/*` endpoints.
+- **Data:** PostgreSQL/Supabase as the source of truth, with read models for the
+  catalog, offers, and per-seller history.
+- **Cache:** optional Redis caching for frequently read API responses.
+- **Build:** TypeScript build, sitemap generation, Vite bundle, and prerendering.
 
-More details are available in the
-[architecture overview](docs/architecture/overview.md) and
-[HTTP API contract](docs/api/http-api.md).
+See the [architecture overview](docs/architecture/overview.md) for details.
 
-## Tech stack
+## Technology stack
 
 | Layer | Technology |
 | --- | --- |
-| Frontend | React 19, TypeScript, Vite, Tailwind CSS, Recharts |
-| Backend | Go read API, route timeouts, request cancellation |
-| Data | Postgres read models, per-seller history |
-| Cache | Optional Redis cache with singleflight cache-miss coalescing |
-| Quality | ESLint, Playwright E2E, TypeScript build |
-| Deploy | Vite build, prerender, Go API container, nginx reverse proxy |
+| Frontend | React 19, TypeScript, Vite, Tailwind CSS, Lucide, Recharts |
+| Backend | Go 1.26, Chi, pgx |
+| Data | PostgreSQL, Supabase, slug- and seller-level read models |
+| Cache | Redis, singleflight cache-miss coalescing |
+| Testing | Node test runner, Playwright, Go tests with the race detector |
+| Deployment | Vite, prerendering, Docker, nginx |
 
-## Local development
+## Local setup
 
-```bash
-npm install
-npm run dev
-```
+You need Node.js with npm, Go 1.26, and a PostgreSQL database containing the
+project read models.
 
-Run layers separately:
+1. Install the JavaScript dependencies:
+
+   ```bash
+   npm install
+   ```
+
+2. Create `apps/api-go/.env` from `apps/api-go/.env.example` and set at least
+   `DATABASE_URL`.
+
+3. Start the frontend and API together:
+
+   ```bash
+   npm run dev
+   ```
+
+You can also run the layers separately:
 
 ```bash
 npm run dev:frontend
 npm run api:dev
 ```
 
-Tests and build:
+Environment variables and their defaults are documented in the
+[configuration reference](docs/operations/configuration.md).
+
+## Tests and quality checks
+
+Install the Playwright Chromium browser before running E2E tests for the first
+time:
+
+```bash
+npx playwright install chromium
+```
+
+Frontend and repository checks used in CI:
 
 ```bash
 npm run lint
-npm test
+npm run security:sql
+npm run test:unit
 npm run build
+npm run test:e2e
 ```
 
-Environment configuration is documented in
-[operations/configuration.md](docs/operations/configuration.md). The Go API
-requires `DATABASE_URL` for real data; the frontend uses `VITE_API_BASE_URL` or
-the local proxy when running `npm run dev`.
+Go API checks:
+
+```bash
+cd apps/api-go
+go test -race ./...
+go vet ./...
+```
+
+The `npm test` command runs the unit and E2E suites in sequence.
 
 ## Documentation
 
-`docs/` is the canonical source of documentation for current project behavior:
+The `docs/` directory is the canonical, English-first source of documentation
+for the project's current behavior:
 
-- [Architecture overview](docs/architecture/overview.md)
-- [Product domain model](docs/domain/product-model.md)
+- [Documentation hub](docs/README.md)
+- [Architecture](docs/architecture/overview.md)
+- [Product model](docs/domain/product-model.md)
 - [HTTP API contract](docs/api/http-api.md)
 - [Frontend runtime](docs/frontend/runtime.md)
-- [Build and deploy](docs/operations/build-and-deploy.md)
+- [Build and deployment](docs/operations/build-and-deploy.md)
 - [Configuration](docs/operations/configuration.md)
-- [Data refresh operations](docs/operations/data-refresh.md)
-
-## What this project demonstrates
-
-This repository demonstrates the ability to take a full-stack product beyond a
-prototype: domain modeling, API contracts, frontend UX, performance-oriented
-read paths, SEO build pipeline, operational documentation, and a testable code
-structure.
+- [Data refresh](docs/operations/data-refresh.md)
+- [Documentation standards](docs/contributing/documentation-standards.md)

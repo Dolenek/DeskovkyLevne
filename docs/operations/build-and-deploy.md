@@ -93,7 +93,9 @@ ignored.
 
 The API and Redis containers run with all capabilities dropped,
 `no-new-privileges`, read-only root filesystems, and explicit writable mounts or
-tmpfs only. Redis is password-protected in the compose stack.
+tmpfs only. Redis is password-protected and explicitly runs as its image's
+unprivileged UID 999 and GID 1000 so the capability drop remains compatible
+with its persistent data volume.
 
 `infra/rewrite/test-nginx-security.sh` starts an isolated local nginx container
 and verifies the production headers plus a `429` response after the configured
