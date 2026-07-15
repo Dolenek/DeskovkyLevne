@@ -1,8 +1,13 @@
-# Deskovky Levně
-
-Srovnávač cen deskových her s historií cen po jednotlivých obchodech.
-
-[Živý web](https://www.deskovkylevne.com/) | [Dokumentace](docs/README.md) | [English](README.en.md)
+<div align="center">
+  <img src="public/logo.png" alt="Logo Deskovky Levně" width="72" />
+  <h1>Deskovky Levně</h1>
+  <p>Srovnávač cen deskových her s historií cen po jednotlivých obchodech.</p>
+  <p>
+    <a href="https://www.deskovkylevne.com/">Živý web</a> |
+    <a href="docs/README.md">Dokumentace</a> |
+    <a href="README.en.md">English</a>
+  </p>
+</div>
 
 ## Screenshot
 

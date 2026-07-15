@@ -1,8 +1,13 @@
-# Deskovky Levně
-
-A board-game price comparison app with per-store price history.
-
-[Live website](https://www.deskovkylevne.com/) | [Documentation](docs/README.md) | [Česky](README.md)
+<div align="center">
+  <img src="public/logo.png" alt="Deskovky Levně logo" width="72" />
+  <h1>Deskovky Levně</h1>
+  <p>A board-game price comparison app with per-store price history.</p>
+  <p>
+    <a href="https://www.deskovkylevne.com/">Live website</a> |
+    <a href="docs/README.md">Documentation</a> |
+    <a href="README.md">Česky</a>
+  </p>
+</div>
 
 ## Screenshot
 
