@@ -23,12 +23,15 @@
    Postgres state tables and seller-day history. Runtime endpoints do not expose
    raw snapshot rows.
 3. API applies route-level request deadlines and DB context cancellation.
-4. API optionally serves cached responses from Redis with cancellation-safe
+4. The HTTP service depends on narrow catalog and snapshot repository contracts;
+   production repositories use PostgreSQL while tests can provide deterministic
+   in-memory collaborators without changing endpoint behavior.
+5. API optionally serves cached responses from Redis with cancellation-safe
    singleflight cache-miss coalescing, cache diagnostics, and a versioned cache
    namespace.
-5. Product detail responses nest compact history below seller metadata; the
+6. Product detail responses nest compact history below seller metadata; the
    frontend expands this transport shape into independent seller chart series.
-6. Recent discounts come from seller-level state and never compare prices
+7. Recent discounts come from seller-level state and never compare prices
    between sellers.
 
 ## Security Boundaries

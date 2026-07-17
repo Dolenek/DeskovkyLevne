@@ -69,6 +69,9 @@ refresh materialized view concurrently public.catalog_slug_summary;
 - Do not use full rebuild helper functions for routine refresh when concurrent refresh is available.
 
 ## Verification
+- Run `npm run test:unit` before deployment. Its SQL contract tests protect
+  canonical/seller keys, daily-history time bounds, and the declared privilege
+  split, but they do not execute migrations or PostgreSQL authorization checks.
 - Run `infra/rewrite/sql/verify-security-privileges.sql` after deploying the
   security migration and confirm that each expected-zero query is empty.
 - Confirm latest timestamps in `catalog_slug_state.latest_scraped_at`.

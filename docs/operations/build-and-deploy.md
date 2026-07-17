@@ -20,14 +20,21 @@ does not publish artifacts or deploy the application.
 
 The required CI jobs run in parallel:
 - `Frontend`: installs locked npm dependencies, runs ESLint, validates managed
-  SQL function privileges, runs unit tests, builds the production frontend, and
-  runs the Playwright E2E suite.
-- `Backend`: runs all Go tests with race detection and then `go vet`.
+  SQL function privileges, runs Node and Vitest unit tests, builds the production
+  frontend, and runs the Playwright E2E suite. Unit tests cover API retry and
+  cancellation, product transformations, and static SQL migration contracts.
+- `Backend`: runs all Go tests with race detection and then `go vet`. The unit
+  suite uses repository and cache collaborators to exercise service failures,
+  caching, request boundaries, and timeout behavior without external services.
 - `Infrastructure`: validates the hardened Compose output, builds the Go API
   container, and verifies nginx security headers and rate limiting.
 
 CI does not receive Supabase build credentials. The frontend build therefore
 uses the deterministic static-only fallback described below.
+
+CI validates migration structure and privilege policy statically; it does not
+apply the migration chain to a live PostgreSQL instance. Deployment verification
+against PostgreSQL remains required as described in `data-refresh.md`.
 
 The separate security workflow runs after pushes to `main`, on manual dispatch,
 and every Monday at 04:17 UTC. It runs the strict npm dependency audit plus
