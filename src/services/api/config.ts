@@ -44,11 +44,6 @@ export const SEARCH_LIMIT = Math.max(1, readInteger(
 	60
 ));
 
-export const RECENT_DISCOUNT_LIMIT = Math.min(
-  100,
-	Math.max(1, readInteger(import.meta.env.VITE_API_RECENT_DISCOUNT_LIMIT, 10))
-);
-
 export const PRODUCT_HISTORY_POINTS = Math.max(
   0,
 	readInteger(import.meta.env.VITE_API_PRODUCT_HISTORY_POINTS, 0)

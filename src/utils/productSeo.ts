@@ -58,37 +58,6 @@ const buildSellerCountText = (count: number, locale: LocaleKey): string => {
 export const pickPrimaryImage = (series: ProductSeries): string | null =>
   pickPrimaryProductImage(series);
 
-export const buildProductDescription = (
-  series: ProductSeries,
-  locale: LocaleKey
-): string => {
-  if (series.shortDescription) {
-    return truncateText(series.shortDescription, 200);
-  }
-  const sellerName = getSellerDisplayName(
-    series.primarySeller ?? series.sellers[0]?.seller ?? null
-  );
-  const formattedPrice = formatPrice(
-    series.latestPrice,
-    series.currency ?? undefined,
-    locale
-  );
-  if (formattedPrice !== "--") {
-    return truncateText(
-      locale === "en"
-        ? `Track ${series.label} from ${sellerName} and other Czech stores. Current price ${formattedPrice}.`
-        : `Sledujte ${series.label} od ${sellerName} a dalších českých obchodů. Aktuální cena ${formattedPrice}.`,
-      200
-    );
-  }
-  return truncateText(
-    locale === "en"
-      ? `Track price history and availability for ${series.label} across Czech board game shops.`
-      : `Sledujte vývoj ceny a dostupnosti pro ${series.label} napříč českými obchody s deskovkami.`,
-    200
-  );
-};
-
 export const buildProductSeoDescription = (
   series: ProductSeries,
   locale: LocaleKey

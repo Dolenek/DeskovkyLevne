@@ -147,17 +147,6 @@ export interface SupplementaryParameter {
 
 export type ProductFetcher = (signal?: AbortSignal) => Promise<ProductRow[]>;
 
-export interface DiscountEntry {
-	productSlug: string;
-	seller: string;
-	productName: string;
-  currency?: string | null;
-  url?: string | null;
-  previousPrice: number;
-  currentPrice: number;
-  changedAt: string;
-}
-
 export interface PriceRangeResponse {
   min_price: number | null;
   max_price: number | null;

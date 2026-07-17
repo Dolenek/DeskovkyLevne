@@ -1,14 +1,12 @@
-import type { DiscountEntry, ProductRow } from "../../types/product";
+import type { ProductRow } from "../../types/product";
 import { ApiRequestError, buildApiUrl, fetchApi } from "./client";
 import { filterRowsByCode } from "./helpers";
-import { PRODUCT_HISTORY_POINTS, RECENT_DISCOUNT_LIMIT } from "./config";
+import { PRODUCT_HISTORY_POINTS } from "./config";
 import type {
   ProductDetailResponse,
   ProductHistoryPointResponse,
   ProductSellerResponse,
-  RecentDiscountsResponse,
 } from "./types";
-import { sanitizeExternalHttpsUrl } from "../../utils/urls";
 
 const toProductRow = (
   slug: string,
@@ -90,33 +88,4 @@ export const fetchProductDetailBySlug = async (
 		}
 		throw error;
 	}
-};
-
-export const fetchRecentDiscounts = async (
-  limit = RECENT_DISCOUNT_LIMIT,
-  signal?: AbortSignal
-): Promise<DiscountEntry[]> => {
-  const payload = await fetchApi<RecentDiscountsResponse>(
-    buildApiUrl("/discounts/recent", { limit }),
-    { signal }
-  );
-  return payload.rows.flatMap((row) => {
-    if (
-      row.current_price === null ||
-      row.reference_price === null ||
-      !row.changed_at
-    ) {
-      return [];
-    }
-		return [{
-			productSlug: row.product_name_normalized,
-			seller: row.seller,
-      productName: row.product_name ?? row.product_code ?? "Neznámý produkt",
-      currency: row.currency_code,
-			url: sanitizeExternalHttpsUrl(row.source_url),
-      previousPrice: row.reference_price,
-      currentPrice: row.current_price,
-      changedAt: row.changed_at,
-    }];
-  });
 };

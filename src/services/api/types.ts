@@ -61,22 +61,6 @@ export interface ProductDetailResponse {
   sellers: ProductSellerResponse[];
 }
 
-export interface RecentDiscountRow {
-  product_name_normalized: string;
-  seller: string;
-  product_code: string | null;
-  product_name: string | null;
-  currency_code: string | null;
-  current_price: number | null;
-  reference_price: number | null;
-  source_url: string | null;
-  changed_at: string | null;
-}
-
-export interface RecentDiscountsResponse {
-  rows: RecentDiscountRow[];
-}
-
 export interface CatalogFilterOptions {
   availability?: AvailabilityFilter;
   minPrice?: number | null;

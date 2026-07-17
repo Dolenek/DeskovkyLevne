@@ -1,10 +1,3 @@
-export const LoadingState = ({ message }: { message?: string }) => (
-  <div className="flex flex-col items-center gap-4 rounded-lg border border-dashed border-line bg-white p-10 text-center text-muted shadow-sm">
-    <div className="h-10 w-10 animate-spin rounded-full border-2 border-line border-t-primary" />
-    {message ? <p className="text-sm text-muted">{message}</p> : null}
-  </div>
-);
-
 export const ErrorState = ({
   message,
   retryLabel,

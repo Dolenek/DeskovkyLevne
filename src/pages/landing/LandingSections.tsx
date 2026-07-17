@@ -1,4 +1,3 @@
-import type { MouseEvent } from "react";
 import { ProductTile } from "../../components/ProductTile";
 import { ProductCardSkeleton, SkeletonBlock, SkeletonImage } from "../../components/skeleton";
 import { Icon } from "../../components/ui/Icon";
@@ -7,14 +6,7 @@ import type { Translator } from "../../types/i18n";
 import type { ProductSeries } from "../../types/product";
 import { formatAvailabilityLabel } from "../../utils/availability";
 import { formatPrice } from "../../utils/numberFormat";
-
-const shouldUseClientNavigation = (event: MouseEvent<HTMLAnchorElement>) =>
-  !event.defaultPrevented &&
-  event.button === 0 &&
-  !event.metaKey &&
-  !event.ctrlKey &&
-  !event.altKey &&
-  !event.shiftKey;
+import { handleInAppNavigation } from "../../utils/navigation";
 
 const getHeroProductMeta = (series: ProductSeries, locale: LocaleKey, t: Translator) =>
   series.categoryTags[0] ??
@@ -146,13 +138,9 @@ export const HeroPreview = ({
     <div className="hidden justify-end lg:flex">
       <a
         href={href}
-        onClick={(event) => {
-          if (!shouldUseClientNavigation(event)) {
-            return;
-          }
-          event.preventDefault();
-          onNavigate(series.slug);
-        }}
+        onClick={(event) =>
+          handleInAppNavigation(event, () => onNavigate(series.slug))
+        }
         className="group w-full max-w-xl rounded-lg border border-line bg-white p-5 shadow-lg transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-xl"
       >
         <HeroProductImage series={series} />

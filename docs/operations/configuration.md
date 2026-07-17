@@ -32,7 +32,6 @@ for product preview prices, offers, and fallback images.
 
 ### Optional frontend runtime tuning
 - `VITE_API_SEARCH_LIMIT` (fallback: `VITE_SUPABASE_SEARCH_LIMIT`, default `60`)
-- `VITE_API_RECENT_DISCOUNT_LIMIT` (default `10`, capped at `100`)
 - `VITE_API_PRODUCT_HISTORY_POINTS` (default `0`, disabled; max enforced by backend `5000`)
 - `VITE_API_FILTER_CODES` (fallback: `VITE_SUPABASE_FILTER_CODES`,
   comma-separated allowlist sent to API as `product_codes`; maximum 200

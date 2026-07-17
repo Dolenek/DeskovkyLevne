@@ -1,10 +1,10 @@
-import type { MouseEvent } from "react";
 import type { LocaleKey } from "../i18n/translations";
 import type { Translator } from "../types/i18n";
 import type { ProductSeries } from "../types/product";
 import { formatAvailabilityLabel } from "../utils/availability";
 import { formatPrice } from "../utils/numberFormat";
 import { getSeriesDiscountPercent } from "../utils/priceStats";
+import { handleInAppNavigation } from "../utils/navigation";
 import { SkeletonImage } from "./skeleton";
 
 interface ProductTileProps {
@@ -14,14 +14,6 @@ interface ProductTileProps {
   onNavigate: (slug: string) => void;
 }
 
-const shouldUseClientNavigation = (event: MouseEvent<HTMLAnchorElement>) =>
-  !event.defaultPrevented &&
-  event.button === 0 &&
-  !event.metaKey &&
-  !event.ctrlKey &&
-  !event.altKey &&
-  !event.shiftKey;
-
 export const ProductTile = ({ series, locale, t, onNavigate }: ProductTileProps) => {
   const href = `/deskove-hry/${encodeURIComponent(series.slug)}`;
   const discount = getSeriesDiscountPercent(series);
@@ -30,13 +22,9 @@ export const ProductTile = ({ series, locale, t, onNavigate }: ProductTileProps)
   return (
     <a
       href={href}
-      onClick={(event) => {
-        if (!shouldUseClientNavigation(event)) {
-          return;
-        }
-        event.preventDefault();
-        onNavigate(series.slug);
-      }}
+      onClick={(event) =>
+        handleInAppNavigation(event, () => onNavigate(series.slug))
+      }
       className="group flex h-full flex-col rounded-lg border border-line bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-lg"
     >
       <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-slate-50">

@@ -4,6 +4,7 @@ import type { TranslationHook } from "../hooks/useTranslation";
 import type { TranslationKey } from "../i18n/translations";
 import { BrandLogo } from "./ui/BrandLogo";
 import { Icon } from "./ui/Icon";
+import { handleInAppNavigation } from "../utils/navigation";
 
 interface AppHeaderProps {
   searchValue: string;
@@ -20,14 +21,6 @@ const navItems = [
   { href: "/deskove-hry", labelKey: "navCatalog" },
 ] satisfies Array<{ href: string; labelKey: TranslationKey }>;
 
-const shouldNavigateClientSide = (event: MouseEvent<HTMLAnchorElement>) =>
-  !event.defaultPrevented &&
-  event.button === 0 &&
-  !event.metaKey &&
-  !event.ctrlKey &&
-  !event.altKey &&
-  !event.shiftKey;
-
 export const AppHeader = ({
   searchValue,
   onSearchChange,
@@ -40,11 +33,10 @@ export const AppHeader = ({
 }: AppHeaderProps) => {
   const handleNavigate =
     (path: string) => (event: MouseEvent<HTMLAnchorElement>) => {
-      if (!onNavigatePath || !shouldNavigateClientSide(event)) {
+      if (!onNavigatePath) {
         return;
       }
-      event.preventDefault();
-      onNavigatePath(path);
+      handleInAppNavigation(event, () => onNavigatePath(path));
     };
 
   const handleSearchButtonClick = () => {

@@ -41,13 +41,11 @@ SEO canonical link with the resolved canonical slug.
   - Catalog/filter: `/api/v1/catalog`
   - Search suggestions: `/api/v1/search/suggest`
   - Compact product detail and seller-day history: `/api/v1/products/:slug`
-  - Seller-aware recent discounts: `/api/v1/discounts/recent`
   - Filter options metadata: `/api/v1/meta/filter-options`
   - Price-range metadata: `/api/v1/meta/price-range`
 
 ## Runtime Tuning Environment Variables
 - `VITE_API_SEARCH_LIMIT` (fallback: `VITE_SUPABASE_SEARCH_LIMIT`)
-- `VITE_API_RECENT_DISCOUNT_LIMIT` (default `10`, capped at `100`)
 - `VITE_API_PRODUCT_HISTORY_POINTS`
 - `VITE_API_FILTER_CODES` (fallback: `VITE_SUPABASE_FILTER_CODES`)
 - `VITE_API_RETRY_ATTEMPTS`
@@ -57,12 +55,12 @@ SEO canonical link with the resolved canonical slug.
 ## Key UI Behaviors
 - Frontend uses a light DeskovkyLevně brand system: navy text, white surfaces,
   green primary CTAs, orange promotional CTAs, subtle borders, and shared
-  header/footer/CTA components.
+  header/footer components.
 - Shared UI iconography uses `lucide-react` through the local `Icon`
   component so feature components do not import icon packages directly.
-- Shared presentation components use static generated board-game scene assets
-  for catalog decorative artwork and product-detail CTA artwork. Landing hero,
-  product cards, and product galleries are API-image driven.
+- Mock fallback catalog and product-detail rows use static board-game scene
+  assets. Production landing hero, product cards, and product galleries are
+  API-image driven.
 - API-backed catalog, search overlay, landing product blocks, and product
   detail use skeleton loading states. Product images keep a skeleton placeholder
   until each image load either succeeds or fails.
@@ -118,8 +116,6 @@ SEO canonical link with the resolved canonical slug.
   current-price field entirely.
 - Date-only history values are formatted as calendar dates without timezone
   conversion.
-- Recent discounts are already paired per seller by the API; the browser does
-  not infer price changes from adjacent global snapshots.
 - Product detail renders one mock product with multi-seller price history when
   the product API cannot be reached because the browser reports `Failed to fetch`
   or the API/proxy returns a transient 5xx failure.

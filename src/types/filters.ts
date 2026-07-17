@@ -10,15 +10,6 @@ export type PlaytimeRangeFilter = "under-30" | "30-60" | "60-plus";
 export type AgeRatingFilter = "6" | "8" | "10" | "12";
 export type PriceMovementFilter = "decreased";
 
-export interface CatalogFilterState {
-  availability: AvailabilityFilter;
-  categories: CategoryFilter[];
-  playerRanges: PlayerRangeFilter[];
-  playtimeRanges: PlaytimeRangeFilter[];
-  ageRatings: AgeRatingFilter[];
-  priceMovement: PriceMovementFilter | null;
-}
-
 export interface ActiveFilterChip {
   key: string;
   label: string;
