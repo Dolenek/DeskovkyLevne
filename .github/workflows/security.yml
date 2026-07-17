@@ -1,63 +1,50 @@
-name: Security gate
+name: Security
 
 on:
   push:
-  pull_request:
+    branches:
+      - main
   schedule:
     - cron: "17 4 * * 1"
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  frontend:
+  npm_dependency_audit:
+    name: npm dependency audit
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: 24
           cache: npm
-      - run: npm ci
-      - run: npm audit
-      - run: npm run security:sql
-      - run: npm run lint
-      - run: npm run test:unit
-      - run: npx playwright install --with-deps chromium
-      - run: npm run build
-      - run: npm run test:e2e
+      - name: Install dependencies
+        run: npm ci
+      - name: Audit npm dependencies
+        run: npm audit
 
-  backend:
+  go_security_scan:
+    name: Go security scan
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: apps/api-go
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
         with:
-          go-version: 1.26.5
+          go-version-file: apps/api-go/go.mod
           cache-dependency-path: apps/api-go/go.sum
-      - run: go test -race ./...
-      - run: go vet ./...
-      - run: go run golang.org/x/vuln/cmd/govulncheck@v1.6.0 ./...
-      - run: go run github.com/securego/gosec/v2/cmd/gosec@v2.28.0 ./...
-
-  infrastructure:
-    runs-on: ubuntu-latest
-    env:
-      DATABASE_URL: postgres://postgres:password@database.invalid/postgres
-      FRONTEND_ORIGIN: https://www.deskovkylevne.com
-      REDIS_PASSWORD: ci-only-not-a-production-secret
-    steps:
-      - uses: actions/checkout@v4
-      - name: Validate hardened compose configuration
-        run: |
-          rendered="$(docker compose -f infra/rewrite/docker-compose.api-go.yml config)"
-          grep --fixed-strings 'host_ip: 127.0.0.1' <<<"${rendered}"
-          grep --fixed-strings 'no-new-privileges:true' <<<"${rendered}"
-          grep --fixed-strings 'read_only: true' <<<"${rendered}"
-          grep --fixed-strings 'user: 999:1000' <<<"${rendered}"
-      - run: docker build apps/api-go
-      - name: Verify nginx headers and rate limiting
-        run: bash infra/rewrite/test-nginx-security.sh
+      - name: Scan reachable Go vulnerabilities
+        run: go run golang.org/x/vuln/cmd/govulncheck@v1.6.0 ./...
+      - name: Run Go static security analysis
+        run: go run github.com/securego/gosec/v2/cmd/gosec@v2.28.0 ./...

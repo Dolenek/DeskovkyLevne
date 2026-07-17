@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Lint frontend and repository scripts
+        run: npm run lint
+      - name: Validate SQL function privileges
+        run: npm run security:sql
+      - name: Run unit tests
+        run: npm run test:unit
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Build production frontend
+        run: npm run build
+      - name: Run end-to-end tests
+        run: npm run test:e2e
+
+  backend:
+    name: Backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: apps/api-go
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: apps/api-go/go.mod
+          cache-dependency-path: apps/api-go/go.sum
+      - name: Run tests with race detection
+        run: go test -race ./...
+      - name: Run Go vet
+        run: go vet ./...
+
+  infrastructure:
+    name: Infrastructure
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DATABASE_URL: postgres://postgres:password@database.invalid/postgres
+      FRONTEND_ORIGIN: https://www.deskovkylevne.com
+      REDIS_PASSWORD: ci-only-not-a-production-secret
+    steps:
+      - uses: actions/checkout@v6
+      - name: Validate hardened compose configuration
+        run: |
+          rendered="$(docker compose -f infra/rewrite/docker-compose.api-go.yml config)"
+          grep --fixed-strings 'host_ip: 127.0.0.1' <<<"${rendered}"
+          grep --fixed-strings 'no-new-privileges:true' <<<"${rendered}"
+          grep --fixed-strings 'read_only: true' <<<"${rendered}"
+          grep --fixed-strings 'user: 999:1000' <<<"${rendered}"
+      - name: Build Go API image
+        run: docker build apps/api-go
+      - name: Verify nginx headers and rate limiting
+        run: bash infra/rewrite/test-nginx-security.sh

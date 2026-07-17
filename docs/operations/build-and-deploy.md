@@ -12,6 +12,27 @@ Pipeline stages:
 3. Vite production build (`vite build`)
 4. Prerender pass (`node scripts/prerender.mjs`)
 
+## Continuous Integration
+GitHub Actions runs the validation workflow for pull requests targeting `main`,
+pushes to `main`, and manual dispatches. New commits cancel older runs for the
+same ref. The workflow grants the GitHub token read-only repository access and
+does not publish artifacts or deploy the application.
+
+The required CI jobs run in parallel:
+- `Frontend`: installs locked npm dependencies, runs ESLint, validates managed
+  SQL function privileges, runs unit tests, builds the production frontend, and
+  runs the Playwright E2E suite.
+- `Backend`: runs all Go tests with race detection and then `go vet`.
+- `Infrastructure`: validates the hardened Compose output, builds the Go API
+  container, and verifies nginx security headers and rate limiting.
+
+CI does not receive Supabase build credentials. The frontend build therefore
+uses the deterministic static-only fallback described below.
+
+The separate security workflow runs after pushes to `main`, on manual dispatch,
+and every Monday at 04:17 UTC. It runs the strict npm dependency audit plus
+`govulncheck` and `gosec`; these network-backed scans do not block pull requests.
+
 ## Build Reliability Notes
 - In Linux/WSL environments, ensure optional Rollup binary packages are installed (for example `@rollup/rollup-linux-x64-gnu`). If missing, reinstall dependencies with `npm install`.
 
@@ -99,7 +120,8 @@ with its persistent data volume.
 
 `infra/rewrite/test-nginx-security.sh` starts an isolated local nginx container
 and verifies the production headers plus a `429` response after the configured
-burst. The CI infrastructure security job runs this check on every change.
+burst. The CI infrastructure job runs this check for pull requests and pushes
+to `main`.
 
 ## SQL Operations Used in Deployment/Cutover
 - Index cleanup migration: `infra/db/migrations/20260221_phase1_index_cleanup.sql`

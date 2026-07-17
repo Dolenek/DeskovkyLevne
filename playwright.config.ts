@@ -9,9 +9,9 @@ export default defineConfig({
     headless: true,
   },
   webServer: {
-    command: "npm run dev -- --host 127.0.0.1 --port 4174",
+    command: "npm run dev:frontend -- --host 127.0.0.1 --port 4174",
     url: "http://127.0.0.1:4174",
-    reuseExistingServer: true,
+    reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },
 });
