@@ -15,7 +15,9 @@ import (
 type fakeService struct {
 	catalog         func(ctx context.Context, filters catalog.Filters) ([]catalog.Row, int64, error)
 	catalogOverview func(ctx context.Context) (catalog.Overview, error)
+	search          func(ctx context.Context, query string, availability string, productCodes []string, limit int) ([]catalog.SuggestionRow, error)
 	productDetail   func(ctx context.Context, slug string, historyPoints int) (snapshots.ProductDetail, error)
+	recentDiscounts func(ctx context.Context, limit int) ([]snapshots.RecentDiscount, error)
 	priceRange      func(ctx context.Context, filters catalog.PriceRangeFilters) (catalog.PriceRange, error)
 	ready           func(ctx context.Context) error
 }
@@ -38,12 +40,15 @@ func (f *fakeService) CatalogOverview(ctx context.Context) (catalog.Overview, er
 }
 
 func (f *fakeService) Search(
-	_ context.Context,
-	_ string,
-	_ string,
-	_ []string,
-	_ int,
+	ctx context.Context,
+	query string,
+	availability string,
+	productCodes []string,
+	limit int,
 ) ([]catalog.SuggestionRow, error) {
+	if f.search != nil {
+		return f.search(ctx, query, availability, productCodes, limit)
+	}
 	return nil, nil
 }
 
@@ -58,7 +63,13 @@ func (f *fakeService) ProductDetail(
 	return snapshots.ProductDetail{}, nil
 }
 
-func (f *fakeService) RecentDiscounts(_ context.Context, _ int) ([]snapshots.RecentDiscount, error) {
+func (f *fakeService) RecentDiscounts(
+	ctx context.Context,
+	limit int,
+) ([]snapshots.RecentDiscount, error) {
+	if f.recentDiscounts != nil {
+		return f.recentDiscounts(ctx, limit)
+	}
 	return nil, nil
 }
 

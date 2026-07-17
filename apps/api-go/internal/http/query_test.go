@@ -1,6 +1,7 @@
 package http
 
 import (
+	"fmt"
 	"net/url"
 	"strings"
 	"testing"
@@ -37,6 +38,8 @@ func TestCatalogValidationRejectsInvalidValues(t *testing.T) {
 		{"players": []string{"unknown"}},
 		{"age": []string{"7"}},
 		{"min_price": []string{"NaN"}},
+		{"min_price": []string{"+Inf"}},
+		{"min_price": []string{"-1"}},
 		{"min_price": []string{"500"}, "max_price": []string{"100"}},
 		{"random_seed": []string{"invalid"}},
 		{"q": []string{strings.Repeat("a", maxSearchLength+1)}},
@@ -90,5 +93,77 @@ func TestValidateSearchQueryRejectsExcessiveLength(t *testing.T) {
 	}
 	if _, err := validateSearchQuery(string(query)); err == nil {
 		t.Fatal("expected long search query to fail")
+	}
+}
+
+func TestBoundedIntegerCapsMaximumAndRejectsNonPositiveValues(t *testing.T) {
+	values := url.Values{"limit": []string{"201"}}
+	got, err := parseBoundedInt(values, "limit", 20, 200)
+	if err != nil || got != 200 {
+		t.Fatalf("expected capped limit 200, got %d, err=%v", got, err)
+	}
+	for _, raw := range []string{"0", "-1"} {
+		if _, err := parseBoundedInt(
+			url.Values{"limit": []string{raw}}, "limit", 20, 200,
+		); err == nil {
+			t.Fatalf("expected limit %q to fail", raw)
+		}
+	}
+}
+
+func TestOffsetAcceptsExactMaximumAndRejectsOverflow(t *testing.T) {
+	got, err := parseOffset(url.Values{"offset": []string{"1000000"}})
+	if err != nil || got != maxCatalogOffset {
+		t.Fatalf("expected maximum offset, got %d, err=%v", got, err)
+	}
+	if _, err := parseOffset(url.Values{"offset": []string{"1000001"}}); err == nil {
+		t.Fatal("expected offset above maximum to fail")
+	}
+}
+
+func TestProductCodeLimitsUseRuneCountAndDistinctValues(t *testing.T) {
+	maximumLengthCode := strings.Repeat("ž", maxProductCodeSize)
+	if codes, err := parseProductCodes(maximumLengthCode); err != nil || len(codes) != 1 {
+		t.Fatalf("expected maximum-length Unicode code, got %#v, err=%v", codes, err)
+	}
+	if _, err := parseProductCodes(maximumLengthCode + "ž"); err == nil {
+		t.Fatal("expected overlong Unicode code to fail")
+	}
+
+	codes := make([]string, maxProductCodes+1)
+	for index := range codes {
+		codes[index] = fmt.Sprintf("CODE-%d", index)
+	}
+	if _, err := parseProductCodes(strings.Join(codes[:maxProductCodes], ",")); err != nil {
+		t.Fatalf("expected exact product-code maximum: %v", err)
+	}
+	if _, err := parseProductCodes(strings.Join(codes, ",")); err == nil {
+		t.Fatal("expected too many product codes to fail")
+	}
+}
+
+func TestQueryAndSlugLengthsUseUnicodeCharacters(t *testing.T) {
+	exactQuery := strings.Repeat("ž", maxSearchLength)
+	if got, err := validateSearchQuery(exactQuery); err != nil || got != exactQuery {
+		t.Fatalf("expected exact query limit, got %q, err=%v", got, err)
+	}
+	if _, err := validateSearchQuery(exactQuery + "ž"); err == nil {
+		t.Fatal("expected overlong Unicode query to fail")
+	}
+
+	exactSlug := strings.Repeat("ž", 200)
+	if got, err := validateProductSlug("  " + exactSlug + "  "); err != nil || got != exactSlug {
+		t.Fatalf("expected normalized exact slug limit, got %q, err=%v", got, err)
+	}
+	if _, err := validateProductSlug(exactSlug + "ž"); err == nil {
+		t.Fatal("expected overlong Unicode slug to fail")
+	}
+}
+
+func TestProductHistoryPointsRejectsNegativeValue(t *testing.T) {
+	if _, err := parseProductHistoryPoints(
+		url.Values{"history_points": []string{"-1"}},
+	); err == nil {
+		t.Fatal("expected negative history_points to fail")
 	}
 }

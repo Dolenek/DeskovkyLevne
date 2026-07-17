@@ -18,6 +18,14 @@ type PoolOptions struct {
 }
 
 func NewPool(ctx context.Context, databaseURL string, options PoolOptions) (*pgxpool.Pool, error) {
+	cfg, err := buildPoolConfig(databaseURL, options)
+	if err != nil {
+		return nil, err
+	}
+	return pgxpool.NewWithConfig(ctx, cfg)
+}
+
+func buildPoolConfig(databaseURL string, options PoolOptions) (*pgxpool.Config, error) {
 	cfg, err := pgxpool.ParseConfig(databaseURL)
 	if err != nil {
 		return nil, err
@@ -45,7 +53,7 @@ func NewPool(ctx context.Context, databaseURL string, options PoolOptions) (*pgx
 	if options.MaxConnLifetime > 0 {
 		cfg.MaxConnLifetime = options.MaxConnLifetime
 	}
-	return pgxpool.NewWithConfig(ctx, cfg)
+	return cfg, nil
 }
 
 func setRoleStatement(roleName string) string {

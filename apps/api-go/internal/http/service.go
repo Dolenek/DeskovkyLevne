@@ -1,6 +1,7 @@
 package http
 
 import (
+	"context"
 	"strings"
 	"time"
 
@@ -23,9 +24,22 @@ type ServiceOptions struct {
 	CacheTTL       CacheTTLConfig
 }
 
+type catalogRepository interface {
+	Fetch(context.Context, catalog.Filters) ([]catalog.Row, int64, error)
+	FetchOverview(context.Context) (catalog.Overview, error)
+	Search(context.Context, string, string, []string, int) ([]catalog.SuggestionRow, error)
+	FetchPriceRange(context.Context, catalog.PriceRangeFilters) (catalog.PriceRange, error)
+}
+
+type snapshotRepository interface {
+	BySlug(context.Context, string, int) (snapshots.ProductDetail, error)
+	RecentDiscounts(context.Context, int) ([]snapshots.RecentDiscount, error)
+	Ping(context.Context) error
+}
+
 type Service struct {
-	catalogRepo    *catalog.Repository
-	snapshotRepo   *snapshots.Repository
+	catalogRepo    catalogRepository
+	snapshotRepo   snapshotRepository
 	cacheClient    cache.Client
 	cacheNamespace string
 	cacheTTL       CacheTTLConfig
@@ -33,8 +47,8 @@ type Service struct {
 }
 
 func NewService(
-	catalogRepo *catalog.Repository,
-	snapshotRepo *snapshots.Repository,
+	catalogRepo catalogRepository,
+	snapshotRepo snapshotRepository,
 	cacheClient cache.Client,
 	options ServiceOptions,
 ) *Service {
