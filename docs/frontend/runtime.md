@@ -114,6 +114,11 @@ SEO canonical link with the resolved canonical slug.
   explicit missing current price is never replaced by history; history is used
   as a compatibility fallback only when the legacy snapshot shape omits the
   current-price field entirely.
+- Seller metadata and current offers remain available even when a seller has
+  no usable chart points. A known product without prices still renders its
+  detail page; absence of price history does not imply that the product is
+  missing. Zero is a valid current offer, while a missing price is omitted
+  from the offers table. Missing history dates do not create chart points.
 - Date-only history values are formatted as calendar dates without timezone
   conversion.
 - Product detail renders one mock product with multi-seller price history when

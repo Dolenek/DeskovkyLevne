@@ -44,7 +44,7 @@ const toAuthoritativePrice = (
 ): number | null | undefined =>
   value === undefined ? undefined : toNumericPrice(value);
 
-export const resolveSlug = (row: ProductRow): string | null => {
+const resolveSlug = (row: ProductRow): string | null => {
   const normalizedSlug = row.product_name_normalized?.trim().toLowerCase();
   if (normalizedSlug) {
     return normalizedSlug;

@@ -40,7 +40,8 @@ Returns deployment identity embedded at build time.
 Invalid integers, prices, enum values, ranges, overlong queries, product-code
 allowlists, and unsupported filter options
 return `400 validation_error`. Page sizes above the configured maximum are
-capped. Prices must be finite and non-negative, and `min_price` must not exceed
+capped, including endpoint defaults when `limit` is omitted or blank.
+Prices must be finite and non-negative, and `min_price` must not exceed
 `max_price`.
 
 Supported values:

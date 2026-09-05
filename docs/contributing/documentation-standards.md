@@ -26,6 +26,18 @@ A code task is incomplete until impacted docs are updated in the same task when 
 4. Keep examples aligned with current code paths and env names.
 5. Verify links from root/service README still point to canonical pages.
 
+## Code Cleanup Review
+
+- Verify unused-code findings against application entry points, test runners,
+  dynamic imports, package scripts, and operational consumers before removal.
+- Keep analysis exceptions narrow and explain their purpose in configuration.
+  Do not suppress findings merely to make CI pass.
+- Reproduce behavior fixes with focused regression tests. Review slug identity,
+  seller separation, presentation priority, and missing-versus-zero prices when
+  changing product transformations.
+- Run the applicable checks documented in
+  [Build and Deploy](../operations/build-and-deploy.md#continuous-integration).
+
 ## Page Ownership Model
 - Architecture: `../architecture/overview.md`
 - Domain invariants: `../domain/product-model.md`

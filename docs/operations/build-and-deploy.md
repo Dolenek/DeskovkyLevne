@@ -19,7 +19,7 @@ same ref. The workflow grants the GitHub token read-only repository access and
 does not publish artifacts or deploy the application.
 
 The required CI jobs run in parallel:
-- `Frontend`: installs locked npm dependencies, runs ESLint, validates managed
+- `Frontend`: installs locked npm dependencies, runs ESLint and Knip, validates managed
   SQL function privileges, runs Node and Vitest unit tests, builds the production
   frontend, and runs the Playwright E2E suite. Unit tests cover API retry and
   cancellation, product transformations, and static SQL migration contracts.
@@ -28,6 +28,15 @@ The required CI jobs run in parallel:
   caching, request boundaries, and timeout behavior without external services.
 - `Infrastructure`: validates the hardened Compose output, builds the Go API
   container, and verifies nginx security headers and rate limiting.
+
+`npm run lint` checks frontend TypeScript, root JavaScript configuration, and
+Node build/test scripts. `npm run check:unused` checks unused files, exports,
+types, and dependencies across the frontend, scripts, and tests. Its
+`knip.jsonc` project patterns exclude the separate `TlamaScraper` tree and
+generated output. Playwright configuration/specs and Node unit tests are
+explicit entry points; Vite, Vitest, and package scripts supply the other
+entries. The `go` executable is supplied by the backend toolchain and is the
+only ignored binary. Both checks run locally and in the frontend CI job.
 
 CI does not receive Supabase build credentials. The frontend build therefore
 uses the deterministic static-only fallback described below.
@@ -39,6 +48,10 @@ against PostgreSQL remains required as described in `data-refresh.md`.
 The separate security workflow runs after pushes to `main`, on manual dispatch,
 and every Monday at 04:17 UTC. It runs the strict npm dependency audit plus
 `govulncheck` and `gosec`; these network-backed scans do not block pull requests.
+Local security checks use `npm ci && npm audit` at the repository root and,
+from `apps/api-go`, the scanner commands pinned in `.github/workflows/security.yml`.
+The minimum Go version in `apps/api-go/go.mod` also selects the CI toolchain;
+keep it aligned with the Docker builder version when applying security patches.
 
 ## Build Reliability Notes
 - In Linux/WSL environments, ensure optional Rollup binary packages are installed (for example `@rollup/rollup-linux-x64-gnu`). If missing, reinstall dependencies with `npm install`.
@@ -81,7 +94,7 @@ numeric zero remains valid.
 - Service code: `apps/api-go`
 - Compose stack: `infra/rewrite/docker-compose.api-go.yml`
 - Deployment helper: `infra/rewrite/deploy-api-go.sh`
-- Container baseline: Go `1.26.5` on Alpine `3.24`, with Alpine `3.24.1` at runtime
+- Container baseline: Go `1.26.8` on Alpine `3.24`, with Alpine `3.24.1` at runtime
 - Published port: loopback-only `127.0.0.1:${API_GO_PORT:-18080}`
 
 Required runtime env:

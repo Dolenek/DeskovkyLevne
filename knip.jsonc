@@ -1,0 +1,7 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": ["playwright.config.ts", "tests/e2e/**/*.spec.ts", "tests/unit/*.test.mjs"],
+  "project": ["src/**/*.{ts,tsx,css}", "scripts/**/*.mjs", "tests/**/*.{ts,mjs}", "*.{js,ts}"],
+  // Go is installed by the backend toolchain, not by npm.
+  "ignoreBinaries": ["go"]
+}

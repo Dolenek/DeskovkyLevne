@@ -1,5 +1,5 @@
-export const LANDING_LEVNE_PATH = "/levne-deskovky";
-export const CATALOG_PATH = "/deskove-hry";
+const LANDING_LEVNE_PATH = "/levne-deskovky";
+const CATALOG_PATH = "/deskove-hry";
 const DETAIL_ROUTE = /^\/deskove-hry\/([^/]+)\/?$/i;
 
 export type AppRoute =

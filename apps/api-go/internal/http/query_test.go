@@ -15,6 +15,20 @@ func TestParseProductHistoryPoints(t *testing.T) {
 	}
 }
 
+func TestDefaultPageSizeRespectsConfiguredMaximum(t *testing.T) {
+	for _, rawLimit := range []string{"", "   ", "60"} {
+		values := url.Values{"limit": []string{rawLimit}}
+		limit, err := parseBoundedInt(values, "limit", 60, 10)
+		if err != nil || limit != 10 {
+			t.Errorf("limit %q: expected cap 10, got %d, err=%v", rawLimit, limit, err)
+		}
+		filters, err := parseCatalogFilters(values, 10)
+		if err != nil || filters.Limit != 10 {
+			t.Errorf("catalog limit %q: expected cap 10, got %d, err=%v", rawLimit, filters.Limit, err)
+		}
+	}
+}
+
 func TestParseProductHistoryPointsCap(t *testing.T) {
 	values := url.Values{"history_points": []string{"999999"}}
 	got, err := parseProductHistoryPoints(values)

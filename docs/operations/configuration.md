@@ -68,6 +68,8 @@ literal `0` remains an explicit value where the setting permits zero.
 - `API_TRUSTED_PROXY_CIDRS` (default empty; comma-separated CIDRs whose direct
   connections may supply `CF-Connecting-IP` or `X-Forwarded-For`)
 - `API_MAX_PAGE_SIZE` (default `200`, minimum enforced `10`)
+  - Caps catalog and search page sizes, including their defaults when `limit`
+    is omitted or blank.
 
 ### Go Runtime and Container Limits
 - `API_GO_MEMORY_LIMIT` (compose default `768m`)

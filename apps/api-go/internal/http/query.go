@@ -169,7 +169,7 @@ func parseCommonFilters(values url.Values) (commonFilters, error) {
 func parseBoundedInt(values url.Values, key string, fallback int, maximum int) (int, error) {
 	raw := strings.TrimSpace(values.Get(key))
 	if raw == "" {
-		return fallback, nil
+		return min(fallback, maximum), nil
 	}
 	parsed, err := strconv.Atoi(raw)
 	if err != nil || parsed < 1 {

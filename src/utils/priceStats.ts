@@ -1,6 +1,6 @@
 import type { ProductSeries, SellerSeries } from "../types/product";
 
-export const collectSellerPrices = (series: ProductSeries): number[] =>
+const collectSellerPrices = (series: ProductSeries): number[] =>
   series.sellers.flatMap((seller) =>
     seller.points.map((point) => point.price).filter(Number.isFinite)
   );
@@ -9,7 +9,7 @@ export const getLatestComparablePrice = (
   seller: SellerSeries
 ): number | null => seller.latestPrice;
 
-export const getDiscountPercent = (
+const getDiscountPercent = (
   current: number | null,
   reference: number | null
 ): number | null => {

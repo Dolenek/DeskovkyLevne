@@ -1,3 +1,5 @@
+// Reject embedded control characters before URL parsing can silently strip them.
+// eslint-disable-next-line no-control-regex
 const unsafeUrlCharacters = /[\u0000-\u001f\u007f\\]/;
 
 export const sanitizeExternalHttpsUrl = (value) => {

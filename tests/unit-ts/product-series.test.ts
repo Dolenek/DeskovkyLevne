@@ -27,6 +27,39 @@ const productRow = (overrides: Partial<ProductRow>): ProductRow => ({
 });
 
 describe("product series regressions", () => {
+  test("keeps current offers and presentation when a seller has no chart points", () => {
+    const [series] = buildProductSeries([
+      productRow({
+        seller: "tlamagames",
+        price_with_vat: null,
+        price_date: null,
+        scraped_at: "",
+        latest_scraped_at: null,
+        latest_price: 0,
+        hero_image_url: "https://img.test/tlama.jpg",
+      }),
+      productRow({ seller: "planetaher" }),
+    ]);
+
+    expect(series?.primarySeller).toBe("tlamagames");
+    expect(series?.heroImage).toBe("https://img.test/tlama.jpg");
+    expect(series?.sellerCount).toBe(2);
+    expect(series?.sellers[0]?.latestPrice).toBe(0);
+    expect(series?.sellers[0]?.points).toEqual([]);
+    expect(series?.sellers[1]?.points).toHaveLength(1);
+  });
+
+  test("keeps a known product without prices instead of treating it as missing", () => {
+    const [series] = buildProductSeries([
+      productRow({ price_with_vat: null, latest_price: null }),
+    ]);
+
+    expect(series?.slug).toBe("canonical-alpha");
+    expect(series?.latestPrice).toBeNull();
+    expect(series?.sellers).toHaveLength(1);
+    expect(series?.points).toEqual([]);
+  });
+
   test("preserves seller series and applies TLAMA presentation priority", () => {
     const rows = [
       productRow({

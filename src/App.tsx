@@ -4,12 +4,22 @@ import { ProductDetailPage } from "./pages/ProductDetailPage";
 import { usePathNavigation } from "./hooks/usePathNavigation";
 import { LandingPage } from "./pages/landing/LandingPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
-import { buildProductDetailPath, parseRoute } from "./routing/routes";
+import { buildProductDetailPath, parseRoute, type AppRoute } from "./routing/routes";
 
-const App = () => {
-  const { path, navigate } = usePathNavigation();
-  const route = useMemo(() => parseRoute(path), [path]);
+type RouteNavigation = Pick<ReturnType<typeof usePathNavigation>, "path" | "navigate">;
 
+const ProductDetailRoute = ({ slug, path, navigate }: RouteNavigation & { slug: string }) => (
+  <ProductDetailPage
+    productSlug={slug}
+    onNavigateToProduct={(productSlug) => navigate(buildProductDetailPath(productSlug))}
+    onNavigateHome={() => navigate("/")}
+    onNavigatePath={navigate}
+    onReplacePath={(targetPath) => navigate(targetPath, { replace: true })}
+    activePath={path}
+  />
+);
+
+const RouteContent = ({ route, path, navigate }: RouteNavigation & { route: AppRoute }) => {
   if (route.kind === "home" || route.kind === "landing-levne") {
     return (
       <LandingPage
@@ -23,16 +33,7 @@ const App = () => {
   }
 
   if (route.kind === "detail") {
-    return (
-      <ProductDetailPage
-        productSlug={route.slug}
-        onNavigateToProduct={(slug) => navigate(buildProductDetailPath(slug))}
-        onNavigateHome={() => navigate("/")}
-        onNavigatePath={navigate}
-        onReplacePath={(targetPath) => navigate(targetPath, { replace: true })}
-        activePath={path}
-      />
-    );
+    return <ProductDetailRoute slug={route.slug} path={path} navigate={navigate} />;
   }
 
   if (route.kind === "not-found") {
@@ -44,16 +45,6 @@ const App = () => {
     );
   }
 
-  if (route.kind === "catalog") {
-    return (
-      <SearchPage
-        onProductNavigate={(slug) => navigate(buildProductDetailPath(slug))}
-        onNavigatePath={navigate}
-        activePath={path}
-      />
-    );
-  }
-
   return (
     <SearchPage
       onProductNavigate={(slug) => navigate(buildProductDetailPath(slug))}
@@ -61,6 +52,12 @@ const App = () => {
       activePath={path}
     />
   );
+};
+
+const App = () => {
+  const navigation = usePathNavigation();
+  const route = useMemo(() => parseRoute(navigation.path), [navigation.path]);
+  return <RouteContent route={route} {...navigation} />;
 };
 
 export default App;

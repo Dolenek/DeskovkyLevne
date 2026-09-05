@@ -79,7 +79,7 @@ export type CatalogSearchRow = Pick<
   | "category_tags"
 >;
 
-export interface ProductPoint {
+interface ProductPoint {
   rawDate: string;
   price: number;
 }

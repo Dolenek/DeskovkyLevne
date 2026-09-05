@@ -67,6 +67,22 @@ export const buildApiUrl = (
   return url.toString();
 };
 
+const fetchJsonResponse = async <T>(url: string, signal?: AbortSignal): Promise<T> => {
+  const response = await fetch(url, {
+    method: "GET",
+    headers: { Accept: "application/json" },
+    signal,
+  });
+  if (!response.ok) {
+    throw new ApiRequestError(response.status);
+  }
+  return (await response.json()) as T;
+};
+
+const canRetryError = (error: unknown): boolean =>
+  !isAbortError(error) &&
+  (!(error instanceof ApiRequestError) || shouldRetryStatus(error.status));
+
 export const fetchApi = async <T>(
   url: string,
   options: ApiRequestOptions = {}
@@ -78,27 +94,10 @@ export const fetchApi = async <T>(
   while (attempt < API_RETRY_ATTEMPTS) {
     attempt += 1;
     try {
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-        },
-        signal,
-      });
-
-      if (!response.ok) {
-        const error = new ApiRequestError(response.status);
-        if (attempt < API_RETRY_ATTEMPTS && shouldRetryStatus(response.status)) {
-          await waitForRetry(attempt, signal);
-          continue;
-        }
-        throw error;
-      }
-
-      return (await response.json()) as T;
+      return await fetchJsonResponse<T>(url, signal);
     } catch (error) {
       lastError = error;
-      if (isAbortError(error) || error instanceof ApiRequestError) {
+      if (!canRetryError(error)) {
         throw error;
       }
       if (attempt >= API_RETRY_ATTEMPTS) {

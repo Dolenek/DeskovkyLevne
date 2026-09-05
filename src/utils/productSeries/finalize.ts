@@ -9,8 +9,7 @@ const deduplicatePoints = (points: ProductSeries["points"]) =>
         index === 0 || point.rawDate !== allPoints[index - 1]?.rawDate
     );
 
-const finalizeSeller = (draft: SellerDraft): ProductSeries["sellers"][number] => {
-  const points = deduplicatePoints(draft.points);
+const resolveSellerPrices = (draft: SellerDraft, points: ProductSeries["points"]) => {
   const firstPrice =
     draft.firstPrice !== undefined ? draft.firstPrice : points[0]?.price ?? null;
   const latestPrice =
@@ -25,7 +24,11 @@ const finalizeSeller = (draft: SellerDraft): ProductSeries["sellers"][number] =>
         : null;
   const latestScrapedAt =
     draft.latestScrapedAt ?? points[points.length - 1]?.rawDate ?? null;
+  return { firstPrice, latestPrice, previousPrice, latestScrapedAt };
+};
 
+const finalizeSeller = (draft: SellerDraft): ProductSeries["sellers"][number] => {
+  const points = deduplicatePoints(draft.points);
   return {
     seller: draft.sellerId,
     productCode: draft.productCode,
@@ -40,10 +43,7 @@ const finalizeSeller = (draft: SellerDraft): ProductSeries["sellers"][number] =>
     supplementaryParameters: draft.supplementaryParameters,
     categoryTags: draft.categoryTags,
     points,
-    latestPrice,
-    firstPrice,
-    previousPrice,
-    latestScrapedAt,
+    ...resolveSellerPrices(draft, points),
   };
 };
 
@@ -66,27 +66,25 @@ const mergeGalleryImages = (sellers: ProductSeries["sellers"]) => {
   return sellers[0]?.galleryImages ?? [];
 };
 
+const resolveProductPresentation = (sellers: ProductSeries["sellers"]) => {
+  const heroImage =
+    sellers.find((seller) => seller.heroImage)?.heroImage ??
+    null;
+  const shortDescription =
+    sellers.find((seller) => seller.shortDescription)?.shortDescription ??
+    null;
+  return { heroImage, shortDescription };
+};
+
 export const finalizeProductDraft = (
   productDraft: ProductDraft,
   sortedSellers: SellerDraft[]
 ): ProductSeries | null => {
-  const sellers = sortedSellers
-    .map(finalizeSeller)
-    .filter((seller) => seller.points.length > 0);
-  if (sellers.length === 0) {
+  const sellers = sortedSellers.map(finalizeSeller);
+  const primarySeller = sellers[0];
+  if (!primarySeller) {
     return null;
   }
-
-  const primarySeller = sellers[0];
-  const heroImage =
-    primarySeller.heroImage ??
-    sellers.find((seller) => seller.heroImage)?.heroImage ??
-    null;
-  const shortDescription =
-    primarySeller.shortDescription ??
-    sellers.find((seller) => seller.shortDescription)?.shortDescription ??
-    null;
-
   return {
     slug: productDraft.slug,
     primaryProductCode: primarySeller.productCode ?? null,
@@ -94,9 +92,8 @@ export const finalizeProductDraft = (
     currency: primarySeller.currency ?? null,
     url: primarySeller.url ?? null,
     listPrice: primarySeller.listPrice,
-    heroImage,
+    ...resolveProductPresentation(sellers),
     availabilityLabel: primarySeller.availabilityLabel ?? null,
-    shortDescription,
     galleryImages: mergeGalleryImages(sellers),
     supplementaryParameters: primarySeller.supplementaryParameters,
     categoryTags: mergeCategoryTags(sellers),

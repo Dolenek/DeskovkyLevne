@@ -31,6 +31,8 @@ jobs:
         run: npm ci
       - name: Lint frontend and repository scripts
         run: npm run lint
+      - name: Check unused code and dependencies
+        run: npm run check:unused
       - name: Validate SQL function privileges
         run: npm run security:sql
       - name: Run unit tests

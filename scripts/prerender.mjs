@@ -102,6 +102,8 @@ const prerenderStaticRoutes = async () => {
       const url = `${prerenderOrigin}${routePath}`;
       await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 });
       await page.waitForFunction(() => {
+        // This callback executes inside the prerender browser, not Node.
+        // eslint-disable-next-line no-undef
         const robots = document.querySelector('meta[name="robots"]');
         return robots?.getAttribute("content") === "index,follow";
       }, { timeout: 60000 });

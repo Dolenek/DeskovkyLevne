@@ -55,17 +55,5 @@ export const usePathNavigation = () => {
     []
   );
 
-  const goBack = useCallback(() => {
-    if (typeof window === "undefined") {
-      setPath("/");
-      return;
-    }
-    if (window.history.length > 1) {
-      window.history.back();
-      return;
-    }
-    navigate("/", { replace: true });
-  }, [navigate]);
-
-  return { path, navigate, goBack };
+  return { path, navigate };
 };
