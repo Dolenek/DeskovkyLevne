@@ -5,8 +5,10 @@
 - Legacy landing alias: `/levne-deskovky` with canonical SEO pointing to `/`
 - Catalog page: `/deskove-hry`
 - Search results: `/deskove-hry?q=encoded-query`; opening a link, refreshing,
-  and browser Back/Forward restore the submitted query. Filters and page
-  numbers are local UI state and are not serialized in the URL.
+  and browser Back/Forward restore the submitted query, filters, sort, and page.
+  Catalog changes replace the current history entry; a new search starts a new
+  entry. Browser history stores the scroll position and restores it after results
+  load. Invalid URL selections are normalized to supported values.
 - Product detail page: `/deskove-hry/:slug`
 - Unknown paths render an explicit not-found screen.
 
@@ -83,17 +85,24 @@ SEO canonical link with the resolved canonical slug.
   dynamically renders the number of rows that fit in the viewport minus one.
 - Frontend search strips diacritics, treats punctuation and special characters
   as spaces, lowercases the query, and sends a compact token string to the API.
-- Catalog renders a search/filter toolbar, category chips, sticky desktop
-  filter sidebar, mobile filter drawer, active filter chips, product card grid,
-  and pagination controls.
-- Header, landing hero, and catalog search forms submit with Enter or their
+- Catalog has one search field in the shared header, a sort selector, horizontally
+  scrollable mobile category chips, a sticky desktop filter sidebar, and a mobile
+  filter drawer. Only mobile displays the drawer button. The drawer locks body
+  scrolling, traps focus, closes with Escape, restores trigger focus, and has a
+  fixed results button displaying the current count when loaded.
+- Active filter chips remove individual filters. Clearing filters preserves the
+  query and sort. Pagination uses a moving five-page window and scrolls to the
+  new results; there is no separate load-more control.
+- Catalog sorting uses API `sort=name|price_asc|price_desc` across the whole result
+  set before pagination. Missing prices sort last in both price directions.
+- Header and landing hero search forms submit with Enter or their
   search button. Typing only updates suggestions; the grid uses the submitted
   query. Submission does not wait for the suggestion debounce.
 - Each submission resets filters and pagination, even for the same query.
   Catalog starts without price bounds. Applying or resetting filters and
   changing pages preserves the submitted query.
-- Search results use `/api/v1/catalog?q=...`, its exact total, stable name/slug
-  ordering, and ten items per page. They are not limited to suggestion candidates.
+- Search results use `/api/v1/catalog?q=...`, its exact total, selected server-side
+  ordering with stable name/slug tie-breaks, and ten items per page. They are not limited to suggestion candidates.
   The heading displays the submitted query; no matches show a query-specific
   empty state. Active filters can be reset from an empty result.
 - Search fields and URL queries are capped at 120 characters. The URL and
@@ -122,11 +131,13 @@ SEO canonical link with the resolved canonical slug.
   be reached because the browser reports `Failed to fetch` or the API/proxy
   returns a transient 5xx failure. Text-search catalog failures instead display
   an error with retry and never insert an unrelated mock result.
-- Product detail renders an image-led two-column hero with a wider gallery and
-  narrower text/price column, followed by a seller-offer table, actual price
-  statistics, a multi-seller history chart with range controls, interactive
-  seller visibility, a portal-rendered tooltip, a zoomed price axis based on
-  visible values, supplementary parameters, and a data summary.
+- Product detail renders a two-column desktop hero with a wider gallery and
+  narrower text/price column. On mobile the name, gameplay parameters, price,
+  and offer CTA precede the compact gallery. Offers precede the history chart
+  and price statistics. The multi-seller history chart has range controls,
+  interactive seller visibility, a portal-rendered tooltip, and a zoomed price axis
+  based on visible values. Supplementary parameters and a price-freshness summary
+  follow the chart and statistics.
 - Product detail chart points prefer API `price_date` and fall back to
   `scraped_at` for raw snapshot-shaped rows.
 - Product detail expands the compact seller-nested API response for the existing
@@ -148,12 +159,30 @@ SEO canonical link with the resolved canonical slug.
   or the API/proxy returns a transient 5xx failure.
 - Product detail offer CTA scrolls to the seller-offer section. Price-watch and
   favorite actions are not rendered until backend support exists.
-- Seller-offer rows show only API-backed values: seller, price, normalized
-  availability, and outbound shop link. Shipping prices and seller ratings are
-  not simulated in the frontend.
-- The detail hero, SEO description, and offer ordering use the lowest current
-  seller price. Sellers without a current price are excluded from current
-  offers but remain available as history-chart series.
+- Seller-offer rows show seller, price, normalized availability, source check date,
+  and an outbound shop link. Prices explicitly exclude shipping; shipping charges
+  and ratings are not simulated. The first eight offers are shown initially,
+  with an expandable control for all remaining offers.
+- Confirmed in-stock offers come first, followed by other offers; both groups are
+  ordered by current price. All offers tied for the lowest in-stock price are
+  highlighted. The hero prefers this price; when no stock is confirmed it labels
+  the lowest listed price and explicitly states that stock is not confirmed.
+  SEO describes the lowest listed price across sellers. Missing prices are excluded
+  from offers but remain available as chart series; an empty table has an explicit
+  message and the hero omits its offer CTA.
+- History charts fit the viewport, including on mobile, with adaptive date ticks
+  and a compact two-column seller legend below the graph. All sellers start visible.
+- Product breadcrumbs are links. Gameplay parameters (players, playtime, minimum
+  age, language) appear near the title when supplied by the preferred seller.
+  Other parameters remain accessible through an expandable section. The freshness
+  panel reports seller coverage and the latest check of any offer, while each
+  offer retains its own check date.
+- Whole currency amounts omit zero decimal places. Product cards use locale-aware
+  shop-count plurals, contained images, and unbroken discount badges. Suggestions
+  show source category labels instead of unexplained seller product codes.
+- Catalog navigation and language selection remain available on mobile and tablet.
+  Landing statistics show the API-backed tracked count and descriptive comparison/
+  history labels; no fixed shop count or daily refresh percentage is claimed.
 - Product galleries deduplicate normalized image URLs and skip placeholder or
   thumbnail-only images such as `blank.gif` and `150x150` assets.
 - Catalog URLs are untrusted input. Seller links are rendered only for absolute,

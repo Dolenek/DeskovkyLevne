@@ -27,6 +27,7 @@ type Row struct {
 }
 
 type Filters struct {
+	Sort           string
 	Availability   string
 	MinPrice       *float64
 	MaxPrice       *float64

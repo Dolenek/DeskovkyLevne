@@ -47,7 +47,9 @@ const SearchResultImage = ({ series }: { series: ProductSearchResult }) => {
 const SearchResultLabel = ({ series }: { series: ProductSearchResult }) => (
   <div className="min-w-0">
     <p className="text-base font-extrabold text-navy">{series.label}</p>
-    <p className="text-sm text-muted">{series.primaryProductCode ?? series.slug}</p>
+    {series.categoryTags.length > 0 ? (
+      <p className="text-sm text-muted">{series.categoryTags.slice(0, 2).join(" · ")}</p>
+    ) : null}
   </div>
 );
 

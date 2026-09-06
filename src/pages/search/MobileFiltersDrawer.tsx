@@ -1,48 +1,76 @@
 import { FiltersPanel, type FiltersPanelProps } from "./FiltersPanel";
+import { useDialogFocus } from "../../hooks/useDialogFocus";
 
 interface MobileFiltersDrawerProps extends FiltersPanelProps {
   open: boolean;
   closeLabel: string;
+  resultCount: number;
+  loading: boolean;
   onClose: () => void;
 }
 
 export const MobileFiltersDrawer = ({
   open,
   closeLabel,
+  resultCount,
+  loading,
   onClose,
   ...filterPanelProps
 }: MobileFiltersDrawerProps) => {
-  if (!open) {
-    return null;
-  }
-
+  const dialogRef = useDialogFocus(open, onClose);
+  if (!open) return null;
+  const { t } = filterPanelProps;
   return (
     <div className="fixed inset-0 z-[60] flex lg:hidden">
       <button
         type="button"
         aria-label={closeLabel}
         onClick={onClose}
-        className="absolute inset-0 bg-black/70"
+        className="absolute inset-0 bg-navy/40"
       />
-      <div className="relative z-10 h-full w-full max-w-sm overflow-hidden rounded-none border-r border-slate-800 bg-slate-950/95 shadow-2xl">
-        <div className="flex items-center justify-between border-b border-slate-800 px-5 py-4">
-          <p className="text-lg font-semibold text-white">
-            {filterPanelProps.t("filtersTitle")}
-          </p>
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={t("filtersTitle")}
+        className="relative z-10 flex h-full w-full max-w-sm flex-col bg-white shadow-2xl"
+      >
+        <div className="flex shrink-0 items-center justify-between border-b border-line px-4 py-3">
+          <h2 className="text-lg font-bold">{t("filtersTitle")}</h2>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full border border-slate-700 px-3 py-1 text-xs font-semibold text-slate-200 transition hover:border-primary hover:text-white"
+            className="min-h-11 rounded-lg border border-line px-3 text-sm font-bold"
           >
             {closeLabel}
           </button>
         </div>
-        <FiltersPanel
-          {...filterPanelProps}
-          showTitle={false}
-          className="h-[calc(100%-4.5rem)] overflow-y-auto rounded-none border-0 bg-transparent p-5 shadow-none"
-        />
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <FiltersPanel
+            {...filterPanelProps}
+            showTitle={false}
+            className="rounded-none border-0 p-4 shadow-none"
+          />
+        </div>
+        <FilterResultsButton onClose={onClose} loading={loading} resultCount={resultCount} t={t} />
       </div>
     </div>
   );
 };
+
+const FilterResultsButton = ({
+  onClose,
+  loading,
+  resultCount,
+  t,
+}: Pick<MobileFiltersDrawerProps, "onClose" | "loading" | "resultCount" | "t">) => (
+  <div className="shrink-0 border-t border-line bg-white p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+    <button
+      type="button"
+      onClick={onClose}
+      className="min-h-12 w-full rounded-lg bg-primary px-4 py-3 font-bold text-white"
+    >
+      {loading ? t("catalogShowResults") : t("catalogShowCount", { count: resultCount })}
+    </button>
+  </div>
+);

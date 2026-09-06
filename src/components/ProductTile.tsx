@@ -1,3 +1,4 @@
+import { formatSellerCount } from "../utils/sellerCount";
 import type { LocaleKey } from "../i18n/translations";
 import type { Translator } from "../types/i18n";
 import type { ProductSeries } from "../types/product";
@@ -22,9 +23,7 @@ export const ProductTile = ({ series, locale, t, onNavigate }: ProductTileProps)
   return (
     <a
       href={href}
-      onClick={(event) =>
-        handleInAppNavigation(event, () => onNavigate(series.slug))
-      }
+      onClick={(event) => handleInAppNavigation(event, () => onNavigate(series.slug))}
       className="group flex h-full flex-col rounded-lg border border-line bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-lg"
     >
       <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-slate-50">
@@ -32,7 +31,7 @@ export const ProductTile = ({ series, locale, t, onNavigate }: ProductTileProps)
           <SkeletonImage
             src={series.heroImage}
             alt={series.label}
-            className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+            className="h-full w-full object-contain transition duration-300 group-hover:scale-105"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-5xl font-extrabold text-line">
@@ -49,17 +48,17 @@ export const ProductTile = ({ series, locale, t, onNavigate }: ProductTileProps)
             formatAvailabilityLabel(series.availabilityLabel, locale, t("fallbackBoardGame"))}
         </p>
         <div className="mt-3 flex items-center gap-3">
-          <span className="text-2xl font-extrabold text-primary">
+          <span className="whitespace-nowrap text-xl font-extrabold text-primary">
             {formatPrice(series.latestPrice, series.currency ?? undefined, locale) ?? "--"}
           </span>
           {discount ? (
-            <span className="rounded-md bg-orange-50 px-2 py-1 text-sm font-extrabold text-accent">
+            <span className="shrink-0 whitespace-nowrap rounded-md bg-orange-50 px-2 py-1 text-sm font-extrabold text-accent">
               -{discount} %
             </span>
           ) : null}
         </div>
         <span className="mt-1 text-sm font-semibold text-muted">
-          {t("productTileSellerCount", { count: sellerCount })}
+          {formatSellerCount(sellerCount, locale)}
         </span>
         <span className="mt-4 inline-flex items-center justify-center rounded-lg border border-primary px-4 py-2 text-sm font-extrabold text-primary transition group-hover:bg-primary group-hover:text-white">
           {t("productTileDetail")}

@@ -12,6 +12,12 @@ Pipeline stages:
 3. Vite production build (`vite build`)
 4. Prerender pass (`node scripts/prerender.mjs`)
 
+## Frontend/API Compatibility
+Deploy the frontend and Go API together for catalog price sorting. The frontend
+sends the `sort` query parameter; the API validates and applies it before
+pagination. This feature does not require a database migration. See the
+[HTTP API contract](../api/http-api.md#catalog).
+
 ## Continuous Integration
 GitHub Actions runs the validation workflow for pull requests targeting `main`,
 pushes to `main`, and manual dispatches. New commits cancel older runs for the

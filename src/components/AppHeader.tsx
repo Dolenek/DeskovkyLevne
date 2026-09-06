@@ -1,3 +1,4 @@
+import { MobileLocaleSwitcher } from "./MobileLocaleSwitcher";
 import type { MouseEvent, RefObject } from "react";
 import { SearchForm } from "./SearchForm";
 import { LocaleSwitcher } from "./LocaleSwitcher";
@@ -19,9 +20,10 @@ interface AppHeaderProps {
   t: TranslationHook["t"];
 }
 
-const navItems = [
-  { href: "/deskove-hry", labelKey: "navCatalog" },
-] satisfies Array<{ href: string; labelKey: TranslationKey }>;
+const navItems = [{ href: "/deskove-hry", labelKey: "navCatalog" }] satisfies Array<{
+  href: string;
+  labelKey: TranslationKey;
+}>;
 
 export const AppHeader = ({
   searchValue,
@@ -34,13 +36,12 @@ export const AppHeader = ({
   activePath = "",
   t,
 }: AppHeaderProps) => {
-  const handleNavigate =
-    (path: string) => (event: MouseEvent<HTMLAnchorElement>) => {
-      if (!onNavigatePath) {
-        return;
-      }
-      handleInAppNavigation(event, () => onNavigatePath(path));
-    };
+  const handleNavigate = (path: string) => (event: MouseEvent<HTMLAnchorElement>) => {
+    if (!onNavigatePath) {
+      return;
+    }
+    handleInAppNavigation(event, () => onNavigatePath(path));
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-line bg-white/95 shadow-sm backdrop-blur">
@@ -53,11 +54,8 @@ export const AppHeader = ({
           >
             <BrandLogo compact />
           </button>
-          <div className="lg:hidden">
-            <LocaleSwitcher size="compact" showLabel={false} />
-          </div>
 
-          <nav className="hidden items-center justify-start gap-8 text-sm font-bold text-navy lg:ml-8 lg:flex">
+          <nav className="flex items-center justify-start gap-3 text-sm font-bold text-navy lg:ml-8">
             {navItems.map((item) => {
               const active = activePath.startsWith(item.href);
               return (
@@ -76,9 +74,15 @@ export const AppHeader = ({
               );
             })}
           </nav>
+          <div className="sm:hidden">
+            <MobileLocaleSwitcher />
+          </div>
         </div>
 
-        <SearchForm onSearchSubmit={onSearchSubmit} className="flex items-center gap-3 lg:justify-self-center lg:w-full">
+        <SearchForm
+          onSearchSubmit={onSearchSubmit}
+          className="flex items-center gap-3 lg:justify-self-center lg:w-full"
+        >
           <div className="flex min-w-0 flex-1 items-center rounded-lg border border-line bg-white shadow-sm transition focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15">
             <Icon name="search" className="ml-3 h-5 w-5 flex-shrink-0 text-muted" />
             <input
@@ -111,7 +115,7 @@ export const AppHeader = ({
           </button>
         </SearchForm>
 
-        <div className="hidden justify-self-end xl:block">
+        <div className="absolute right-4 top-3 hidden sm:block lg:static lg:justify-self-end">
           <LocaleSwitcher showLabel={false} />
         </div>
       </div>

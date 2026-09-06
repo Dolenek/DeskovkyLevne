@@ -28,7 +28,8 @@ const SearchPage = ({ query, onProductNavigate, onNavigatePath, activePath }: Se
   const homeSeo = useMemo(() => HOME_SEO_COPY[locale], [locale]);
   const homeStructuredData = useMemo(() => buildHomeStructuredData(locale), [locale]);
   const state = useSearchPageState(SEARCH_CANDIDATE_LIMIT, OVERLAY_SEARCH_LIMIT, t, query);
-  const { setSearchActive } = state;
+  const { setSearchActive, setFiltersOpen } = state;
+  const closeFilters = useCallback(() => setFiltersOpen(false), [setFiltersOpen]);
   const submitSearch = () => onNavigatePath(buildCatalogSearchPath(state.searchValue));
   const searchInputRef = useRef<HTMLInputElement>(null);
   const activateHeaderSearch = useCallback(() => {
@@ -79,7 +80,9 @@ const SearchPage = ({ query, onProductNavigate, onNavigatePath, activePath }: Se
       <MobileFiltersDrawer
         open={state.filtersOpen}
         closeLabel={t("filtersClose")}
-        onClose={() => state.setFiltersOpen(false)}
+        onClose={closeFilters}
+        resultCount={state.filteredTotal}
+        loading={state.filteredLoading}
         availabilityFilter={state.availabilityFilter}
         onAvailabilityChange={state.setAvailabilityFilter}
         priceMovementFilter={state.priceMovementFilter}
@@ -103,15 +106,15 @@ const SearchPage = ({ query, onProductNavigate, onNavigatePath, activePath }: Se
       />
       <main className="px-4 pb-12 pt-6 sm:px-6 lg:px-10">
         <div className="mx-auto flex max-w-7xl flex-col gap-8">
-          {query ? <h1 className="break-words text-2xl font-extrabold">{t("searchResultsFor", { term: query })}</h1> : null}
+          {query ? (
+            <h1 className="break-words text-2xl font-extrabold">{t("searchResultsFor", { term: query })}</h1>
+          ) : null}
           <CatalogToolbar
-            onSearchSubmit={submitSearch}
-            searchValue={state.searchValue}
-            onSearchValueChange={state.handleSearchChange}
-            onSearchActiveChange={state.setSearchActive}
             onOpenFilters={() => state.setFiltersOpen(true)}
             categoryFilters={state.categoryFilters}
             activeFilterCount={state.activeFilterCount}
+            sort={state.sort}
+            onSortChange={state.setSort}
             t={t}
             onCategoryToggle={state.handleCategoryToggle}
           />
@@ -153,6 +156,7 @@ const SearchPage = ({ query, onProductNavigate, onNavigatePath, activePath }: Se
               activeFilterChips={state.activeFilterChips}
               page={state.pricePage}
               onResetFilters={state.resetFilters}
+              onRemoveFilter={state.removeFilter}
               onPageChange={state.setPricePage}
               onNavigateToSeries={(series) => onProductNavigate(series.slug)}
             />

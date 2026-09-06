@@ -1,13 +1,5 @@
 import { useRef, type ReactElement } from "react";
-import {
-  CartesianGrid,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { formatPrice } from "../utils/numberFormat";
 import { PriceChartTooltip } from "./product-chart/PriceChartTooltip";
 import type { PriceChartDatum, ProductChartProps } from "./product-chart/types";
@@ -23,7 +15,7 @@ interface EndpointDotProps {
 const renderEndpointDot = (
   props: EndpointDotProps,
   dataKey: string,
-  color: string
+  color: string,
 ): ReactElement<SVGElement> | null => {
   if (!props.payload?.[`${dataKey}IsLatest`] || props.cx === undefined || props.cy === undefined) {
     return null;
@@ -32,13 +24,7 @@ const renderEndpointDot = (
   return <circle cx={props.cx} cy={props.cy} r={4.5} fill="#ffffff" stroke={color} strokeWidth={3} />;
 };
 
-export const ProductChart = ({
-  series,
-  locale,
-  priceLabel,
-  dateLabel,
-  model,
-}: ProductChartProps) => {
+export const ProductChart = ({ series, locale, priceLabel, dateLabel, model }: ProductChartProps) => {
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
 
   if (model.data.length === 0 || model.activeSellerConfigs.length === 0) {
@@ -47,14 +33,16 @@ export const ProductChart = ({
 
   return (
     <div className="min-w-0">
-      <div className="custom-scrollbar overflow-x-auto lg:overflow-visible">
-        <div ref={chartContainerRef} className="h-[320px] min-w-[760px] lg:min-w-0">
+      <div className="w-full min-w-0">
+        <div ref={chartContainerRef} className="h-[320px] w-full min-w-0">
           <ResponsiveContainer width="100%" height={320}>
-            <LineChart data={model.data} margin={{ top: 14, right: 22, bottom: 0, left: 0 }}>
+            <LineChart data={model.data} margin={{ top: 14, right: 14, bottom: 0, left: 0 }}>
               <CartesianGrid stroke="#e7edf5" vertical={false} />
               <XAxis
                 dataKey="date"
-                minTickGap={22}
+                minTickGap={30}
+                interval="preserveStartEnd"
+                tickFormatter={(value: string) => value.replace(/(?:[. ]+|\/)\d{4}$/, "")}
                 stroke="#60708c"
                 tick={{ fill: "#60708c", fontSize: 12 }}
                 tickLine={false}
@@ -64,7 +52,7 @@ export const ProductChart = ({
                 stroke="#60708c"
                 tick={{ fill: "#60708c", fontSize: 12 }}
                 tickLine={false}
-                width={82}
+                width={62}
                 tickFormatter={(value) =>
                   formatPrice(Number(value), series.currency ?? undefined, locale) ?? ""
                 }

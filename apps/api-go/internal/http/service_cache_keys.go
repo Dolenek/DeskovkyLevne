@@ -14,6 +14,7 @@ func catalogCacheKey(filters catalog.Filters) string {
 		normalizeAvailability(filters.Availability),
 		fmt.Sprintf("min:%s", floatPtrKey(filters.MinPrice)),
 		fmt.Sprintf("max:%s", floatPtrKey(filters.MaxPrice)),
+		fmt.Sprintf("sort:%s", filters.Sort),
 		fmt.Sprintf("q:%s", strings.ToLower(strings.TrimSpace(filters.Query))),
 		fmt.Sprintf("cats:%s", sortedJoin(filters.Categories)),
 		fmt.Sprintf("players:%s", sortedJoin(filters.PlayerRanges)),

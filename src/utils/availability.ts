@@ -6,7 +6,7 @@ const ENTITY_REPLACEMENTS: Record<string, string> = {
   "&amp;": "&",
   "&gt;": ">",
   "&lt;": "<",
-  "&quot;": "\"",
+  "&quot;": '"',
   "&#39;": "'",
   "&nbsp;": " ",
 };
@@ -14,7 +14,7 @@ const ENTITY_REPLACEMENTS: Record<string, string> = {
 const decodeSimpleEntities = (value: string): string =>
   Object.entries(ENTITY_REPLACEMENTS).reduce(
     (current, [entity, replacement]) => current.replaceAll(entity, replacement),
-    value
+    value,
   );
 
 const normalizeForMatch = (value: string): string =>
@@ -25,8 +25,7 @@ const normalizeForMatch = (value: string): string =>
     .replace(/\s+/g, " ")
     .trim();
 
-const stripSchemaPrefix = (value: string): string =>
-  value.replace(/^https?:\/\/schema\.org\//i, "");
+const stripSchemaPrefix = (value: string): string => value.replace(/^https?:\/\/schema\.org\//i, "");
 
 const capitalizeFirst = (value: string): string =>
   value.length > 0 ? `${value.charAt(0).toUpperCase()}${value.slice(1)}` : value;
@@ -52,7 +51,7 @@ const AVAILABILITY_COPY: Record<
 export const formatAvailabilityLabel = (
   availabilityLabel: string | null | undefined,
   locale: LocaleKey = "cs",
-  fallback = AVAILABILITY_COPY[locale].unknown
+  fallback = AVAILABILITY_COPY[locale].unknown,
 ): string => {
   if (!availabilityLabel) {
     return fallback;
@@ -79,18 +78,26 @@ export const formatAvailabilityLabel = (
   return capitalizeFirst(decoded);
 };
 
-export const getAvailabilityTone = (
-  availabilityLabel: string | null | undefined
-): AvailabilityTone => {
+export const getAvailabilityTone = (availabilityLabel: string | null | undefined): AvailabilityTone => {
   if (!availabilityLabel) {
     return "unknown";
   }
   const normalized = normalizeForMatch(stripSchemaPrefix(decodeSimpleEntities(availabilityLabel)));
-  if (normalized.includes("preorder") || normalized.includes("predobjednav")) {
+  if (
+    normalized.includes("preorder") ||
+    normalized.includes("pre-order") ||
+    normalized.includes("pre order") ||
+    normalized.includes("predobjednav") ||
+    normalized.includes("predprodej")
+  ) {
     return "preorder";
   }
   if (
     normalized.includes("outofstock") ||
+    normalized.includes("out of stock") ||
+    normalized.includes("neni skladem") ||
+    normalized.includes("neni na sklade") ||
+    normalized.includes("not in stock") ||
     normalized.includes("nedostup") ||
     normalized.includes("vyprodan")
   ) {
@@ -98,6 +105,7 @@ export const getAvailabilityTone = (
   }
   if (
     normalized.includes("instock") ||
+    normalized.includes("in stock") ||
     normalized.includes("skladem") ||
     normalized.includes("do kosiku")
   ) {

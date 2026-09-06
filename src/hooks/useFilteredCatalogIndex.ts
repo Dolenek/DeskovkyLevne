@@ -14,6 +14,7 @@ import { buildSeriesFromCatalogIndexRow } from "../utils/catalogTransforms";
 import { isApiFallbackFailure } from "../utils/networkErrors";
 
 interface UseFilteredCatalogIndexOptions {
+  sort?: import("../types/filters").CatalogSort;
   query?: string;
   priceRange: { min: number | null; max: number | null };
   availabilityFilter: AvailabilityFilter;
@@ -37,17 +38,16 @@ interface UseFilteredCatalogIndexResult {
 
 const FILTER_KEY_SEPARATOR = "\u001f";
 
-const buildFilterKey = (values: string[]) =>
-  values.filter(Boolean).sort().join(FILTER_KEY_SEPARATOR);
+const buildFilterKey = (values: string[]) => values.filter(Boolean).sort().join(FILTER_KEY_SEPARATOR);
 
-const parseFilterKey = <T extends string>(key: string) =>
-  (key ? key.split(FILTER_KEY_SEPARATOR) : []) as T[];
+const parseFilterKey = <T extends string>(key: string) => (key ? key.split(FILTER_KEY_SEPARATOR) : []) as T[];
 
 export const useFilteredCatalogIndex = (
-  options: UseFilteredCatalogIndexOptions
+  options: UseFilteredCatalogIndexOptions,
 ): UseFilteredCatalogIndexResult => {
   const {
     query = "",
+    sort = "name",
     availabilityFilter,
     priceRange,
     page,
@@ -72,19 +72,19 @@ export const useFilteredCatalogIndex = (
   const ageRatingFilterKey = buildFilterKey(ageRatingFilters);
   const normalizedCategories = useMemo(
     () => parseFilterKey<CategoryFilter>(categoryFilterKey),
-    [categoryFilterKey]
+    [categoryFilterKey],
   );
   const normalizedPlayers = useMemo(
     () => parseFilterKey<PlayerRangeFilter>(playerRangeFilterKey),
-    [playerRangeFilterKey]
+    [playerRangeFilterKey],
   );
   const normalizedPlaytimes = useMemo(
     () => parseFilterKey<PlaytimeRangeFilter>(playtimeRangeFilterKey),
-    [playtimeRangeFilterKey]
+    [playtimeRangeFilterKey],
   );
   const normalizedAges = useMemo(
     () => parseFilterKey<AgeRatingFilter>(ageRatingFilterKey),
-    [ageRatingFilterKey]
+    [ageRatingFilterKey],
   );
 
   useEffect(() => {
@@ -96,18 +96,24 @@ export const useFilteredCatalogIndex = (
     const load = async () => {
       try {
         const offset = Math.max(0, (page - 1) * pageSize);
-        const { rows, total } = await fetchFilteredCatalogIndex(offset, pageSize, {
-          query,
-          availability: availabilityFilter,
-          minPrice: priceRange.min,
-          maxPrice: priceRange.max,
-          categories: normalizedCategories,
-          playerRanges: normalizedPlayers,
-          playtimeRanges: normalizedPlaytimes,
-          ageRatings: normalizedAges,
-          priceMovement: priceMovementFilter,
-          randomSeed,
-        }, controller.signal);
+        const { rows, total } = await fetchFilteredCatalogIndex(
+          offset,
+          pageSize,
+          {
+            query,
+            sort,
+            availability: availabilityFilter,
+            minPrice: priceRange.min,
+            maxPrice: priceRange.max,
+            categories: normalizedCategories,
+            playerRanges: normalizedPlayers,
+            playtimeRanges: normalizedPlaytimes,
+            ageRatings: normalizedAges,
+            priceMovement: priceMovementFilter,
+            randomSeed,
+          },
+          controller.signal,
+        );
         if (controller.signal.aborted || requestRef.current !== requestId) {
           return;
         }
@@ -153,6 +159,7 @@ export const useFilteredCatalogIndex = (
     randomSeed,
     query,
     reloadToken,
+    sort,
   ]);
 
   const reload = useCallback(() => {

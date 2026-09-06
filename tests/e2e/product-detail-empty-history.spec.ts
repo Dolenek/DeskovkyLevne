@@ -2,15 +2,17 @@ import { expect, test } from "playwright/test";
 import { productDetailResponseFromRows } from "./apiMocks";
 
 const productWithoutHistory = (price: number | null) => {
-  const response = productDetailResponseFromRows([{
-    product_name_normalized: "no-history",
-    product_name_original: "Game without history",
-    seller: "tlamagames",
-    latest_price: price,
-    currency_code: "CZK",
-    source_url: "https://shop.test/no-history",
-    hero_image_url: "/logo.png",
-  }]);
+  const response = productDetailResponseFromRows([
+    {
+      product_name_normalized: "no-history",
+      product_name_original: "Game without history",
+      seller: "tlamagames",
+      latest_price: price,
+      currency_code: "CZK",
+      source_url: "https://shop.test/no-history",
+      hero_image_url: "/logo.png",
+    },
+  ]);
   response.sellers[0].history = [];
   return response;
 };
@@ -32,7 +34,7 @@ for (const price of [0, null]) {
     await expect(page.locator('#nabidky a[target="_blank"]')).toHaveCount(price === null ? 0 : 1);
     await expect(page.locator(".recharts-line")).toHaveCount(0);
     if (price === 0) {
-      await expect(page.locator("#nabidky").getByText("0,00 Kč", { exact: true })).toBeVisible();
+      await expect(page.locator("#nabidky").getByText("0 Kč", { exact: true })).toBeVisible();
     }
   });
 }

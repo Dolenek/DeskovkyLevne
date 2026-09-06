@@ -24,6 +24,15 @@
   model. Shipping prices, shop ratings, and price-watch state require explicit
   backend data before they can appear as factual UI fields.
 
+## Current Offer Presentation
+- Confirmed in-stock offers are prioritized, with each availability group ordered
+  by current price. Unknown availability and preorders do not count as in stock.
+- The lowest in-stock offer drives the detail hero when available. Otherwise the
+  hero explicitly labels the lowest listed price without asserting stock.
+- Missing current prices are not offers; zero remains a valid current price.
+- Offer check timestamps remain per seller; the newest timestamp does not imply
+  that every seller was checked at that time. Prices exclude shipping.
+
 ## Presentation Priority Rule
 - For hero image, description, and similar display text:
   1. Prefer `tlamagames` and `tlamagase`

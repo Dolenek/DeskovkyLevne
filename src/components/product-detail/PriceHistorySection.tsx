@@ -35,7 +35,7 @@ export const PriceHistorySection = ({
   }, [allSellerIds, selectedSellerIds]);
   const chartModel = useMemo(
     () => buildPriceChartModel(series, locale, selectedRange, activeSellerIds),
-    [activeSellerIds, locale, selectedRange, series]
+    [activeSellerIds, locale, selectedRange, series],
   );
 
   const toggleSeller = (sellerId: string) => {
@@ -52,7 +52,7 @@ export const PriceHistorySection = ({
   };
 
   return (
-    <section className="rounded-lg border border-line bg-white p-5 shadow-sm">
+    <section className="min-w-0 rounded-lg border border-line bg-white p-3 shadow-sm sm:p-5">
       <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-2xl font-extrabold text-navy">{t("detailHistoryTitle")}</h2>
         <div
@@ -77,11 +77,6 @@ export const PriceHistorySection = ({
           })}
         </div>
       </div>
-      {chartModel.legendItems.length > 0 ? (
-        <div className="mb-4">
-          <PriceChartLegend items={chartModel.legendItems} locale={locale} onToggleSeller={toggleSeller} />
-        </div>
-      ) : null}
       <ProductChart
         series={series}
         locale={locale}
@@ -89,6 +84,11 @@ export const PriceHistorySection = ({
         dateLabel={dateLabel}
         model={chartModel}
       />
+      {chartModel.legendItems.length > 0 ? (
+        <div className="mt-4">
+          <PriceChartLegend items={chartModel.legendItems} locale={locale} onToggleSeller={toggleSeller} />
+        </div>
+      ) : null}
     </section>
   );
 };

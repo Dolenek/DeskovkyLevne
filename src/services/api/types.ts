@@ -1,7 +1,4 @@
-import type {
-  CatalogSearchRow,
-  ProductCatalogIndexRow,
-} from "../../types/product";
+import type { CatalogSearchRow, ProductCatalogIndexRow } from "../../types/product";
 import type { AvailabilityFilter } from "../../types/filters";
 import type {
   AgeRatingFilter,
@@ -62,6 +59,7 @@ export interface ProductDetailResponse {
 }
 
 export interface CatalogFilterOptions {
+  sort?: import("../../types/filters").CatalogSort;
   query?: string;
   availability?: AvailabilityFilter;
   minPrice?: number | null;

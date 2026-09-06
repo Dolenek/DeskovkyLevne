@@ -2,15 +2,15 @@ import { SkeletonBlock } from "./SkeletonBlock";
 
 const ProductDetailTopSkeleton = () => (
   <section className="grid min-w-0 items-start gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">
-    <div>
-      <SkeletonBlock className="aspect-[4/3] w-full" />
+    <div className="order-2 min-w-0 lg:order-1">
+      <SkeletonBlock className="aspect-[4/3] max-h-64 w-full lg:max-h-none" />
       <div className="mt-4 flex gap-3 overflow-hidden">
         {Array.from({ length: 4 }, (_, index) => (
           <SkeletonBlock key={index} className="h-20 w-24 flex-shrink-0" />
         ))}
       </div>
     </div>
-    <section>
+    <section className="order-1 min-w-0 lg:order-2">
       <SkeletonBlock className="h-4 w-56 max-w-full" />
       <SkeletonBlock className="mt-5 h-11 w-4/5" />
       <SkeletonBlock className="mt-3 h-7 w-2/3" />

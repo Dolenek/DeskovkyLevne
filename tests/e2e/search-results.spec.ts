@@ -1,7 +1,9 @@
 import { expect, test } from "playwright/test";
 import { fulfillSearchJson, mockSearchResults, searchCatalogRows } from "./searchResultsMocks";
 
-test("immediate Enter searches the full catalog and paginates independently of suggestions", async ({ page }) => {
+test("immediate Enter searches the full catalog and paginates independently of suggestions", async ({
+  page,
+}) => {
   const requests = await mockSearchResults(page);
   await page.goto("/");
   const input = page.getByRole("banner").getByRole("textbox");
@@ -14,7 +16,7 @@ test("immediate Enter searches the full catalog and paginates independently of s
   expect(requests.at(-1)?.searchParams.get("q")).toBe("ceska hra");
   expect(requests.at(-1)?.searchParams.has("min_price")).toBe(false);
   expect(requests.at(-1)?.searchParams.has("max_price")).toBe(false);
-  await page.getByRole("button", { name: "2", exact: true }).click();
+  await page.getByRole("button", { name: "Stránka 2", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Česká hra 11", exact: true })).toBeVisible();
   expect(requests.at(-1)?.searchParams.get("q")).toBe("ceska hra");
   expect(requests.at(-1)?.searchParams.get("offset")).toBe("10");
@@ -40,15 +42,17 @@ test("direct links, refresh and history restore the query; a card opens its slug
   await expect(input).toHaveValue("missing");
 });
 
-test("filters preserve query and resubmitting the same query resets filters and pagination", async ({ page }) => {
+test("filters preserve query and resubmitting the same query resets filters and pagination", async ({
+  page,
+}) => {
   const requests = await mockSearchResults(page);
   await page.goto("/deskove-hry?q=hra");
   await page.getByRole("button", { name: "Strategické", exact: true }).click();
   await expect.poll(() => requests.at(-1)?.searchParams.get("categories")).toBe("strategicka");
   expect(requests.at(-1)?.searchParams.get("q")).toBe("hra");
-  await page.getByRole("button", { name: "2", exact: true }).click();
+  await page.getByRole("button", { name: "Stránka 2", exact: true }).click();
   await expect.poll(() => requests.at(-1)?.searchParams.get("offset")).toBe("10");
-  const input = page.locator('main form[role="search"] input');
+  const input = page.getByRole("banner").getByRole("textbox");
   await input.press("Enter");
   await expect.poll(() => requests.at(-1)?.searchParams.has("categories")).toBe(false);
   expect(requests.at(-1)?.searchParams.get("offset")).toBe("0");
@@ -108,15 +112,21 @@ test("empty search clears the query and empty filtered results can reset filters
   }
 });
 
-test("search labels translate to English and Enter on a retry button keeps native behavior", async ({ page }) => {
+test("search labels translate to English and Enter on a retry button keeps native behavior", async ({
+  page,
+}) => {
   await mockSearchResults(page);
   await page.goto("/deskove-hry?q=missing");
   await page.getByRole("button", { name: "English" }).click();
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText('Search results for “missing”');
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Search results for “missing”");
   await expect(page.getByText('No matches for "missing".')).toBeVisible();
-  await page.route("**/api/v1/search/suggest?*", (route) => route.fulfill({
-    status: 400, contentType: "application/json", body: JSON.stringify({ error: "Suggestion failed" }),
-  }));
+  await page.route("**/api/v1/search/suggest?*", (route) =>
+    route.fulfill({
+      status: 400,
+      contentType: "application/json",
+      body: JSON.stringify({ error: "Suggestion failed" }),
+    }),
+  );
   const input = page.getByRole("banner").getByRole("textbox");
   await input.fill("next");
   const retry = page.getByRole("button", { name: "Try again" });
@@ -131,7 +141,9 @@ test("search labels translate to English and Enter on a retry button keeps nativ
 test("an older response cannot overwrite a newly submitted query", async ({ page }) => {
   await mockSearchResults(page);
   let releaseOldResponse = () => {};
-  const pending = new Promise<void>((resolve) => { releaseOldResponse = resolve; });
+  const pending = new Promise<void>((resolve) => {
+    releaseOldResponse = resolve;
+  });
   await page.route("**/api/v1/catalog?*", async (route) => {
     if (new URL(route.request().url()).searchParams.get("q") !== "old") return route.fallback();
     await pending;

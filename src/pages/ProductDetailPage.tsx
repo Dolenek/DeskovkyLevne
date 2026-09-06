@@ -74,16 +74,22 @@ export const ProductDetailPage = ({
 
   const canonicalPath = useMemo(
     () => buildProductDetailPath(product?.slug ?? productSlug),
-    [product?.slug, productSlug]
+    [product?.slug, productSlug],
   );
-  const seoDescription = useMemo(() => (product ? buildProductSeoDescription(product, locale) : null), [locale, product]);
+  const seoDescription = useMemo(
+    () => (product ? buildProductSeoDescription(product, locale) : null),
+    [locale, product],
+  );
   const structuredData = useMemo(() => {
     if (!product || !seoDescription) return null;
     const canonicalUrl = buildAbsoluteUrl(canonicalPath) ?? canonicalPath;
     return buildProductStructuredData(product, canonicalUrl, locale, seoDescription);
   }, [canonicalPath, locale, product, seoDescription]);
   const ogImage = useMemo(() => (product ? pickPrimaryImage(product) : null), [product]);
-  const keywords = useMemo(() => (product ? [product.label, ...product.categoryTags].slice(0, 8) : undefined), [product]);
+  const keywords = useMemo(
+    () => (product ? [product.label, ...product.categoryTags].slice(0, 8) : undefined),
+    [product],
+  );
   const pageTitle = product ? buildProductTitle(product) : "Deskovky Levně | Srovnávač cen deskových her";
 
   return (
@@ -133,12 +139,29 @@ export const ProductDetailPage = ({
         <div className="mx-auto flex max-w-7xl flex-col gap-8">
           {loading ? <ProductDetailSkeleton /> : null}
           {error ? <ErrorState message={error} retryLabel={t("retry")} onRetry={reload} /> : null}
-			{!loading && !error && !product ? <EmptyState message={t("detailNotFoundDescription", { slug: productSlug })} /> : null}
+          {!loading && !error && !product ? (
+            <EmptyState message={t("detailNotFoundDescription", { slug: productSlug })} />
+          ) : null}
           {product ? (
             <>
               <section className="grid min-w-0 items-start gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">
-                <ProductGallery series={product} t={t} />
-                <ProductHero series={product} locale={locale} offersSectionId={OFFERS_SECTION_ID} t={t} />
+                <div className="order-1 min-w-0 lg:order-2">
+                  <ProductHero
+                    series={product}
+                    locale={locale}
+                    offersSectionId={OFFERS_SECTION_ID}
+                    t={t}
+                    onNavigate={onNavigatePath}
+                  />
+                </div>
+                <div className="order-2 min-w-0 lg:order-1">
+                  <ProductGallery series={product} t={t} />
+                </div>
+              </section>
+
+              <section id={OFFERS_SECTION_ID} className="scroll-mt-36 lg:scroll-mt-24">
+                <h2 className="mb-5 text-2xl font-extrabold text-navy">{t("detailOffersTitle")}</h2>
+                <SellerOfferTable series={product} locale={locale} t={t} />
               </section>
 
               <PriceHistorySection
@@ -148,11 +171,6 @@ export const ProductDetailPage = ({
                 dateLabel={t("date")}
                 t={t}
               />
-
-              <section id={OFFERS_SECTION_ID} className="scroll-mt-28">
-                <h2 className="mb-5 text-2xl font-extrabold text-navy">{t("detailOffersTitle")}</h2>
-                <SellerOfferTable series={product} locale={locale} t={t} />
-              </section>
 
               <ProductPriceStats product={product} locale={locale} t={t} />
 
@@ -164,7 +182,10 @@ export const ProductDetailPage = ({
                   </p>
                   <div className="mt-5 flex flex-wrap gap-2">
                     {product.categoryTags.slice(0, 6).map((category) => (
-                      <span key={category} className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold text-primary">
+                      <span
+                        key={category}
+                        className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold text-primary"
+                      >
                         {category}
                       </span>
                     ))}
@@ -174,7 +195,7 @@ export const ProductDetailPage = ({
                   <h2 className="mb-4 text-xl font-extrabold text-navy">{t("detailBasicInfoTitle")}</h2>
                   <SupplementaryParametersPanel parameters={product.supplementaryParameters} t={t} />
                 </article>
-                <ProductDataSummary product={product} t={t} />
+                <ProductDataSummary product={product} t={t} locale={locale} />
               </section>
             </>
           ) : null}

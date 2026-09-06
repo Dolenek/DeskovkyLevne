@@ -18,7 +18,7 @@ func buildRowsQuery(
 	filters Filters,
 ) (string, []any) {
 	rowArgs := append([]any{}, args...)
-	orderSQL := "product_name asc, product_name_normalized asc"
+	orderSQL := catalogOrderSQL(filters.Sort)
 	if filters.RandomSeed != nil {
 		rowArgs = append(rowArgs, *filters.RandomSeed)
 		orderSQL = fmt.Sprintf(
@@ -187,4 +187,16 @@ func buildSearchClause(args *[]any, query string) string {
 		return ""
 	}
 	return "(" + strings.Join(clauses, " and ") + ")"
+}
+
+func catalogOrderSQL(sort string) string {
+	const tieBreak = "product_name asc, product_name_normalized asc"
+	switch sort {
+	case "price_asc":
+		return "latest_price asc nulls last, " + tieBreak
+	case "price_desc":
+		return "latest_price desc nulls last, " + tieBreak
+	default:
+		return tieBreak
+	}
 }

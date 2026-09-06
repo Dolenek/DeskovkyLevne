@@ -75,3 +75,9 @@ Build-time slug source is `catalog_slug_state`. If Supabase credentials are miss
   require review before public catalog identity changes.
 - `/health` is process liveness, `/ready` checks PostgreSQL, and `/version`
   identifies the deployed build.
+
+## Catalog Navigation and Ordering
+The frontend serializes filters, sort and page into the catalog URL and restores
+scroll positions from browser history. The API applies validated price ordering
+before pagination and isolates cache entries by sort. See
+[Frontend Runtime](../frontend/runtime.md) and [HTTP API](../api/http-api.md).

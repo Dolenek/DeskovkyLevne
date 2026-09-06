@@ -8,7 +8,6 @@ import type {
   PriceMovementFilter,
 } from "../../types/filters";
 import type { Translator } from "../../types/i18n";
-import type { ProductSearchResult } from "../../types/product";
 import type { FilterOptionRow, FilterOptionsResponse } from "../../services/api/types";
 import { translateFilterOptionLabel } from "../../utils/filterLabels";
 
@@ -24,12 +23,7 @@ type ActiveFilterSelection = {
 const findOptionLabel = (options: FilterOptionRow[], value: string) =>
   options.find((option) => option.value === value)?.label ?? value;
 
-const translateOptionChipLabel = (
-  groupKey: string,
-  value: string,
-  fallback: string,
-  t: Translator
-) => {
+const translateOptionChipLabel = (groupKey: string, value: string, fallback: string, t: Translator) => {
   if (groupKey === "category") {
     return translateFilterOptionLabel("categories", value, fallback, t);
   }
@@ -43,7 +37,7 @@ const buildOptionChips = <T extends string>(
   groupKey: string,
   values: T[],
   options: FilterOptionRow[],
-  t: Translator
+  t: Translator,
 ): ActiveFilterChip[] =>
   values.map((value) => ({
     key: `${groupKey}-${value}`,
@@ -52,7 +46,7 @@ const buildOptionChips = <T extends string>(
 
 const buildPriceChip = (
   priceRange: { min: number | null; max: number | null },
-  t: Translator
+  t: Translator,
 ): ActiveFilterChip[] =>
   priceRange.min !== null || priceRange.max !== null
     ? [
@@ -66,7 +60,7 @@ const buildPriceChip = (
 const buildAvailabilityChip = (
   availabilityFilter: AvailabilityFilter,
   filterOptions: FilterOptionsResponse,
-  t: Translator
+  t: Translator,
 ): ActiveFilterChip[] =>
   availabilityFilter === "all"
     ? []
@@ -77,7 +71,7 @@ const buildAvailabilityChip = (
             "availability",
             availabilityFilter,
             findOptionLabel(filterOptions.availability, availabilityFilter),
-            t
+            t,
           ),
         },
       ];
@@ -85,7 +79,7 @@ const buildAvailabilityChip = (
 const buildPriceMovementChip = (
   priceMovementFilter: PriceMovementFilter | null,
   filterOptions: FilterOptionsResponse,
-  t: Translator
+  t: Translator,
 ): ActiveFilterChip[] =>
   priceMovementFilter
     ? [
@@ -95,7 +89,7 @@ const buildPriceMovementChip = (
             "price_movement",
             priceMovementFilter,
             findOptionLabel(filterOptions.price_movement, priceMovementFilter),
-            t
+            t,
           ),
         },
       ]
@@ -105,7 +99,7 @@ export const buildActiveFilterChips = (
   priceRange: { min: number | null; max: number | null },
   filterOptions: FilterOptionsResponse,
   t: Translator,
-  filters: ActiveFilterSelection
+  filters: ActiveFilterSelection,
 ): ActiveFilterChip[] => [
   ...buildPriceChip(priceRange, t),
   ...buildAvailabilityChip(filters.availabilityFilter, filterOptions, t),
@@ -115,24 +109,3 @@ export const buildActiveFilterChips = (
   ...buildOptionChips("age", filters.ageRatingFilters, filterOptions.age_ratings, t),
   ...buildPriceMovementChip(filters.priceMovementFilter, filterOptions, t),
 ];
-
-export const filterSearchResultsByCategory = (
-  rows: ProductSearchResult[],
-  selectedCategories: CategoryFilter[]
-) => {
-  if (selectedCategories.length === 0) {
-    return rows;
-  }
-  const categoryLabels: Record<CategoryFilter, string[]> = {
-    strategicka: ["Strategická"],
-    rodinna: ["Rodinná"],
-    fantasy: ["Fantasy"],
-    kooperativni: ["Kooperativní", "Cooperative Game"],
-    ekonomicka: ["Ekonomické"],
-  };
-  return rows.filter((series) =>
-    selectedCategories.some((category) =>
-      categoryLabels[category].some((label) => series.categoryTags.includes(label))
-    )
-  );
-};

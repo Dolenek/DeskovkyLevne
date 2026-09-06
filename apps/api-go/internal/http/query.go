@@ -75,9 +75,13 @@ func parseCatalogFilters(
 	if err != nil {
 		return catalog.Filters{}, err
 	}
-	return buildCatalogFilters(
-		common, minPrice, maxPrice, limit, offset, randomSeed, query, productCodes,
-	), nil
+	sortOrder, err := parseOptionalEnum(values.Get("sort"), "sort", stringSet("name", "price_asc", "price_desc"))
+	if err != nil {
+		return catalog.Filters{}, err
+	}
+	filters := buildCatalogFilters(common, minPrice, maxPrice, limit, offset, randomSeed, query, productCodes)
+	filters.Sort = sortOrder
+	return filters, nil
 }
 
 func buildCatalogFilters(

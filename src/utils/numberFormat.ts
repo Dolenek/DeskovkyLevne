@@ -10,8 +10,9 @@ const getFormatter = (currency: string | null | undefined, locale: LocaleKey) =>
       new Intl.NumberFormat(locale === "cs" ? "cs-CZ" : "en-US", {
         style: "currency",
         currency: currency ?? "CZK",
+        minimumFractionDigits: 0,
         maximumFractionDigits: 2,
-      })
+      }),
     );
   }
 
@@ -21,7 +22,7 @@ const getFormatter = (currency: string | null | undefined, locale: LocaleKey) =>
 export const formatPrice = (
   value: number | null,
   currency: string | null | undefined,
-  locale: LocaleKey
+  locale: LocaleKey,
 ): string => {
   if (value === null || Number.isNaN(value)) {
     return "--";

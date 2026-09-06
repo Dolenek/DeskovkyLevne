@@ -1,7 +1,4 @@
-import type {
-	PriceRangeResponse,
-  ProductSearchResult,
-} from "../../types/product";
+import type { PriceRangeResponse, ProductSearchResult } from "../../types/product";
 import type { AvailabilityFilter } from "../../types/filters";
 import { buildSearchResultFromCatalogRow } from "../../utils/catalogTransforms";
 import { buildApiUrl, fetchApi } from "./client";
@@ -37,7 +34,7 @@ export const searchCatalogIndexByName = async (
   term: string,
   limit = SEARCH_LIMIT,
   availabilityFilter: AvailabilityFilter = "all",
-  signal?: AbortSignal
+  signal?: AbortSignal,
 ): Promise<ProductSearchResult[]> => {
   const safeTerm = sanitizeSearchTerm(term);
   if (!safeTerm) {
@@ -56,18 +53,16 @@ export const searchCatalogIndexByName = async (
       availability: availabilityFilter === "all" ? null : availabilityFilter,
       product_codes: FILTER_CODES.length > 0 ? FILTER_CODES.join(",") : null,
     }),
-    { signal }
+    { signal },
   );
-  return payload.rows.map((row) =>
-    buildSearchResultFromCatalogRow(row)
-  );
+  return payload.rows.map((row) => buildSearchResultFromCatalogRow(row));
 };
 
 export const fetchFilteredCatalogIndex = async (
   from: number,
   size: number,
   filters: CatalogFilterOptions,
-  signal?: AbortSignal
+  signal?: AbortSignal,
 ): Promise<FilteredCatalogResult> => {
   if (size <= 0) {
     return { rows: [], total: 0 };
@@ -82,8 +77,9 @@ export const fetchFilteredCatalogIndex = async (
       min_price: filters.minPrice ?? null,
       max_price: filters.maxPrice ?? null,
       random_seed: filters.randomSeed ?? null,
+      sort: filters.sort ?? null,
     }),
-    { signal }
+    { signal },
   );
 
   return {
@@ -92,24 +88,20 @@ export const fetchFilteredCatalogIndex = async (
   };
 };
 
-export const fetchCatalogOverview = async (
-  signal?: AbortSignal
-): Promise<CatalogOverviewResponse> =>
+export const fetchCatalogOverview = async (signal?: AbortSignal): Promise<CatalogOverviewResponse> =>
   fetchApi<CatalogOverviewResponse>(buildApiUrl("/catalog/overview"), { signal });
 
-export const fetchFilterOptions = async (
-  signal?: AbortSignal
-): Promise<FilterOptionsResponse> =>
+export const fetchFilterOptions = async (signal?: AbortSignal): Promise<FilterOptionsResponse> =>
   fetchApi<FilterOptionsResponse>(buildApiUrl("/meta/filter-options"), { signal });
 
 export const fetchCatalogPriceRange = async (
   filters: CatalogFilterOptions,
-  signal?: AbortSignal
+  signal?: AbortSignal,
 ): Promise<PriceRangeResponse> => {
   return fetchApi<PriceRangeResponse>(
     buildApiUrl("/meta/price-range", {
       ...serializeCatalogFilters(filters),
     }),
-    { signal }
+    { signal },
   );
 };

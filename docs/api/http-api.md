@@ -68,9 +68,13 @@ Query parameters:
 - `q`: token search against canonical search text and product code
 - `product_codes`: optional comma-separated allowlist, capped at 200 values
   and 120 characters per value; filtering happens before totals and pagination
-- `random_seed`: deterministic pseudo-random ordering for small selections
+- `sort`: `name` (default), `price_asc`, or `price_desc`; unknown values return 400
+- `random_seed`: deterministic pseudo-random ordering for small selections; takes
+  precedence over `sort`
 
-Normal ordering is stable by product name and canonical slug. The exact total
+Name ordering is stable by product name and canonical slug. Price ordering applies
+to the complete filtered result set, places null prices last in both directions,
+and uses name and canonical slug as tie-breaks. Cache keys include the sort value. The exact total
 is calculated with the page query; an out-of-range non-zero offset uses a
 fallback count query.
 Catalog `q` uses the same 120-character limit as search suggestions.

@@ -1,85 +1,78 @@
-import { SearchForm } from "../../components/SearchForm";
-import type { CategoryFilter } from "../../types/filters";
+import type { CatalogSort, CategoryFilter } from "../../types/filters";
 import { Icon } from "../../components/ui/Icon";
-import type { TranslationKey } from "../../i18n/translations";
 import type { Translator } from "../../types/i18n";
 
 interface CatalogToolbarProps {
-  searchValue: string;
-  onSearchSubmit: () => void;
-  onSearchValueChange: (value: string) => void;
-  onSearchActiveChange: (active: boolean) => void;
   onOpenFilters: () => void;
   categoryFilters: CategoryFilter[];
   activeFilterCount: number;
+  sort: CatalogSort;
+  onSortChange: (sort: CatalogSort) => void;
   t: Translator;
   onCategoryToggle: (category: CategoryFilter) => void;
 }
 
 const categoryChips = [
-  { value: "strategicka", labelKey: "catalogChipStrategic" },
-  { value: "rodinna", labelKey: "catalogChipFamily" },
-  { value: "kooperativni", labelKey: "catalogChipCooperative" },
-  { value: "fantasy", labelKey: "catalogChipFantasy" },
-  { value: "ekonomicka", labelKey: "catalogChipEconomic" },
-] satisfies Array<{ value: CategoryFilter; labelKey: TranslationKey }>;
+  ["strategicka", "catalogChipStrategic"],
+  ["rodinna", "catalogChipFamily"],
+  ["kooperativni", "catalogChipCooperative"],
+  ["fantasy", "catalogChipFantasy"],
+  ["ekonomicka", "catalogChipEconomic"],
+] as const;
 
 export const CatalogToolbar = ({
-  searchValue,
-  onSearchSubmit,
-  onSearchValueChange,
-  onSearchActiveChange,
   onOpenFilters,
   categoryFilters,
   activeFilterCount,
+  sort,
+  onSortChange,
   t,
   onCategoryToggle,
 }: CatalogToolbarProps) => (
-  <section className="rounded-lg border border-line bg-white p-5 shadow-sm">
-    <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
-      <SearchForm onSearchSubmit={onSearchSubmit} className="relative focus-within:z-50 flex min-w-0 flex-1 items-center rounded-lg border border-line bg-white px-4 transition focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15">
-        <Icon name="search" className="h-5 w-5 text-muted" />
-        <input
-          maxLength={120}
-          aria-label={t("searchLabel")}
-          value={searchValue}
-          onChange={(event) => {
-            onSearchValueChange(event.target.value);
-            onSearchActiveChange(Boolean(event.target.value.trim()));
-          }}
-          onFocus={() => onSearchActiveChange(true)}
-          placeholder={t("catalogSearchPlaceholder")}
-          className="min-w-0 flex-1 px-3 py-3 text-sm font-semibold outline-none placeholder:text-muted"
-        />
-        <button type="submit" className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white">
-          {t("searchButton")}
-        </button>
-      </SearchForm>
+  <section className="flex min-w-0 flex-col gap-3 rounded-lg border border-line bg-white p-3 sm:p-4 lg:flex-row-reverse lg:items-center lg:justify-between">
+    <div className="flex items-center justify-between gap-3 lg:justify-end">
       <button
         type="button"
         onClick={onOpenFilters}
-        className="inline-flex items-center justify-center gap-2 rounded-lg border border-line px-5 py-3 text-sm font-extrabold text-navy"
+        className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-line px-3 text-sm font-bold lg:hidden"
       >
-        <Icon name="filter" className="h-5 w-5" />
+        <Icon name="filter" className="h-4 w-4" />
         {t("catalogFiltersButton", { count: activeFilterCount })}
       </button>
+      <label className="flex min-w-0 items-center gap-2 text-sm font-bold">
+        <span className="hidden sm:inline">{t("catalogSort")}</span>
+        <select
+          aria-label={t("catalogSort")}
+          value={sort}
+          onChange={(event) => onSortChange(event.target.value as CatalogSort)}
+          className="min-h-11 min-w-0 rounded-lg border border-line bg-white px-2"
+        >
+          <option value="name">{t("catalogSortName")}</option>
+          <option value="price_asc">{t("catalogSortPriceAsc")}</option>
+          <option value="price_desc">{t("catalogSortPriceDesc")}</option>
+        </select>
+      </label>
     </div>
-    <div className="mt-5 flex flex-wrap gap-3">
-      {categoryChips.map((chip) => {
-        const active = categoryFilters.includes(chip.value);
-        return (
-          <button
-            key={chip.value}
-            type="button"
-            onClick={() => onCategoryToggle(chip.value)}
-            className={`rounded-lg border px-5 py-2 text-sm font-bold ${
-              active ? "border-primary bg-primary text-white" : "border-line bg-white text-navy"
-            }`}
-          >
-            {t(chip.labelKey)}
-          </button>
-        );
-      })}
-    </div>
+    <CategoryChips categoryFilters={categoryFilters} onCategoryToggle={onCategoryToggle} t={t} />
   </section>
+);
+
+const CategoryChips = ({
+  categoryFilters,
+  onCategoryToggle,
+  t,
+}: Pick<CatalogToolbarProps, "categoryFilters" | "onCategoryToggle" | "t">) => (
+  <div className="flex gap-2 overflow-x-auto pb-1 lg:flex-wrap">
+    {categoryChips.map(([value, label]) => (
+      <button
+        key={value}
+        type="button"
+        aria-pressed={categoryFilters.includes(value)}
+        onClick={() => onCategoryToggle(value)}
+        className={`min-h-11 shrink-0 rounded-lg border px-3 text-sm font-bold ${categoryFilters.includes(value) ? "border-primary bg-primary text-white" : "border-line text-navy"}`}
+      >
+        {t(label)}
+      </button>
+    ))}
+  </div>
 );

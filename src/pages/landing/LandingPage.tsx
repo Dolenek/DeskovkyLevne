@@ -13,12 +13,7 @@ import { useSearchOverlayState } from "../../hooks/useSearchOverlayState";
 import { useTranslation } from "../../hooks/useTranslation";
 import { buildAbsoluteUrl } from "../../utils/urls";
 import { LANDING_SEO_COPY } from "../../utils/seoContent";
-import {
-  FeaturedProducts,
-  HeroPreview,
-  HowItWorks,
-  StatPill,
-} from "./LandingSections";
+import { FeaturedProducts, HeroPreview, HowItWorks, StatPill } from "./LandingSections";
 import { buildLandingCopy, toAppLocaleTag } from "./landingUtils";
 
 interface LandingPageProps {
@@ -61,10 +56,7 @@ export const LandingPage = ({
   });
   const landingRandomSeed = useMemo(createLandingRandomSeed, []);
   const catalogOverview = useCatalogOverview();
-  const {
-    series: randomCatalogSeries,
-    loading: landingCatalogLoading,
-  } = useFilteredCatalogIndex({
+  const { series: randomCatalogSeries, loading: landingCatalogLoading } = useFilteredCatalogIndex({
     availabilityFilter: "available",
     priceRange: { min: null, max: null },
     categoryFilters: [],
@@ -80,12 +72,10 @@ export const LandingPage = ({
     return randomCatalogSeries[0] ?? null;
   }, [randomCatalogSeries]);
   const randomFeaturedSeries = useMemo(() => {
-    const entriesWithoutHero = randomCatalogSeries.filter(
-      (series) => series.slug !== heroProduct?.slug
-    );
+    const entriesWithoutHero = randomCatalogSeries.filter((series) => series.slug !== heroProduct?.slug);
     return (entriesWithoutHero.length ? entriesWithoutHero : randomCatalogSeries).slice(
       0,
-      FEATURED_PAGE_SIZE
+      FEATURED_PAGE_SIZE,
     );
   }, [heroProduct?.slug, randomCatalogSeries]);
   const trackedGameCount =
@@ -97,7 +87,8 @@ export const LandingPage = ({
       "@type": "ListItem",
       position: index + 1,
       name: series.label,
-      url: buildAbsoluteUrl(`/deskove-hry/${encodeURIComponent(series.slug)}`) ?? `/deskove-hry/${series.slug}`,
+      url:
+        buildAbsoluteUrl(`/deskove-hry/${encodeURIComponent(series.slug)}`) ?? `/deskove-hry/${series.slug}`,
     }));
     return [
       {
@@ -114,7 +105,14 @@ export const LandingPage = ({
 
   return (
     <div className="min-h-screen bg-background text-navy">
-      <Seo title={seoCopy.title} description={seoCopy.description} path={landingPath} locale={locale} keywords={seoCopy.keywords} structuredData={structuredData} />
+      <Seo
+        title={seoCopy.title}
+        description={seoCopy.description}
+        path={landingPath}
+        locale={locale}
+        keywords={seoCopy.keywords}
+        structuredData={structuredData}
+      />
       <AppHeader
         onSearchSubmit={submitSearch}
         searchValue={searchState.searchValue}
@@ -152,7 +150,10 @@ export const LandingPage = ({
                 {copy.heading}
               </h1>
               <p className="mt-6 max-w-2xl text-lg leading-8 text-muted">{copy.subheading}</p>
-              <SearchForm onSearchSubmit={submitSearch} className="relative focus-within:z-50 mt-8 flex max-w-2xl rounded-lg border border-line bg-white p-2 shadow-lg">
+              <SearchForm
+                onSearchSubmit={submitSearch}
+                className="relative focus-within:z-50 mt-8 flex max-w-2xl rounded-lg border border-line bg-white p-2 shadow-lg"
+              >
                 <Icon name="search" className="ml-3 mt-3 h-5 w-5 text-muted" />
                 <input
                   maxLength={120}
@@ -174,13 +175,13 @@ export const LandingPage = ({
                 </button>
               </SearchForm>
               <div className="mt-8 grid gap-5 sm:grid-cols-3">
+                <StatPill icon="spark" value={trackedGameCount} label={t("landingTrackedGames")} />
                 <StatPill
-                  icon="spark"
-                  value={trackedGameCount}
-                  label={t("landingTrackedGames")}
+                  icon="store"
+                  value={t("landingComparisonValue")}
+                  label={t("landingComparisonLabel")}
                 />
-                <StatPill icon="store" value="15" label={t("landingShopCount")} />
-                <StatPill icon="refresh" value="99 %" label={t("landingDailyUpdates")} />
+                <StatPill icon="barChart" value={t("landingHistoryValue")} label={t("landingHistoryLabel")} />
               </div>
             </div>
             <HeroPreview
@@ -202,7 +203,6 @@ export const LandingPage = ({
             onNavigate={onNavigateToProduct}
             onShowAll={() => onNavigatePath("/deskove-hry")}
           />
-
         </div>
       </main>
       <AppFooter />

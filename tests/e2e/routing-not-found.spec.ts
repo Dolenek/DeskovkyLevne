@@ -45,7 +45,7 @@ test("root renders landing page and catalog lives at deskove-hry", async ({ page
   await page.goto("/deskove-hry");
   await expect(page.getByText(/Showing/)).toBeVisible();
   await expect(page.getByRole("banner").getByRole("link", { name: "Catalog" })).toBeVisible();
-  await expect(page.getByRole("button", { name: /Filters \(\d+\)/ })).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Sort by" })).toBeVisible();
 });
 
 test("a stale detail response cannot replace the current product", async ({ page }) => {
@@ -60,11 +60,13 @@ test("a stale detail response cannot replace the current product", async ({ page
       product_name_original: productName,
       product_name_normalized: slug,
     };
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify(productDetailResponseFromRows([row])),
-    }).catch(() => undefined);
+    await route
+      .fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(productDetailResponseFromRows([row])),
+      })
+      .catch(() => undefined);
   });
 
   await page.goto("/deskove-hry/alpha-game");
@@ -121,20 +123,20 @@ test("unknown routes render explicit not-found page", async ({ page }) => {
 });
 
 test("unknown product API response renders product not-found state", async ({ page }) => {
-	await page.route("**/api/v1/**", async (route) => {
-		const url = new URL(route.request().url());
-		if (url.pathname === "/api/v1/products/missing-game") {
-			await route.fulfill({
-				status: 404,
-				contentType: "application/json",
-				body: JSON.stringify({ error: "product not found", code: "not_found" }),
-			});
-			return;
-		}
-		await route.fulfill({ status: 200, contentType: "application/json", body: "{\"rows\":[]}" });
-	});
+  await page.route("**/api/v1/**", async (route) => {
+    const url = new URL(route.request().url());
+    if (url.pathname === "/api/v1/products/missing-game") {
+      await route.fulfill({
+        status: 404,
+        contentType: "application/json",
+        body: JSON.stringify({ error: "product not found", code: "not_found" }),
+      });
+      return;
+    }
+    await route.fulfill({ status: 200, contentType: "application/json", body: '{"rows":[]}' });
+  });
 
-	await page.goto("/deskove-hry/missing-game");
-	await expect(page.getByText(/missing-game/)).toBeVisible();
-	await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", "noindex,nofollow");
+  await page.goto("/deskove-hry/missing-game");
+  await expect(page.getByText(/missing-game/)).toBeVisible();
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", "noindex,nofollow");
 });
