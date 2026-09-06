@@ -8,6 +8,7 @@ import type { ProductSeries } from "../../types/product";
 export const FILTERED_PAGE_SIZE = 10;
 
 export interface FilteredProductsSectionProps {
+  query?: string;
   series: ProductSeries[];
   total: number;
   loading: boolean;
@@ -23,6 +24,7 @@ export interface FilteredProductsSectionProps {
 }
 
 export const FilteredProductsSection = ({
+  query,
   series,
   total,
   loading,
@@ -41,7 +43,15 @@ export const FilteredProductsSection = ({
 
   if (loading) return <CatalogSkeleton itemCount={FILTERED_PAGE_SIZE} />;
   if (error) return <ErrorState message={error} retryLabel={t("retry")} onRetry={reload} />;
-  if (total === 0) return <EmptyState message={t("filteredResultsEmpty")} />;
+  if (total === 0) return (
+    <div className="space-y-4">
+      <p role="status">{t("filteredResultsShowing", { from: 0, to: 0, total: 0 })}</p>
+      <EmptyState message={query ? t("searchNoResults", { term: query }) : t("filteredResultsEmpty")} />
+      {activeFilterChips.length > 0 ? (
+        <button type="button" onClick={onResetFilters} className="font-bold text-primary">{t("filteredResetAll")}</button>
+      ) : null}
+    </div>
+  );
 
   const showingFrom = (page - 1) * FILTERED_PAGE_SIZE + 1;
   const showingTo = Math.min(page * FILTERED_PAGE_SIZE, total);

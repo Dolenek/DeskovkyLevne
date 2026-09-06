@@ -33,8 +33,9 @@ test("root renders landing page and catalog lives at deskove-hry", async ({ page
   const landingSearch = page.getByPlaceholder("Zadejte název deskové hry...");
   await landingSearch.fill("alpha");
   await page.keyboard.press("Escape");
-  await page.getByRole("button", { name: "Vyhledat" }).click();
-  await expect(landingSearch).toBeFocused();
+  await page.locator("main").getByRole("button", { name: "Vyhledat" }).click();
+  await expect(page).toHaveURL(/\/deskove-hry\?q=alpha$/);
+  await page.goBack();
 
   await page.getByRole("button", { name: "English" }).click();
   await expect(page.getByRole("heading", { name: "How it works" })).toBeVisible();

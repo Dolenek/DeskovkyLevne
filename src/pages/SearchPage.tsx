@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef } from "react";
+import { buildCatalogSearchPath } from "../routing/catalogSearch";
 import { Seo } from "../components/Seo";
 import { useTranslation } from "../hooks/useTranslation";
 import { FiltersPanel } from "./search/FiltersPanel";
@@ -13,6 +14,7 @@ import { CatalogToolbar } from "./search/CatalogToolbar";
 import { useSearchPageState } from "./search/useSearchPageState";
 
 interface SearchPageProps {
+  query: string;
   onProductNavigate: (productSlug: string) => void;
   onNavigatePath: (path: string) => void;
   activePath: string;
@@ -21,12 +23,13 @@ interface SearchPageProps {
 const SEARCH_CANDIDATE_LIMIT = Number(import.meta.env.VITE_SEARCH_MAX_SERIES ?? "60");
 const OVERLAY_SEARCH_LIMIT = SEARCH_CANDIDATE_LIMIT;
 
-const SearchPage = ({ onProductNavigate, onNavigatePath, activePath }: SearchPageProps) => {
+const SearchPage = ({ query, onProductNavigate, onNavigatePath, activePath }: SearchPageProps) => {
   const { t, locale } = useTranslation();
   const homeSeo = useMemo(() => HOME_SEO_COPY[locale], [locale]);
   const homeStructuredData = useMemo(() => buildHomeStructuredData(locale), [locale]);
-  const state = useSearchPageState(SEARCH_CANDIDATE_LIMIT, OVERLAY_SEARCH_LIMIT, t);
+  const state = useSearchPageState(SEARCH_CANDIDATE_LIMIT, OVERLAY_SEARCH_LIMIT, t, query);
   const { setSearchActive } = state;
+  const submitSearch = () => onNavigatePath(buildCatalogSearchPath(state.searchValue));
   const searchInputRef = useRef<HTMLInputElement>(null);
   const activateHeaderSearch = useCallback(() => {
     setSearchActive(true);
@@ -48,6 +51,7 @@ const SearchPage = ({ onProductNavigate, onNavigatePath, activePath }: SearchPag
         structuredData={homeStructuredData}
       />
       <AppHeader
+        onSearchSubmit={submitSearch}
         searchValue={state.searchValue}
         onSearchChange={state.handleSearchChange}
         onSearchFocus={activateHeaderSearch}
@@ -99,7 +103,9 @@ const SearchPage = ({ onProductNavigate, onNavigatePath, activePath }: SearchPag
       />
       <main className="px-4 pb-12 pt-6 sm:px-6 lg:px-10">
         <div className="mx-auto flex max-w-7xl flex-col gap-8">
+          {query ? <h1 className="break-words text-2xl font-extrabold">{t("searchResultsFor", { term: query })}</h1> : null}
           <CatalogToolbar
+            onSearchSubmit={submitSearch}
             searchValue={state.searchValue}
             onSearchValueChange={state.handleSearchChange}
             onSearchActiveChange={state.setSearchActive}
@@ -136,6 +142,7 @@ const SearchPage = ({ onProductNavigate, onNavigatePath, activePath }: SearchPag
               />
             </div>
             <FilteredProductsSection
+              query={query}
               series={state.filteredSeries}
               total={state.filteredTotal}
               loading={state.filteredLoading}

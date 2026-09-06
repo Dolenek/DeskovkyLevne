@@ -124,7 +124,7 @@ test("manual price filters normalize negative and reversed bounds", async ({ pag
   const invalidRequest = catalogUrls.some((requestUrl) => {
     const url = new URL(requestUrl);
     const min = Number(url.searchParams.get("min_price"));
-    const max = Number(url.searchParams.get("max_price"));
+    const max = url.searchParams.has("max_price") ? Number(url.searchParams.get("max_price")) : Infinity;
     return min < 0 || max < 0 || min > max;
   });
   expect(invalidRequest).toBe(false);

@@ -62,6 +62,7 @@ export interface ProductDetailResponse {
 }
 
 export interface CatalogFilterOptions {
+  query?: string;
   availability?: AvailabilityFilter;
   minPrice?: number | null;
   maxPrice?: number | null;

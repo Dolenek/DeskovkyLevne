@@ -128,7 +128,7 @@ const mockKeyboardSearchApi = async (
   });
 };
 
-test("slash focuses search and keyboard opens highlighted suggestion", async ({ page }) => {
+test("slash focuses search and Enter opens all results after arrow navigation", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 1000 });
   await mockKeyboardSearchApi(page);
   await page.goto("/deskove-hry");
@@ -143,7 +143,7 @@ test("slash focuses search and keyboard opens highlighted suggestion", async ({ 
   await expect(page.getByRole("button", { name: /Alpha Game/ })).toBeVisible();
   await expect(page.getByText("zaměřit hledání")).toHaveCount(0);
   await expect(page.getByText("procházet návrhy")).toBeVisible();
-  await expect(page.getByText("otevřít výsledek")).toBeVisible();
+  await expect(page.getByText("zobrazit všechny výsledky")).toBeVisible();
   await expect(page.getByText("zavřít")).toBeVisible();
   await expect(page.locator('[data-search-result-row="true"]')).not.toHaveCount(0);
   const tallViewportResultCount = await page.locator('[data-search-result-row="true"]').count();
@@ -172,7 +172,9 @@ test("slash focuses search and keyboard opens highlighted suggestion", async ({ 
   await expect(page.locator('[data-active-result="true"]')).toContainText("Alpha Game");
 
   await page.keyboard.press("Enter");
-  await expect(page).toHaveURL(/\/deskove-hry\/alpha-game$/);
+  await expect(page).toHaveURL(/\/deskove-hry\?q=game$/);
+  await expect(page.locator('[data-search-result-row="true"]')).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Výsledky vyhledávání pro „game“" })).toBeVisible();
 });
 
 test("escape closes suggestions and slash is ignored inside search input", async ({ page }) => {

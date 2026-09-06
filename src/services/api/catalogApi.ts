@@ -75,6 +75,7 @@ export const fetchFilteredCatalogIndex = async (
 
   const payload = await fetchApi<CatalogResponse>(
     buildApiUrl("/catalog", {
+      q: normalizeSearchTerm(filters.query ?? "") || null,
       offset: Math.max(0, from),
       limit: size,
       ...serializeCatalogFilters(filters),

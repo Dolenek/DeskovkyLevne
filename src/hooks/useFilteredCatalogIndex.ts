@@ -14,6 +14,7 @@ import { buildSeriesFromCatalogIndexRow } from "../utils/catalogTransforms";
 import { isApiFallbackFailure } from "../utils/networkErrors";
 
 interface UseFilteredCatalogIndexOptions {
+  query?: string;
   priceRange: { min: number | null; max: number | null };
   availabilityFilter: AvailabilityFilter;
   categoryFilters: CategoryFilter[];
@@ -46,6 +47,7 @@ export const useFilteredCatalogIndex = (
   options: UseFilteredCatalogIndexOptions
 ): UseFilteredCatalogIndexResult => {
   const {
+    query = "",
     availabilityFilter,
     priceRange,
     page,
@@ -95,6 +97,7 @@ export const useFilteredCatalogIndex = (
       try {
         const offset = Math.max(0, (page - 1) * pageSize);
         const { rows, total } = await fetchFilteredCatalogIndex(offset, pageSize, {
+          query,
           availability: availabilityFilter,
           minPrice: priceRange.min,
           maxPrice: priceRange.max,
@@ -115,7 +118,7 @@ export const useFilteredCatalogIndex = (
         if (controller.signal.aborted || requestRef.current !== requestId) {
           return;
         }
-        if (isApiFallbackFailure(err)) {
+        if (!query && isApiFallbackFailure(err)) {
           setSeries([buildSeriesFromCatalogIndexRow(MOCK_CATALOG_ROW)]);
           setTotal(1);
           setError(null);
@@ -148,6 +151,7 @@ export const useFilteredCatalogIndex = (
     priceRange.max,
     priceRange.min,
     randomSeed,
+    query,
     reloadToken,
   ]);
 

@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 interface UseSearchOverlayKeyboardOptions {
   visible: boolean;
   resultCount: number;
-  onSelectActive: (index: number) => void;
   onClose: () => void;
 }
 
@@ -16,7 +15,6 @@ const previousIndex = (current: number, resultCount: number) =>
 export const useSearchOverlayKeyboard = ({
   visible,
   resultCount,
-  onSelectActive,
   onClose,
 }: UseSearchOverlayKeyboardOptions) => {
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -35,6 +33,9 @@ export const useSearchOverlayKeyboard = ({
   useEffect(() => {
     if (!visible) return;
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || event.isComposing) return;
+      if (!(event.target instanceof HTMLInputElement)) return;
+      if (!event.target.closest('form[role="search"]')) return;
       if (event.key === "Escape") {
         event.preventDefault();
         onClose();
@@ -50,15 +51,11 @@ export const useSearchOverlayKeyboard = ({
         setActiveIndex((current) => previousIndex(current, resultCount));
         return;
       }
-      if (event.key === "Enter" && activeIndex >= 0) {
-        event.preventDefault();
-        onSelectActive(activeIndex);
-      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [activeIndex, onClose, onSelectActive, resultCount, visible]);
+  }, [onClose, resultCount, visible]);
 
   return { activeIndex, setActiveIndex };
 };

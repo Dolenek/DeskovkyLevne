@@ -1,3 +1,4 @@
+import { SearchForm } from "../../components/SearchForm";
 import type { CategoryFilter } from "../../types/filters";
 import { Icon } from "../../components/ui/Icon";
 import type { TranslationKey } from "../../i18n/translations";
@@ -5,6 +6,7 @@ import type { Translator } from "../../types/i18n";
 
 interface CatalogToolbarProps {
   searchValue: string;
+  onSearchSubmit: () => void;
   onSearchValueChange: (value: string) => void;
   onSearchActiveChange: (active: boolean) => void;
   onOpenFilters: () => void;
@@ -24,6 +26,7 @@ const categoryChips = [
 
 export const CatalogToolbar = ({
   searchValue,
+  onSearchSubmit,
   onSearchValueChange,
   onSearchActiveChange,
   onOpenFilters,
@@ -34,9 +37,11 @@ export const CatalogToolbar = ({
 }: CatalogToolbarProps) => (
   <section className="rounded-lg border border-line bg-white p-5 shadow-sm">
     <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
-      <div className="flex min-w-0 flex-1 items-center rounded-lg border border-line px-4 transition focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15">
+      <SearchForm onSearchSubmit={onSearchSubmit} className="relative focus-within:z-50 flex min-w-0 flex-1 items-center rounded-lg border border-line bg-white px-4 transition focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15">
         <Icon name="search" className="h-5 w-5 text-muted" />
         <input
+          maxLength={120}
+          aria-label={t("searchLabel")}
           value={searchValue}
           onChange={(event) => {
             onSearchValueChange(event.target.value);
@@ -46,7 +51,10 @@ export const CatalogToolbar = ({
           placeholder={t("catalogSearchPlaceholder")}
           className="min-w-0 flex-1 px-3 py-3 text-sm font-semibold outline-none placeholder:text-muted"
         />
-      </div>
+        <button type="submit" className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white">
+          {t("searchButton")}
+        </button>
+      </SearchForm>
       <button
         type="button"
         onClick={onOpenFilters}

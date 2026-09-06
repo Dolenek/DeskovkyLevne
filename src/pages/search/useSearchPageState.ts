@@ -71,14 +71,15 @@ interface SearchPageState {
 export const useSearchPageState = (
   maxSearchSeries: number,
   overlaySearchLimit: number,
-  t: Translator
+  t: Translator,
+  query: string
 ): SearchPageState => {
-  const [searchValue, setSearchValue] = useState("");
+  const [searchValue, setSearchValue] = useState(query);
   const [searchActive, setSearchActive] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [availabilityFilter, setAvailabilityFilter] = useState<AvailabilityFilter>("all");
   const [selectedSeries, setSelectedSeries] = useState<ProductSeries | null>(null);
-  const [priceFilter, setPriceFilter] = useState({ min: "200", max: "1500" });
+  const [priceFilter, setPriceFilter] = useState({ min: "", max: "" });
   const [pricePage, setPricePage] = useState(1);
   const [categoryFilters, setCategoryFilters] = useState<CategoryFilter[]>([]);
   const [playerRangeFilters, setPlayerRangeFilters] = useState<PlayerRangeFilter[]>([]);
@@ -110,6 +111,7 @@ export const useSearchPageState = (
     error: filteredError,
     reload: reloadFiltered,
   } = useFilteredCatalogIndex({
+    query,
     priceRange,
     availabilityFilter,
     categoryFilters,

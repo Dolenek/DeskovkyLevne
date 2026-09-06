@@ -1,4 +1,6 @@
 import { useCallback, useMemo, useRef } from "react";
+import { SearchForm } from "../../components/SearchForm";
+import { buildCatalogSearchPath } from "../../routing/catalogSearch";
 import { AppHeader } from "../../components/AppHeader";
 import { ProductSearchOverlay } from "../../components/ProductSearchOverlay";
 import { Seo } from "../../components/Seo";
@@ -47,6 +49,7 @@ export const LandingPage = ({
   const landingPath = variant === "levne" ? "/" : "/deskove-hry";
   const searchState = useSearchOverlayState(OVERLAY_LIMIT);
   const { setSearchActive } = searchState;
+  const submitSearch = () => onNavigatePath(buildCatalogSearchPath(searchState.searchValue));
   const searchInputRef = useRef<HTMLInputElement>(null);
   const activateHeaderSearch = useCallback(() => {
     setSearchActive(true);
@@ -113,6 +116,7 @@ export const LandingPage = ({
     <div className="min-h-screen bg-background text-navy">
       <Seo title={seoCopy.title} description={seoCopy.description} path={landingPath} locale={locale} keywords={seoCopy.keywords} structuredData={structuredData} />
       <AppHeader
+        onSearchSubmit={submitSearch}
         searchValue={searchState.searchValue}
         onSearchChange={(value) => {
           searchState.setSearchValue(value);
@@ -148,10 +152,11 @@ export const LandingPage = ({
                 {copy.heading}
               </h1>
               <p className="mt-6 max-w-2xl text-lg leading-8 text-muted">{copy.subheading}</p>
-              <div className="mt-8 flex max-w-2xl rounded-lg border border-line bg-white p-2 shadow-lg">
+              <SearchForm onSearchSubmit={submitSearch} className="relative focus-within:z-50 mt-8 flex max-w-2xl rounded-lg border border-line bg-white p-2 shadow-lg">
                 <Icon name="search" className="ml-3 mt-3 h-5 w-5 text-muted" />
                 <input
-                  ref={searchInputRef}
+                  maxLength={120}
+                  aria-label={t("searchLabel")}
                   value={searchState.searchValue}
                   onChange={(event) => {
                     searchState.setSearchValue(event.target.value);
@@ -162,16 +167,12 @@ export const LandingPage = ({
                   className="min-w-0 flex-1 px-3 py-3 text-sm font-semibold outline-none placeholder:text-muted"
                 />
                 <button
-                  type="button"
-                  onClick={() => {
-                    searchInputRef.current?.focus();
-                    searchState.setSearchActive(true);
-                  }}
+                  type="submit"
                   className="rounded-lg bg-primary px-5 py-3 text-sm font-extrabold text-white"
                 >
                   {t("searchButton")}
                 </button>
-              </div>
+              </SearchForm>
               <div className="mt-8 grid gap-5 sm:grid-cols-3">
                 <StatPill
                   icon="spark"

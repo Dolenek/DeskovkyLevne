@@ -12,24 +12,29 @@ const normalizePath = (value: string): string => {
   if (!trimmed || trimmed === "/") {
     return "/";
   }
-  return trimmed.replace(/\/+$/, "");
+  const [pathname, search] = trimmed.split(/\?(.*)/s);
+  return (pathname.replace(/\/+$/, "") || "/") + (search === undefined ? "" : `?${search}`);
 };
 
 const readPath = (): string => {
   if (typeof window === "undefined") {
     return "/";
   }
-  return normalizePath(window.location.pathname);
+  return normalizePath(window.location.pathname + window.location.search);
 };
 
 export const usePathNavigation = () => {
   const [path, setPath] = useState<string>(() => readPath());
+  const [navigationKey, setNavigationKey] = useState(0);
 
   useEffect(() => {
     if (typeof window === "undefined") {
       return;
     }
-    const handlePopState = () => setPath(readPath());
+    const handlePopState = () => {
+      setPath(readPath());
+      setNavigationKey((current) => current + 1);
+    };
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
@@ -37,6 +42,7 @@ export const usePathNavigation = () => {
   const navigate = useCallback(
     (target: string, options?: NavigateOptions) => {
       const normalized = normalizePath(target);
+      setNavigationKey((current) => current + 1);
       if (typeof window === "undefined") {
         setPath(normalized);
         return;
@@ -55,5 +61,5 @@ export const usePathNavigation = () => {
     []
   );
 
-  return { path, navigate };
+  return { path, navigate, navigationKey };
 };

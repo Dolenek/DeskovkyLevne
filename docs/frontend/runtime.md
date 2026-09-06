@@ -4,6 +4,9 @@
 - Home landing page: `/`
 - Legacy landing alias: `/levne-deskovky` with canonical SEO pointing to `/`
 - Catalog page: `/deskove-hry`
+- Search results: `/deskove-hry?q=encoded-query`; opening a link, refreshing,
+  and browser Back/Forward restore the submitted query. Filters and page
+  numbers are local UI state and are not serialized in the URL.
 - Product detail page: `/deskove-hry/:slug`
 - Unknown paths render an explicit not-found screen.
 
@@ -67,8 +70,11 @@ SEO canonical link with the resolved canonical slug.
 - The desktop header uses a three-zone layout with centered search. Search
   overlay activates on debounced input and shows suggestions.
 - The `/` key focuses the header search from non-editable page content. While
-  suggestions are open, arrow keys move the highlighted suggestion, `Enter`
-  opens it, and `Escape` closes the overlay without clearing the query.
+  suggestions are open, arrow keys move the highlighted suggestion and
+  `Escape` closes the overlay without clearing the query. Enter in any search
+  field always submits the current text, including after arrow navigation.
+  Clicking a suggestion opens its product detail. Other buttons retain native
+  keyboard activation.
 - Selecting a search suggestion from a product detail immediately invalidates
   data loaded for the previous slug, so stale product data cannot restore the
   previous product route while the new request is loading.
@@ -80,6 +86,21 @@ SEO canonical link with the resolved canonical slug.
 - Catalog renders a search/filter toolbar, category chips, sticky desktop
   filter sidebar, mobile filter drawer, active filter chips, product card grid,
   and pagination controls.
+- Header, landing hero, and catalog search forms submit with Enter or their
+  search button. Typing only updates suggestions; the grid uses the submitted
+  query. Submission does not wait for the suggestion debounce.
+- Each submission resets filters and pagination, even for the same query.
+  Catalog starts without price bounds. Applying or resetting filters and
+  changing pages preserves the submitted query.
+- Search results use `/api/v1/catalog?q=...`, its exact total, stable name/slug
+  ordering, and ten items per page. They are not limited to suggestion candidates.
+  The heading displays the submitted query; no matches show a query-specific
+  empty state. Active filters can be reset from an empty result.
+- Search fields and URL queries are capped at 120 characters. The URL and
+  heading preserve the trimmed text; API queries use the existing normalization.
+  Empty or punctuation-only submissions open the unfiltered catalog.
+- Suggestion panels appear below the active search form so it remains usable
+  on desktop and mobile.
 - Catalog cards use backend `seller_count` and do not render ratings,
   review counts, or favorite controls without backend data.
 - Locale switching affects static UI labels, number/date formatting, normalized
@@ -97,9 +118,10 @@ SEO canonical link with the resolved canonical slug.
   Reversed bounds are ordered from lower to higher, and the normalized values
   are written back to both inputs when either input loses focus.
 - Filter options and price bounds are fetched from metadata endpoints, not a full in-browser catalog preload.
-- Catalog and search overlay render one mock product when API requests cannot
+- Unqueried catalog and search overlay render one mock product when API requests cannot
   be reached because the browser reports `Failed to fetch` or the API/proxy
-  returns a transient 5xx failure.
+  returns a transient 5xx failure. Text-search catalog failures instead display
+  an error with retry and never insert an unrelated mock result.
 - Product detail renders an image-led two-column hero with a wider gallery and
   narrower text/price column, followed by a seller-offer table, actual price
   statistics, a multi-seller history chart with range controls, interactive

@@ -1,4 +1,5 @@
 import type { MouseEvent, RefObject } from "react";
+import { SearchForm } from "./SearchForm";
 import { LocaleSwitcher } from "./LocaleSwitcher";
 import type { TranslationHook } from "../hooks/useTranslation";
 import type { TranslationKey } from "../i18n/translations";
@@ -9,6 +10,7 @@ import { handleInAppNavigation } from "../utils/navigation";
 interface AppHeaderProps {
   searchValue: string;
   onSearchChange: (value: string) => void;
+  onSearchSubmit: () => void;
   onSearchFocus?: () => void;
   searchInputRef?: RefObject<HTMLInputElement | null>;
   onLogoClick?: () => void;
@@ -24,6 +26,7 @@ const navItems = [
 export const AppHeader = ({
   searchValue,
   onSearchChange,
+  onSearchSubmit,
   onSearchFocus,
   searchInputRef,
   onLogoClick,
@@ -38,12 +41,6 @@ export const AppHeader = ({
       }
       handleInAppNavigation(event, () => onNavigatePath(path));
     };
-
-  const handleSearchButtonClick = () => {
-    onSearchFocus?.();
-    searchInputRef?.current?.focus();
-    searchInputRef?.current?.select();
-  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-line bg-white/95 shadow-sm backdrop-blur">
@@ -81,10 +78,12 @@ export const AppHeader = ({
           </nav>
         </div>
 
-        <div className="flex items-center gap-3 lg:justify-self-center lg:w-full">
+        <SearchForm onSearchSubmit={onSearchSubmit} className="flex items-center gap-3 lg:justify-self-center lg:w-full">
           <div className="flex min-w-0 flex-1 items-center rounded-lg border border-line bg-white shadow-sm transition focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15">
             <Icon name="search" className="ml-3 h-5 w-5 flex-shrink-0 text-muted" />
             <input
+              maxLength={120}
+              aria-label={t("searchLabel")}
               ref={searchInputRef}
               value={searchValue}
               onChange={(event) => onSearchChange(event.target.value)}
@@ -104,14 +103,13 @@ export const AppHeader = ({
             ) : null}
           </div>
           <button
-            type="button"
-            onClick={handleSearchButtonClick}
+            type="submit"
             className="flex h-11 w-12 items-center justify-center rounded-lg bg-primary text-white shadow-sm transition hover:bg-emerald-700"
-            aria-label={t("searchLabel")}
+            aria-label={t("searchButton")}
           >
             <Icon name="search" className="h-5 w-5" />
           </button>
-        </div>
+        </SearchForm>
 
         <div className="hidden justify-self-end xl:block">
           <LocaleSwitcher showLabel={false} />

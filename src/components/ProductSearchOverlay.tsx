@@ -1,10 +1,10 @@
-import { useCallback } from "react";
 import type { ReactNode, RefObject } from "react";
 import type { ProductSearchResult } from "../types/product";
 import { formatPrice } from "../utils/numberFormat";
 import type { TranslationHook } from "../hooks/useTranslation";
 import { useDynamicSearchResultLimit } from "../hooks/useDynamicSearchResultLimit";
 import { useSearchOverlayKeyboard } from "../hooks/useSearchOverlayKeyboard";
+import { useSearchOverlayPosition } from "../hooks/useSearchOverlayPosition";
 import { SearchOverlaySkeleton } from "./skeleton";
 import { Icon } from "./ui/Icon";
 import { SearchKeyboardHints } from "./search-overlay/SearchKeyboardHints";
@@ -83,7 +83,8 @@ export const ProductSearchOverlay = ({
   onClose,
   ...contentProps
 }: ProductSearchOverlayProps) => {
-  const { results, loading, error, onSelect } = contentProps;
+  const { results, loading, error } = contentProps;
+  const top = useSearchOverlayPosition(visible);
   const { headerRef, hintsRef, listRef, panelRef, visibleResultLimit } =
     useDynamicSearchResultLimit({
       visible,
@@ -92,20 +93,10 @@ export const ProductSearchOverlay = ({
   const fallbackResultLimit = Math.min(results.length, 10);
   const effectiveResultLimit = visibleResultLimit || fallbackResultLimit;
   const visibleResults = results.slice(0, effectiveResultLimit);
-  const handleSelectActive = useCallback(
-    (index: number) => {
-      const selectedResult = visibleResults[index];
-      if (selectedResult) {
-        onSelect(selectedResult);
-      }
-    },
-    [onSelect, visibleResults]
-  );
   const selectableCount = loading || error ? 0 : visibleResults.length;
   const { activeIndex, setActiveIndex } = useSearchOverlayKeyboard({
     visible,
     resultCount: selectableCount,
-    onSelectActive: handleSelectActive,
     onClose,
   });
 
@@ -114,7 +105,7 @@ export const ProductSearchOverlay = ({
   }
 
   return (
-    <div className="fixed inset-0 z-40 flex items-start justify-center px-4 pt-28 sm:px-6 lg:px-10 lg:pt-24">
+    <div style={{ paddingTop: top }} className="fixed inset-0 z-40 flex items-start justify-center px-4 sm:px-6 lg:px-10">
       <button
         type="button"
         className="absolute inset-0 bg-navy/20 backdrop-blur-sm"
@@ -123,7 +114,8 @@ export const ProductSearchOverlay = ({
       />
       <div
         ref={panelRef}
-        className="relative z-10 flex max-h-[calc(100vh-8.5rem)] w-full max-w-3xl flex-col rounded-lg border border-line bg-white p-4 shadow-2xl"
+        style={{ maxHeight: `calc(100dvh - ${top + 16}px)` }}
+        className="relative z-10 flex w-full max-w-3xl flex-col rounded-lg border border-line bg-white p-4 shadow-2xl"
       >
         <div
           ref={headerRef}

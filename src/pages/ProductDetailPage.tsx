@@ -16,6 +16,7 @@ import { useSearchOverlayState } from "../hooks/useSearchOverlayState";
 import { useSearchHotkey } from "../hooks/useSearchHotkey";
 import { useTranslation } from "../hooks/useTranslation";
 import { useProductDetail } from "../hooks/useProductDetail";
+import { buildCatalogSearchPath } from "../routing/catalogSearch";
 import { buildProductDetailPath } from "../routing/routes";
 import {
   buildProductSeoDescription,
@@ -100,6 +101,7 @@ export const ProductDetailPage = ({
         structuredData={structuredData ?? undefined}
       />
       <AppHeader
+        onSearchSubmit={() => onNavigatePath(buildCatalogSearchPath(searchState.searchValue))}
         searchValue={searchState.searchValue}
         onSearchChange={(value) => {
           searchState.setSearchValue(value);

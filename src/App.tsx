@@ -6,7 +6,7 @@ import { LandingPage } from "./pages/landing/LandingPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { buildProductDetailPath, parseRoute, type AppRoute } from "./routing/routes";
 
-type RouteNavigation = Pick<ReturnType<typeof usePathNavigation>, "path" | "navigate">;
+type RouteNavigation = ReturnType<typeof usePathNavigation>;
 
 const ProductDetailRoute = ({ slug, path, navigate }: RouteNavigation & { slug: string }) => (
   <ProductDetailPage
@@ -19,7 +19,7 @@ const ProductDetailRoute = ({ slug, path, navigate }: RouteNavigation & { slug: 
   />
 );
 
-const RouteContent = ({ route, path, navigate }: RouteNavigation & { route: AppRoute }) => {
+const RouteContent = ({ route, path, navigate, navigationKey }: RouteNavigation & { route: AppRoute }) => {
   if (route.kind === "home" || route.kind === "landing-levne") {
     return (
       <LandingPage
@@ -33,7 +33,7 @@ const RouteContent = ({ route, path, navigate }: RouteNavigation & { route: AppR
   }
 
   if (route.kind === "detail") {
-    return <ProductDetailRoute slug={route.slug} path={path} navigate={navigate} />;
+    return <ProductDetailRoute slug={route.slug} path={path} navigate={navigate} navigationKey={navigationKey} />;
   }
 
   if (route.kind === "not-found") {
@@ -47,6 +47,8 @@ const RouteContent = ({ route, path, navigate }: RouteNavigation & { route: AppR
 
   return (
     <SearchPage
+      key={navigationKey}
+      query={route.query}
       onProductNavigate={(slug) => navigate(buildProductDetailPath(slug))}
       onNavigatePath={navigate}
       activePath={path}
