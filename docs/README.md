@@ -8,6 +8,7 @@ This folder is the canonical source of truth for repository documentation.
 - `api/http-api.md`: backend HTTP API contract.
 - `frontend/runtime.md`: frontend runtime behavior and routing.
 - `operations/build-and-deploy.md`: build pipeline and deployment runbook.
+- `operations/continuous-deployment.md`: automatic production deployment and recovery.
 - `operations/configuration.md`: environment variables and defaults.
 - `operations/data-refresh.md`: read-model refresh operations.
 - `contributing/documentation-standards.md`: documentation contribution rules.

@@ -1,0 +1,16 @@
+[Unit]
+Description=Deploy Deskovky Levne main after successful GitHub CI
+Wants=network-online.target
+After=network-online.target docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /usr/local/lib/deskovky-deploy/deploy.py
+TimeoutStartSec=45min
+TimeoutStopSec=5min
+KillSignal=SIGINT
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+UMask=0022
+Environment=PYTHONUNBUFFERED=1

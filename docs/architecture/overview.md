@@ -56,6 +56,12 @@
 
 Build-time slug source is `catalog_slug_state`. If Supabase credentials are missing, build-time scripts fall back to static routes only.
 
+## Production Delivery
+GitHub Actions validates `main`. An outbound-only systemd deployment agent on
+the production host checks the exact revision's CI result, builds a separate
+release, and activates the frontend and Docker Compose API stack with smoke
+checks and rollback. See [Continuous Deployment](../operations/continuous-deployment.md).
+
 ## Design Decisions
 - Slug-first routing and data identity (`product_name_normalized`).
 - Approved aliases can map scraped slugs and seller-specific product codes to a

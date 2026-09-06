@@ -116,3 +116,16 @@ endpoints then continue to work directly against PostgreSQL.
 ## Source Files
 - Frontend env usage: `src/services/api/config.ts`, `scripts/generate-sitemap.mjs`, `scripts/prerender.mjs`
 - Backend env loading: `apps/api-go/internal/config/config.go`
+
+## Production Deployment Agent
+Production runtime configuration remains in `/var/www/DeskovkyLevne/.env`
+(root-owned, mode `600`). The deployment agent loads it on each run. Frontend
+builds receive only `VITE_*` application variables; database and Redis secrets
+are confined to the runtime Compose manifests in the root-only
+`/var/lib/deskovky-deploy/manifests` directory.
+
+Host paths, Compose project `rewrite`, GitHub repository, build user and local
+smoke-check ports are defined in `infra/production/release.py` and
+`infra/production/github_gate.py`. The five-minute polling interval is defined
+in `infra/production/deskovky-deploy.timer`. Installation and recovery are
+documented in [Continuous Deployment](continuous-deployment.md).

@@ -22,7 +22,8 @@ pagination. This feature does not require a database migration. See the
 GitHub Actions runs the validation workflow for pull requests targeting `main`,
 pushes to `main`, and manual dispatches. New commits cancel older runs for the
 same ref. The workflow grants the GitHub token read-only repository access and
-does not publish artifacts or deploy the application.
+does not receive production secrets. The production server deploys successful
+push revisions through the [continuous deployment agent](continuous-deployment.md).
 
 The required CI jobs run in parallel:
 - `Frontend`: installs locked npm dependencies, runs ESLint and Knip, validates managed
@@ -33,7 +34,8 @@ The required CI jobs run in parallel:
   suite uses repository and cache collaborators to exercise service failures,
   caching, request boundaries, and timeout behavior without external services.
 - `Infrastructure`: validates the hardened Compose output, builds the Go API
-  container, and verifies nginx security headers and rate limiting.
+  container, verifies nginx security headers and rate limiting, and tests the
+  production CI gate and automatic rollback.
 
 `npm run lint` checks frontend TypeScript, root JavaScript configuration, and
 Node build/test scripts. `npm run check:unused` checks unused files, exports,

@@ -79,6 +79,8 @@ jobs:
           grep --fixed-strings 'no-new-privileges:true' <<<"${rendered}"
           grep --fixed-strings 'read_only: true' <<<"${rendered}"
           grep --fixed-strings 'user: 999:1000' <<<"${rendered}"
+      - name: Test production CI gate and deployment rollback
+        run: python3 -m unittest discover -s infra/production -p 'test_*.py'
       - name: Build Go API image
         run: docker build apps/api-go
       - name: Verify nginx headers and rate limiting
