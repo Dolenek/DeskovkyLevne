@@ -88,6 +88,9 @@ keep it aligned with the Docker builder version when applying security patches.
 - Keep dependency installations local to the operating system: do not share
   Windows `node_modules` with WSL/Linux. Run `npm ci` in the target environment
   to install the lockfile's native Rollup, Oxc, esbuild, and Tailwind Oxide packages.
+- Dependency updates must preserve the complete optional platform and bundled
+  WASM dependency graph in `package-lock.json`. Verify a fresh `npm ci` using
+  the Node 24/npm toolchain used by CI, without an existing `node_modules` tree.
 
 ## Build-Time Data Sources
 - Dynamic sitemap slugs and product preview pages come from `catalog_slug_state`.
