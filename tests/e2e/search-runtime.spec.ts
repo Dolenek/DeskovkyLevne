@@ -120,27 +120,6 @@ test("search keeps latest result when previous request is slower", async ({ page
   await expect(page.getByText("Slow Result")).toHaveCount(0);
 });
 
-test("catalog renders a mock product when API requests cannot be reached", async ({ page }) => {
-  await page.route("**/api/v1/**", async (route) => route.abort("failed"));
-  await page.goto("/deskove-hry");
-  await expect(page.getByText("Failed to fetch")).toHaveCount(0);
-  await expect(page.getByRole("heading", { name: "Ukázková hra cenové historie" })).toBeVisible();
-  await expect(page.getByText("Zobrazit detail")).toBeVisible();
-});
-
-test("catalog renders a mock product when API returns 500", async ({ page }) => {
-  await page.route("**/api/v1/**", async (route) => {
-    await route.fulfill({
-      status: 500,
-      contentType: "application/json",
-      body: JSON.stringify({ error: "local API unavailable" }),
-    });
-  });
-  await page.goto("/deskove-hry");
-  await expect(page.getByText("API request failed (500)")).toHaveCount(0);
-  await expect(page.getByRole("heading", { name: "Ukázková hra cenové historie" })).toBeVisible();
-});
-
 test("default API retry recovers after one transient server failure", async ({ page }) => {
   let catalogAttempts = 0;
   await mockSearchPageApi(page);

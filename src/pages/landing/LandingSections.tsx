@@ -1,4 +1,5 @@
 import { ProductTile } from "../../components/ProductTile";
+import { ErrorState } from "../../components/AsyncStates";
 import { ProductCardSkeleton, SkeletonBlock, SkeletonImage } from "../../components/skeleton";
 import { Icon } from "../../components/ui/Icon";
 import type { LocaleKey } from "../../i18n/translations";
@@ -150,23 +151,21 @@ export const HeroPreview = ({
   );
 };
 
-export const FeaturedProducts = ({
-  title,
-  series,
-  loading,
-  locale,
-  t,
-  onNavigate,
-  onShowAll,
-}: {
+interface FeaturedProductsProps {
   title: string;
   series: ProductSeries[];
   loading: boolean;
+  error: string | null;
+  onRetry: () => void;
   locale: LocaleKey;
   t: Translator;
   onNavigate: (slug: string) => void;
   onShowAll: () => void;
-}) => (
+}
+
+export const FeaturedProducts = ({
+  title, series, loading, error, onRetry, locale, t, onNavigate, onShowAll,
+}: FeaturedProductsProps) => (
   <section>
     <div className="flex items-center justify-between gap-4">
       <h2 className="text-2xl font-extrabold text-navy">{title}</h2>
@@ -174,12 +173,14 @@ export const FeaturedProducts = ({
         {t("landingShowAllGames")}
       </button>
     </div>
-    <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+    {error && !loading ? (
+      <ErrorState message={t("errorTitle")} retryLabel={t("retry")} onRetry={onRetry} />
+    ) : <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
       {loading
         ? Array.from({ length: 4 }, (_, index) => <ProductCardSkeleton key={index} />)
         : series.slice(0, 4).map((entry) => (
             <ProductTile key={entry.slug} series={entry} locale={locale} t={t} onNavigate={onNavigate} />
           ))}
-    </div>
+    </div>}
   </section>
 );

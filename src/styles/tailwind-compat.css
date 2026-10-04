@@ -1,0 +1,15 @@
+/* Preserve the existing UI's base styles under Tailwind 4 Preflight. */
+@layer base {
+  *, ::before, ::after, ::backdrop, ::file-selector-button {
+    border-color: #e5e7eb;
+  }
+
+  input::placeholder, textarea::placeholder {
+    color: #9ca3af;
+    opacity: 1;
+  }
+
+  button, [role="button"] {
+    cursor: pointer;
+  }
+}

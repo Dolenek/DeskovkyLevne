@@ -1,20 +1,13 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type {
-  AgeRatingFilter,
-  AvailabilityFilter,
-  CategoryFilter,
-  PlayerRangeFilter,
-  PlaytimeRangeFilter,
-  PriceMovementFilter,
-} from "../types/filters";
+import { useMemo } from "react";
+import type { AgeRatingFilter, AvailabilityFilter, CatalogSort, CategoryFilter,
+  PlayerRangeFilter, PlaytimeRangeFilter, PriceMovementFilter } from "../types/filters";
 import type { ProductSeries } from "../types/product";
-import { MOCK_CATALOG_ROW } from "../mocks/mockCatalogRows";
 import { fetchFilteredCatalogIndex } from "../services/api/catalogApi";
 import { buildSeriesFromCatalogIndexRow } from "../utils/catalogTransforms";
-import { isApiFallbackFailure } from "../utils/networkErrors";
+import { useAsyncResource } from "./useAsyncResource";
 
 interface UseFilteredCatalogIndexOptions {
-  sort?: import("../types/filters").CatalogSort;
+  sort?: CatalogSort;
   query?: string;
   priceRange: { min: number | null; max: number | null };
   availabilityFilter: AvailabilityFilter;
@@ -28,143 +21,40 @@ interface UseFilteredCatalogIndexOptions {
   pageSize: number;
 }
 
-interface UseFilteredCatalogIndexResult {
-  series: ProductSeries[];
-  total: number;
-  loading: boolean;
-  error: string | null;
-  reload: () => void;
-}
+const EMPTY_CATALOG: { series: ProductSeries[]; total: number } = { series: [], total: 0 };
+const normalizeFilters = <T extends string>(filters: T[]) => filters.filter(Boolean).sort();
+const catalogRequestKey = (options: UseFilteredCatalogIndexOptions) => JSON.stringify({
+  query: options.query ?? "", sort: options.sort ?? "name",
+  availabilityFilter: options.availabilityFilter,
+  priceRange: { min: options.priceRange.min, max: options.priceRange.max },
+  priceMovementFilter: options.priceMovementFilter,
+  page: options.page, pageSize: options.pageSize,
+  randomSeed: options.randomSeed ?? null,
+  categoryFilters: normalizeFilters(options.categoryFilters),
+  playerRangeFilters: normalizeFilters(options.playerRangeFilters),
+  playtimeRangeFilters: normalizeFilters(options.playtimeRangeFilters),
+  ageRatingFilters: normalizeFilters(options.ageRatingFilters),
+});
 
-const FILTER_KEY_SEPARATOR = "\u001f";
+const createCatalogLoader = (requestKey: string) => {
+  const options: UseFilteredCatalogIndexOptions = JSON.parse(requestKey);
+  return async (signal: AbortSignal) => {
+    const { rows, total } = await fetchFilteredCatalogIndex(
+      Math.max(0, (options.page - 1) * options.pageSize), options.pageSize, {
+        query: options.query, sort: options.sort, availability: options.availabilityFilter,
+        minPrice: options.priceRange.min, maxPrice: options.priceRange.max,
+        categories: options.categoryFilters, playerRanges: options.playerRangeFilters,
+        playtimeRanges: options.playtimeRangeFilters, ageRatings: options.ageRatingFilters,
+        priceMovement: options.priceMovementFilter, randomSeed: options.randomSeed,
+      }, signal,
+    );
+    return { series: rows.map(buildSeriesFromCatalogIndexRow), total };
+  };
+};
 
-const buildFilterKey = (values: string[]) => values.filter(Boolean).sort().join(FILTER_KEY_SEPARATOR);
-
-const parseFilterKey = <T extends string>(key: string) => (key ? key.split(FILTER_KEY_SEPARATOR) : []) as T[];
-
-export const useFilteredCatalogIndex = (
-  options: UseFilteredCatalogIndexOptions,
-): UseFilteredCatalogIndexResult => {
-  const {
-    query = "",
-    sort = "name",
-    availabilityFilter,
-    priceRange,
-    page,
-    pageSize,
-    categoryFilters,
-    playerRangeFilters,
-    playtimeRangeFilters,
-    ageRatingFilters,
-    priceMovementFilter,
-    randomSeed = null,
-  } = options;
-  const [series, setSeries] = useState<ProductSeries[]>([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [reloadToken, setReloadToken] = useState(0);
-  const requestRef = useRef(0);
-
-  const categoryFilterKey = buildFilterKey(categoryFilters);
-  const playerRangeFilterKey = buildFilterKey(playerRangeFilters);
-  const playtimeRangeFilterKey = buildFilterKey(playtimeRangeFilters);
-  const ageRatingFilterKey = buildFilterKey(ageRatingFilters);
-  const normalizedCategories = useMemo(
-    () => parseFilterKey<CategoryFilter>(categoryFilterKey),
-    [categoryFilterKey],
-  );
-  const normalizedPlayers = useMemo(
-    () => parseFilterKey<PlayerRangeFilter>(playerRangeFilterKey),
-    [playerRangeFilterKey],
-  );
-  const normalizedPlaytimes = useMemo(
-    () => parseFilterKey<PlaytimeRangeFilter>(playtimeRangeFilterKey),
-    [playtimeRangeFilterKey],
-  );
-  const normalizedAges = useMemo(
-    () => parseFilterKey<AgeRatingFilter>(ageRatingFilterKey),
-    [ageRatingFilterKey],
-  );
-
-  useEffect(() => {
-    const controller = new AbortController();
-    const requestId = requestRef.current + 1;
-    requestRef.current = requestId;
-    setLoading(true);
-
-    const load = async () => {
-      try {
-        const offset = Math.max(0, (page - 1) * pageSize);
-        const { rows, total } = await fetchFilteredCatalogIndex(
-          offset,
-          pageSize,
-          {
-            query,
-            sort,
-            availability: availabilityFilter,
-            minPrice: priceRange.min,
-            maxPrice: priceRange.max,
-            categories: normalizedCategories,
-            playerRanges: normalizedPlayers,
-            playtimeRanges: normalizedPlaytimes,
-            ageRatings: normalizedAges,
-            priceMovement: priceMovementFilter,
-            randomSeed,
-          },
-          controller.signal,
-        );
-        if (controller.signal.aborted || requestRef.current !== requestId) {
-          return;
-        }
-        setSeries(rows.map((row) => buildSeriesFromCatalogIndexRow(row)));
-        setTotal(total);
-        setError(null);
-      } catch (err) {
-        if (controller.signal.aborted || requestRef.current !== requestId) {
-          return;
-        }
-        if (!query && isApiFallbackFailure(err)) {
-          setSeries([buildSeriesFromCatalogIndexRow(MOCK_CATALOG_ROW)]);
-          setTotal(1);
-          setError(null);
-          return;
-        }
-        setSeries([]);
-        setTotal(0);
-        setError(err instanceof Error ? err.message : "Unknown error");
-      } finally {
-        if (!controller.signal.aborted && requestRef.current === requestId) {
-          setLoading(false);
-        }
-      }
-    };
-
-    void load();
-
-    return () => {
-      controller.abort();
-    };
-  }, [
-    availabilityFilter,
-    normalizedCategories,
-    normalizedPlayers,
-    normalizedPlaytimes,
-    normalizedAges,
-    page,
-    pageSize,
-    priceMovementFilter,
-    priceRange.max,
-    priceRange.min,
-    randomSeed,
-    query,
-    reloadToken,
-    sort,
-  ]);
-
-  const reload = useCallback(() => {
-    setReloadToken((token) => token + 1);
-  }, []);
-
-  return { series, total, loading, error, reload };
+export const useFilteredCatalogIndex = (options: UseFilteredCatalogIndexOptions) => {
+  const requestKey = catalogRequestKey(options);
+  const loader = useMemo(() => createCatalogLoader(requestKey), [requestKey]);
+  const { value, loading, error, reload } = useAsyncResource(loader, EMPTY_CATALOG);
+  return { ...value, loading, error, reload };
 };

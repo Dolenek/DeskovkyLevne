@@ -5,6 +5,8 @@
 - Backend read API: Go service (`apps/api-go`) exposing `/api/v1/*`.
 - Database: Postgres/Supabase as source of truth.
 - Optional cache: Redis for API read-path caching.
+- Shared availability rules: `shared/availability.mjs`, consumed by frontend
+  offers/SEO and the Node product-preview generator, with TypeScript declarations.
 
 ## Read Models
 - `catalog_slug_state`: default runtime catalog/search/filter source, one row per canonical slug.
@@ -33,6 +35,8 @@
    frontend expands this transport shape into independent seller chart series.
 7. Recent discounts come from seller-level state and never compare prices
    between sellers.
+8. Frontend requests cancel obsolete loads and expose recoverable errors without
+   inventing product data. See [Frontend Runtime](../frontend/runtime.md).
 
 ## Security Boundaries
 - Browser traffic reaches the Go API through the versioned nginx reverse-proxy

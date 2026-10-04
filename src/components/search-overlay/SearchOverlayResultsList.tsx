@@ -32,13 +32,13 @@ const SearchResultImage = ({ series }: { series: ProductSearchResult }) => {
   const image = getSeriesImage(series);
   if (!image) {
     return (
-      <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center text-lg font-semibold text-muted">
+      <div className="flex h-16 w-16 shrink-0 items-center justify-center text-lg font-semibold text-muted">
         {fallbackInitial(series)}
       </div>
     );
   }
   return (
-    <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden">
+    <div className="relative h-16 w-16 shrink-0 overflow-hidden">
       <SkeletonImage src={image} alt={series.label} className="h-full w-full object-contain" />
     </div>
   );

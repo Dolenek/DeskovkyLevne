@@ -131,6 +131,7 @@ test("search labels translate to English and Enter on a retry button keeps nativ
   await input.fill("next");
   const retry = page.getByRole("button", { name: "Try again" });
   await expect(retry).toBeVisible();
+  await expect(page.getByText("Something went wrong", { exact: true })).toBeVisible();
   await retry.focus();
   const request = page.waitForRequest("**/api/v1/search/suggest?*");
   await retry.press("Enter");

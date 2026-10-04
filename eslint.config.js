@@ -13,7 +13,7 @@ export default defineConfig([
     'TlamaScraper/**',
   ]),
   {
-    files: ['*.js', 'scripts/**/*.mjs', 'tests/unit/**/*.mjs'],
+    files: ['*.js', 'scripts/**/*.mjs', 'shared/**/*.mjs', 'tests/unit/**/*.mjs'],
     extends: [js.configs.recommended],
     languageOptions: {
       globals: globals.node,

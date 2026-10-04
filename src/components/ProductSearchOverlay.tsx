@@ -48,7 +48,7 @@ const renderOverlayContent = ({
   if (error) {
     return (
       <div className="flex flex-col items-center gap-3 py-4 text-center">
-        <p className="text-sm text-rose-600">{error}</p>
+        <p className="text-sm text-rose-600">{t("errorTitle")}</p>
         <button
           type="button"
           onClick={onRetry}

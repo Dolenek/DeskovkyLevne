@@ -6,7 +6,7 @@ const ProductDetailTopSkeleton = () => (
       <SkeletonBlock className="aspect-[4/3] max-h-64 w-full lg:max-h-none" />
       <div className="mt-4 flex gap-3 overflow-hidden">
         {Array.from({ length: 4 }, (_, index) => (
-          <SkeletonBlock key={index} className="h-20 w-24 flex-shrink-0" />
+          <SkeletonBlock key={index} className="h-20 w-24 shrink-0" />
         ))}
       </div>
     </div>

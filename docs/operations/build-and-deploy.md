@@ -1,5 +1,28 @@
 # Build and Deploy
 
+## Local Development
+
+Use Node.js 22.20+ or 24+ with npm, Go 1.26.8+, and PostgreSQL containing the
+project read models. CI uses Node 24. Install the locked dependency tree:
+
+```bash
+npm ci
+```
+
+Copy `apps/api-go/.env.example` to `apps/api-go/.env` and configure
+`DATABASE_URL`, or supply it through the process environment. See
+[Configuration](configuration.md#backend-environment-variables-appsapi-go)
+for precedence and proxy settings.
+
+`npm run dev` starts the Go API and Vite together. Frontend options can be
+forwarded, for example `npm run dev -- --host 127.0.0.1`. `npm run api:dev`
+starts only the API with the same environment loading; `npm run dev:frontend`
+starts only Vite. Invalid required configuration or a missing executable
+produces a controlled failure. A child exit or SIGINT/SIGTERM stops the paired
+services and their descendants. POSIX process groups receive SIGTERM followed
+by SIGKILL after exit or a two-second grace period; Windows uses `taskkill /T /F`
+for the owned process trees.
+
 ## Local Build Pipeline
 Root command:
 ```bash
@@ -9,7 +32,7 @@ npm run build
 Pipeline stages:
 1. TypeScript build (`tsc -b`)
 2. Sitemap generation (`node scripts/generate-sitemap.mjs`)
-3. Vite production build (`vite build`)
+3. Vite production build (`vite build`) with the Tailwind 4 Vite plugin
 4. Prerender pass (`node scripts/prerender.mjs`)
 
 ## Frontend/API Compatibility
@@ -37,14 +60,14 @@ The required CI jobs run in parallel:
   container, verifies nginx security headers and rate limiting, and tests the
   production CI gate and automatic rollback.
 
-`npm run lint` checks frontend TypeScript, root JavaScript configuration, and
-Node build/test scripts. `npm run check:unused` checks unused files, exports,
+`npm run lint` checks frontend TypeScript, root JavaScript configuration,
+shared JavaScript rules, and Node build/test scripts. `npm run check:unused` checks unused files, exports,
 types, and dependencies across the frontend, scripts, and tests. Its
 `knip.jsonc` project patterns exclude the separate `TlamaScraper` tree and
 generated output. Playwright configuration/specs and Node unit tests are
 explicit entry points; Vite, Vitest, and package scripts supply the other
-entries. The `go` executable is supplied by the backend toolchain and is the
-only ignored binary. Both checks run locally and in the frontend CI job.
+entries. The `go` executable used by the Node development launcher is supplied
+by the backend toolchain. Both checks run locally and in the frontend CI job.
 
 CI does not receive Supabase build credentials. The frontend build therefore
 uses the deterministic static-only fallback described below.
@@ -62,7 +85,9 @@ The minimum Go version in `apps/api-go/go.mod` also selects the CI toolchain;
 keep it aligned with the Docker builder version when applying security patches.
 
 ## Build Reliability Notes
-- In Linux/WSL environments, ensure optional Rollup binary packages are installed (for example `@rollup/rollup-linux-x64-gnu`). If missing, reinstall dependencies with `npm install`.
+- Keep dependency installations local to the operating system: do not share
+  Windows `node_modules` with WSL/Linux. Run `npm ci` in the target environment
+  to install the lockfile's native Rollup, Oxc, esbuild, and Tailwind Oxide packages.
 
 ## Build-Time Data Sources
 - Dynamic sitemap slugs and product preview pages come from `catalog_slug_state`.
@@ -80,6 +105,12 @@ HTML, so crawlers receive only the generic SPA fallback for product routes.
 ## Prerender Requirements
 ```bash
 npx playwright install chromium
+```
+
+On Linux, install Chromium's system libraries as well:
+
+```bash
+npx playwright install --with-deps chromium
 ```
 
 Prerender waits for `domcontentloaded` and the SEO robots marker instead of

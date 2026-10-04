@@ -56,7 +56,8 @@ export const LandingPage = ({
   });
   const landingRandomSeed = useMemo(createLandingRandomSeed, []);
   const catalogOverview = useCatalogOverview();
-  const { series: randomCatalogSeries, loading: landingCatalogLoading } = useFilteredCatalogIndex({
+  const { series: randomCatalogSeries, loading: landingCatalogLoading,
+    error: landingCatalogError, reload: reloadLandingCatalog } = useFilteredCatalogIndex({
     availabilityFilter: "available",
     priceRange: { min: null, max: null },
     categoryFilters: [],
@@ -165,7 +166,7 @@ export const LandingPage = ({
                   }}
                   onFocus={() => searchState.setSearchActive(true)}
                   placeholder={t("landingSearchPlaceholder")}
-                  className="min-w-0 flex-1 px-3 py-3 text-sm font-semibold outline-none placeholder:text-muted"
+                  className="min-w-0 flex-1 px-3 py-3 text-sm font-semibold outline-hidden placeholder:text-muted"
                 />
                 <button
                   type="submit"
@@ -198,6 +199,8 @@ export const LandingPage = ({
             title={copy.featuredTitle}
             series={randomFeaturedSeries}
             loading={landingCatalogLoading}
+            error={landingCatalogError}
+            onRetry={reloadLandingCatalog}
             locale={locale}
             t={t}
             onNavigate={onNavigateToProduct}

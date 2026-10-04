@@ -50,7 +50,7 @@ export const AppHeader = ({
           <button
             type="button"
             onClick={onLogoClick}
-            className="rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="rounded-md focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary"
           >
             <BrandLogo compact />
           </button>
@@ -84,7 +84,7 @@ export const AppHeader = ({
           className="flex items-center gap-3 lg:justify-self-center lg:w-full"
         >
           <div className="flex min-w-0 flex-1 items-center rounded-lg border border-line bg-white shadow-sm transition focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15">
-            <Icon name="search" className="ml-3 h-5 w-5 flex-shrink-0 text-muted" />
+            <Icon name="search" className="ml-3 h-5 w-5 shrink-0 text-muted" />
             <input
               maxLength={120}
               aria-label={t("searchLabel")}
@@ -93,7 +93,7 @@ export const AppHeader = ({
               onChange={(event) => onSearchChange(event.target.value)}
               onFocus={onSearchFocus}
               placeholder={t("searchPlaceholder")}
-              className="min-w-0 flex-1 bg-transparent px-3 py-2.5 text-sm font-semibold text-navy outline-none placeholder:text-muted"
+              className="min-w-0 flex-1 bg-transparent px-3 py-2.5 text-sm font-semibold text-navy outline-hidden placeholder:text-muted"
             />
             {searchValue ? (
               <button

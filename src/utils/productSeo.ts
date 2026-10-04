@@ -1,3 +1,4 @@
+import { mapAvailabilityToSchema } from "../../shared/availability.mjs";
 import type { LocaleKey } from "../i18n/translations";
 import type { ProductSeries } from "../types/product";
 import { formatPrice } from "./numberFormat";
@@ -5,34 +6,6 @@ import { collectProductImageUrls, pickPrimaryProductImage } from "./productImage
 import { getLatestComparablePrice, getLowestSeller } from "./priceStats";
 import { getSellerDisplayName } from "./sellers";
 import { buildAbsoluteUrl, sanitizeExternalHttpsUrl } from "./urls";
-
-const mapAvailabilityToSchema = (availability?: string | null): string | undefined => {
-  if (!availability) {
-    return undefined;
-  }
-  const normalized = availability.toLowerCase();
-  if (
-    normalized.includes("předprodej") ||
-    normalized.includes("preorder") ||
-    normalized.includes("pre-order") ||
-    normalized.includes("předobjednávka") ||
-    normalized.includes("predprodej") ||
-    normalized.includes("predobjednavka")
-  ) {
-    return "https://schema.org/PreOrder";
-  }
-  if (normalized.includes("skladem") || normalized.includes("in stock")) {
-    return "https://schema.org/InStock";
-  }
-  if (
-    normalized.includes("není") ||
-    normalized.includes("vyprodáno") ||
-    normalized.includes("out of stock")
-  ) {
-    return "https://schema.org/OutOfStock";
-  }
-  return undefined;
-};
 
 const truncateText = (value: string, limit = 200): string => {
   const clean = value.replace(/\s+/g, " ").trim();

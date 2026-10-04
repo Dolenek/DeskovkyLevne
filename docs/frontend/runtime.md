@@ -22,6 +22,9 @@ SEO canonical link with the resolved canonical slug.
   with seller count and the lowest final current price across all sellers when
   available, canonical slug URL, product `og:type`, large Twitter card, and
   Product JSON-LD.
+- UI offer ordering, runtime Product JSON-LD, and build-time product previews
+  share availability classification from `shared/availability.mjs`. See the
+  [availability rules](../domain/product-model.md#current-offer-presentation).
 - Product social images use the same first-image rules as the visible gallery:
   prefer the hero image, then gallery images, normalize `/related/` image URLs
   to `/big/`, deduplicate, and skip placeholder or thumbnail-only assets such
@@ -61,11 +64,18 @@ SEO canonical link with the resolved canonical slug.
 - Frontend uses a light DeskovkyLevně brand system: navy text, white surfaces,
   green primary CTAs, orange promotional CTAs, subtle borders, and shared
   header/footer components.
+- Tailwind 4 compiles styles through `@tailwindcss/vite`. `src/index.css`
+  explicitly scans `src/` and `index.html`; the separate scraper tree is excluded.
+  `tailwind.config.js` owns brand tokens and the existing UI color palettes and
+  shadow sizes. Icons use `shrink-0`; search controls use `outline-hidden` so
+  forced colors retain a visible outline. `src/styles/tailwind-compat.css`
+  preserves placeholder colors, border defaults, and button cursors.
+  PostCSS/Autoprefixer configuration is unnecessary.
+- CSS targets Safari 16.4+, Chrome 111+, and Firefox 128+. Regression checks
+  cover generated styling, forced-color focus, and mobile layouts.
 - Shared UI iconography uses `lucide-react` through the local `Icon`
   component so feature components do not import icon packages directly.
-- Mock fallback catalog and product-detail rows use static board-game scene
-  assets. Production landing hero, product cards, and product galleries are
-  API-image driven.
+- Landing hero, product cards, and product galleries use API images.
 - API-backed catalog, search overlay, landing product blocks, and product
   detail use skeleton loading states. Product images keep a skeleton placeholder
   until each image load either succeeds or fails.
@@ -127,10 +137,13 @@ SEO canonical link with the resolved canonical slug.
   Reversed bounds are ordered from lower to higher, and the normalized values
   are written back to both inputs when either input loses focus.
 - Filter options and price bounds are fetched from metadata endpoints, not a full in-browser catalog preload.
-- Unqueried catalog and search overlay render one mock product when API requests cannot
-  be reached because the browser reports `Failed to fetch` or the API/proxy
-  returns a transient 5xx failure. Text-search catalog failures instead display
-  an error with retry and never insert an unrelated mock result.
+- Catalog, suggestions, landing product blocks, and product detail display a
+  localized error with retry after API retries are exhausted. Failed requests
+  clear their product results; no sample products, offers, or history are
+  inserted. Landing navigation and search remain usable during a catalog failure.
+- Suggestions cache only successful responses for five minutes, with at most
+  50 entries per search hook. Keys include query, availability, and result
+  limit. Explicit retry bypasses the cache; canceled responses cannot populate it.
 - Product detail renders a two-column desktop hero with a wider gallery and
   narrower text/price column. On mobile the name, gameplay parameters, price,
   and offer CTA precede the compact gallery. Offers precede the history chart
@@ -154,9 +167,8 @@ SEO canonical link with the resolved canonical slug.
   from the offers table. Missing history dates do not create chart points.
 - Date-only history values are formatted as calendar dates without timezone
   conversion.
-- Product detail renders one mock product with multi-seller price history when
-  the product API cannot be reached because the browser reports `Failed to fetch`
-  or the API/proxy returns a transient 5xx failure.
+- Failed product details carry `noindex` and omit Product JSON-LD. A genuine
+  API 404 remains a not-found state rather than an outage error.
 - Product detail offer CTA scrolls to the seller-offer section. Price-watch and
   favorite actions are not rendered until backend support exists.
 - Seller-offer rows show seller, price, normalized availability, source check date,

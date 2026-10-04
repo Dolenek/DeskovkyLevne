@@ -38,7 +38,7 @@ export const ProductGallery = ({ series, t }: { series: ProductSeries; t: Transl
           images.map((url, index) => (
             <div
               key={`${url}-${index}`}
-              className="relative flex aspect-[4/3] max-h-64 lg:max-h-none min-w-0 w-full flex-shrink-0 snap-center items-center justify-center"
+              className="relative flex aspect-[4/3] max-h-64 lg:max-h-none min-w-0 w-full shrink-0 snap-center items-center justify-center"
             >
               <SkeletonImage
                 src={url}
@@ -62,7 +62,7 @@ export const ProductGallery = ({ series, t }: { series: ProductSeries; t: Transl
               type="button"
               onClick={() => scrollToIndex(index)}
               aria-label={t("galleryShowImageAria", { index: index + 1, count: images.length })}
-              className={`relative h-16 w-20 lg:h-20 lg:w-24 flex-shrink-0 overflow-hidden rounded-lg border bg-white p-1 transition ${
+              className={`relative h-16 w-20 lg:h-20 lg:w-24 shrink-0 overflow-hidden rounded-lg border bg-white p-1 transition ${
                 index === activeIndex ? "border-primary ring-2 ring-primary/20" : "border-line"
               }`}
             >

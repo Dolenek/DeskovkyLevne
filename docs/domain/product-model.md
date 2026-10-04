@@ -30,6 +30,12 @@
 - The lowest in-stock offer drives the detail hero when available. Otherwise the
   hero explicitly labels the lowest listed price without asserting stock.
 - Missing current prices are not offers; zero remains a valid current price.
+- Availability classification checks preorders first, explicit unavailability
+  second, and stock signals last. Negative labels such as `Není skladem` and
+  `Not in stock` therefore never imply stock. Czech diacritics, whitespace,
+  simple HTML entities, and schema.org availability URLs are normalized.
+- The same classification drives UI offers and runtime/static Product JSON-LD.
+  Unknown availability is omitted from JSON-LD rather than asserted as stock.
 - Offer check timestamps remain per seller; the newest timestamp does not imply
   that every seller was checked at that time. Prices exclude shipping.
 

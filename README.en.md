@@ -73,7 +73,7 @@ See the [architecture overview](docs/architecture/overview.md) for details.
 
 | Layer | Technology |
 | --- | --- |
-| Frontend | React 19, TypeScript, Vite, Tailwind CSS, Lucide, Recharts |
+| Frontend | React 19, TypeScript, Vite, Tailwind CSS 4, Lucide, Recharts |
 | Backend | Go 1.26, Chi, pgx |
 | Data | PostgreSQL, Supabase, slug- and seller-level read models |
 | Cache | Redis, singleflight cache-miss coalescing |
@@ -82,13 +82,13 @@ See the [architecture overview](docs/architecture/overview.md) for details.
 
 ## Local setup
 
-You need Node.js with npm, Go 1.26, and a PostgreSQL database containing the
+You need Node.js 22.20+ or 24+ with npm, Go 1.26.8+, and a PostgreSQL database containing the
 project read models.
 
 1. Install the JavaScript dependencies:
 
    ```bash
-   npm install
+   npm ci
    ```
 
 2. Create `apps/api-go/.env` from `apps/api-go/.env.example` and set at least
@@ -118,6 +118,10 @@ time:
 ```bash
 npx playwright install chromium
 ```
+
+On Linux, use `npx playwright install --with-deps chromium`. See the
+[local development guide](docs/operations/build-and-deploy.md#local-development)
+for environment loading and platform requirements.
 
 Frontend and repository checks used in CI:
 

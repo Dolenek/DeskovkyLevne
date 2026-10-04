@@ -1,8 +1,6 @@
 import { useMemo } from "react";
-import { buildMockProductRows } from "../mocks/mockProductRows";
 import { fetchProductDetailBySlug } from "../services/api/snapshotApi";
 import type { ProductSeries } from "../types/product";
-import { isApiFallbackFailure } from "../utils/networkErrors";
 import { useProductPricing } from "./useProductPricing";
 
 interface UseProductDetailResult {
@@ -20,16 +18,7 @@ export const useProductDetail = (
     if (!trimmed) {
       return async () => [];
     }
-    return async (signal?: AbortSignal) => {
-      try {
-        return await fetchProductDetailBySlug(trimmed, signal);
-      } catch (error) {
-        if (isApiFallbackFailure(error)) {
-          return buildMockProductRows(trimmed);
-        }
-        throw error;
-      }
-    };
+    return (signal?: AbortSignal) => fetchProductDetailBySlug(trimmed, signal);
   }, [productSlug]);
 
   const { series, loading, error, reload } = useProductPricing(loader);

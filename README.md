@@ -71,7 +71,7 @@ Podrobnosti popisuje [přehled architektury](docs/architecture/overview.md).
 
 | Vrstva | Technologie |
 | --- | --- |
-| Frontend | React 19, TypeScript, Vite, Tailwind CSS, Lucide, Recharts |
+| Frontend | React 19, TypeScript, Vite, Tailwind CSS 4, Lucide, Recharts |
 | Backend | Go 1.26, Chi, pgx |
 | Data | PostgreSQL, Supabase, čtecí modely po slugu a sellerovi |
 | Cache | Redis, singleflight spojování souběžných cache miss požadavků |
@@ -80,13 +80,13 @@ Podrobnosti popisuje [přehled architektury](docs/architecture/overview.md).
 
 ## Lokální spuštění
 
-Potřebujete Node.js s npm, Go 1.26 a PostgreSQL databázi s projektovými čtecími
+Potřebujete Node.js 22.20+ nebo 24+ s npm, Go 1.26.8+ a PostgreSQL databázi s projektovými čtecími
 modely.
 
 1. Nainstalujte JavaScriptové závislosti:
 
    ```bash
-   npm install
+   npm ci
    ```
 
 2. Vytvořte `apps/api-go/.env` podle `apps/api-go/.env.example` a nastavte v něm
@@ -115,6 +115,10 @@ Před prvním spuštěním E2E testů nainstalujte Chromium pro Playwright:
 ```bash
 npx playwright install chromium
 ```
+
+Na Linuxu použijte `npx playwright install --with-deps chromium`. Načítání
+prostředí a požadavky platforem popisuje
+[průvodce lokálním vývojem](docs/operations/build-and-deploy.md#local-development).
 
 Frontendové a repozitářové kontroly používané v CI:
 

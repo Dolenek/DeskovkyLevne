@@ -31,6 +31,10 @@ Use `.env.example` and set:
 - Optional cache tuning (`API_CACHE_*`)
 
 ## Run
+From the repository root, `npm run api:dev` loads `apps/api-go/.env` and starts
+only the API. See the canonical [local development guide](../../docs/operations/build-and-deploy.md#local-development).
+Direct Go invocation requires the variables to be exported in the process environment:
+
 ```bash
 go run ./cmd/server
 ```

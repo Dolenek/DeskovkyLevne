@@ -1,3 +1,4 @@
+import { mapAvailabilityToSchema } from "../shared/availability.mjs";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { injectSeoTags } from "./prerender-product-html.mjs";
@@ -146,23 +147,6 @@ const formatPrice = (value, currency) => {
 
 const sellerCountText = (count) =>
   count === 1 ? "1 e-shopu" : `${count} e-shopech`;
-
-const mapAvailabilityToSchema = (availability) => {
-  const normalized = String(availability ?? "").toLowerCase();
-  if (!normalized) {
-    return undefined;
-  }
-  if (normalized.includes("předprodej") || normalized.includes("preorder")) {
-    return "https://schema.org/PreOrder";
-  }
-  if (normalized.includes("skladem") || normalized.includes("in stock")) {
-    return "https://schema.org/InStock";
-  }
-  if (normalized.includes("není") || normalized.includes("vyprodáno")) {
-    return "https://schema.org/OutOfStock";
-  }
-  return undefined;
-};
 
 const truncateText = (value, limit = 200) => {
   const clean = String(value).replace(/\s+/g, " ").trim();

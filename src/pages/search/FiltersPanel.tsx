@@ -45,7 +45,7 @@ const PriceRangeSlider = ({ bounds, values, onSliderChange }: PriceRangeSliderPr
             step={1}
             value={key === "min" ? activeMin : activeMax}
             onChange={(event) => onSliderChange(key, Number(event.target.value))}
-            className={`pointer-events-auto absolute left-0 top-1/2 h-0 w-full -translate-y-1/2 appearance-none bg-transparent focus:outline-none ${
+            className={`pointer-events-auto absolute left-0 top-1/2 h-0 w-full -translate-y-1/2 appearance-none bg-transparent focus:outline-hidden ${
               index === 0 ? "z-20" : "z-10"
             }`}
           />
@@ -151,8 +151,8 @@ export const FiltersPanel = ({
       </p>
       <PriceRangeSlider bounds={priceBounds} values={priceRangeValues} onSliderChange={onSliderChange} />
       <div className="grid grid-cols-2 gap-2">
-        <input type="number" min={0} value={priceFilter.min} onChange={(event) => onPriceFilterChange("min", event.target.value)} onBlur={onPriceFilterBlur} placeholder={t("fromPrice")} className="rounded-lg border border-line px-3 py-2 text-sm font-bold text-navy outline-none focus:border-primary" />
-        <input type="number" min={0} value={priceFilter.max} onChange={(event) => onPriceFilterChange("max", event.target.value)} onBlur={onPriceFilterBlur} placeholder={t("toPrice")} className="rounded-lg border border-line px-3 py-2 text-sm font-bold text-navy outline-none focus:border-primary" />
+        <input type="number" min={0} value={priceFilter.min} onChange={(event) => onPriceFilterChange("min", event.target.value)} onBlur={onPriceFilterBlur} placeholder={t("fromPrice")} className="rounded-lg border border-line px-3 py-2 text-sm font-bold text-navy outline-hidden focus:border-primary" />
+        <input type="number" min={0} value={priceFilter.max} onChange={(event) => onPriceFilterChange("max", event.target.value)} onBlur={onPriceFilterBlur} placeholder={t("toPrice")} className="rounded-lg border border-line px-3 py-2 text-sm font-bold text-navy outline-hidden focus:border-primary" />
       </div>
     </div>
 

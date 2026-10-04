@@ -29,7 +29,7 @@ export interface FilteredProductsSectionProps {
 const CatalogResults = (props: FilteredProductsSectionProps) => {
   const { loading, error, reload, t, total, query, series, locale, onNavigateToSeries } = props;
   if (loading) return <CatalogSkeleton itemCount={FILTERED_PAGE_SIZE} />;
-  if (error) return <ErrorState message={error} retryLabel={t("retry")} onRetry={reload} />;
+  if (error) return <ErrorState message={t("errorTitle")} retryLabel={t("retry")} onRetry={reload} />;
   if (total === 0)
     return <EmptyState message={query ? t("searchNoResults", { term: query }) : t("filteredResultsEmpty")} />;
   return (

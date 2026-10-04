@@ -46,6 +46,18 @@ literal `0` remains an explicit value where the setting permits zero.
 
 ## Backend Environment Variables (`apps/api-go`)
 
+The root `npm run dev` and `npm run api:dev` commands read `apps/api-go/.env`
+with Node's dotenv parser (including quotes, comments, and CRLF). Explicit
+process environment values override file values, including explicitly empty
+values. A file is optional when `DATABASE_URL` is supplied externally; a missing
+or blank `DATABASE_URL` stops startup before either service is launched.
+Running the Go binary or `go run` directly uses only its process environment.
+
+The paired launcher passes the frontend environment unchanged. Vite resolves
+root `.env` files and proxy defaults itself; setting a non-default `API_ADDRESS`
+also requires a matching `VITE_API_PROXY_TARGET`. See
+[local development](build-and-deploy.md#local-development).
+
 ### Required
 - `DATABASE_URL`
 

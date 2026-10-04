@@ -292,29 +292,6 @@ test("missing current seller price remains absent while history stays chartable"
   await expect(page.getByRole("button", { name: /archive-shop/ })).toBeVisible();
 });
 
-test("product detail renders mock product when the API cannot be reached", async ({ page }) => {
-  await page.route("**/api/v1/**", async (route) => {
-    const url = new URL(route.request().url());
-    if (url.pathname === "/api/v1/products/api-down") {
-      await route.abort("failed");
-      return;
-    }
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ rows: [] }),
-    });
-  });
-
-  await page.goto("/deskove-hry/api-down");
-
-  await expect(page.getByRole("heading", { name: "Ukázková hra cenové historie" })).toBeVisible();
-  await expect(page.getByText("Failed to fetch")).toHaveCount(0);
-  await expect(page.getByRole("heading", { name: "Historie ceny" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Kde koupit nejlevněji" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Skrýt Tlama Games" })).toBeVisible();
-});
-
 test("product detail rejects unsafe catalog URLs", async ({ page }) => {
   const unsafeRows = [
     {

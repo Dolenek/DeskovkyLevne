@@ -138,7 +138,7 @@ export const ProductDetailPage = ({
       <main className="px-4 pb-12 pt-6 sm:px-6 lg:px-10">
         <div className="mx-auto flex max-w-7xl flex-col gap-8">
           {loading ? <ProductDetailSkeleton /> : null}
-          {error ? <ErrorState message={error} retryLabel={t("retry")} onRetry={reload} /> : null}
+          {error ? <ErrorState message={t("errorTitle")} retryLabel={t("retry")} onRetry={reload} /> : null}
           {!loading && !error && !product ? (
             <EmptyState message={t("detailNotFoundDescription", { slug: productSlug })} />
           ) : null}
